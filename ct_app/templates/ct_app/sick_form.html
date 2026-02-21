@@ -1,0 +1,177 @@
+{% extends 'ct_app/base.html' %}
+
+{% block title %}疾患{% if sick %}編集{% else %}作成{% endif %} - How to CT{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">疾患基本情報</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="{{ form.diesease.id_for_label }}" class="form-label">{{ form.diesease.label }} <span class="text-danger">*</span></label>
+                        {{ form.diesease }}
+                        {% if form.diesease.errors %}
+                        <div class="invalid-feedback d-block">{{ form.diesease.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.diesease_text.id_for_label }}" class="form-label">{{ form.diesease_text.label }} <span class="text-danger">*</span></label>
+                        {{ form.diesease_text }}
+                        {% if form.diesease_text.errors %}
+                        <div class="invalid-feedback d-block">{{ form.diesease_text.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.keyword.id_for_label }}" class="form-label">{{ form.keyword.label }}</label>
+                        {{ form.keyword }}
+                        {% if form.keyword.errors %}
+                        <div class="invalid-feedback d-block">{{ form.keyword.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.diesease_img.id_for_label }}" class="form-label">{{ form.diesease_img.label }}</label>
+                        {{ form.diesease_img }}
+                        {% if form.diesease_img.errors %}
+                        <div class="invalid-feedback d-block">{{ form.diesease_img.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">撮影プロトコル</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="{{ form.protocol.id_for_label }}" class="form-label">{{ form.protocol.label }}</label>
+                        {{ form.protocol }}
+                        {% if form.protocol.errors %}
+                        <div class="invalid-feedback d-block">{{ form.protocol.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.protocol_text.id_for_label }}" class="form-label">{{ form.protocol_text.label }}</label>
+                        {{ form.protocol_text }}
+                        {% if form.protocol_text.errors %}
+                        <div class="invalid-feedback d-block">{{ form.protocol_text.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.protocol_img.id_for_label }}" class="form-label">{{ form.protocol_img.label }}</label>
+                        {{ form.protocol_img }}
+                        {% if form.protocol_img.errors %}
+                        <div class="invalid-feedback d-block">{{ form.protocol_img.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">造影プロトコル</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="{{ form.contrast.id_for_label }}" class="form-label">{{ form.contrast.label }}</label>
+                        {{ form.contrast }}
+                        {% if form.contrast.errors %}
+                        <div class="invalid-feedback d-block">{{ form.contrast.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.contrast_text.id_for_label }}" class="form-label">{{ form.contrast_text.label }}</label>
+                        {{ form.contrast_text }}
+                        {% if form.contrast_text.errors %}
+                        <div class="invalid-feedback d-block">{{ form.contrast_text.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.contrast_img.id_for_label }}" class="form-label">{{ form.contrast_img.label }}</label>
+                        {{ form.contrast_img }}
+                        {% if form.contrast_img.errors %}
+                        <div class="invalid-feedback d-block">{{ form.contrast_img.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">画像処理</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="{{ form.processing.id_for_label }}" class="form-label">{{ form.processing.label }}</label>
+                        {{ form.processing }}
+                        {% if form.processing.errors %}
+                        <div class="invalid-feedback d-block">{{ form.processing.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.processing_text.id_for_label }}" class="form-label">{{ form.processing_text.label }}</label>
+                        {{ form.processing_text }}
+                        {% if form.processing_text.errors %}
+                        <div class="invalid-feedback d-block">{{ form.processing_text.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.processing_img.id_for_label }}" class="form-label">{{ form.processing_img.label }}</label>
+                        {{ form.processing_img }}
+                        {% if form.processing_img.errors %}
+                        <div class="invalid-feedback d-block">{{ form.processing_img.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg"></i> {% if sick %}更新{% else %}作成{% endif %}
+                </button>
+                <a href="{% url 'sick_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-x-lg"></i> キャンセル
+                </a>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">ヘルプ</h5>
+            </div>
+            <div class="card-body">
+                <h6>必須項目</h6>
+                <ul class="small">
+                    <li>疾患名</li>
+                    <li>疾患詳細</li>
+                </ul>
+                
+                <h6 class="mt-3">オプション</h6>
+                <ul class="small">
+                    <li>キーワード・症状</li>
+                    <li>プロトコル情報</li>
+                    <li>造影情報</li>
+                    <li>画像処理方法</li>
+                    <li>画像ファイル</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

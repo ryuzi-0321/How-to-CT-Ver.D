@@ -1,0 +1,165 @@
+{% extends 'ct_app/base.html' %}
+
+{% block title %}{{ sick.diesease }} - How to CT{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-6">
+        <a href="{% url 'sick_list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> 検索に戻る
+        </a>
+    </div>
+    <div class="col-6 text-end">
+        <a href="{% url 'sick_update' sick.pk %}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> 編集
+        </a>
+        <form method="post" action="{% url 'sick_delete' sick.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger" onclick="return confirm('削除してよろしいですか？')">
+                <i class="bi bi-trash"></i> 削除
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="card disease-card mb-3">
+    <div class="card-body">
+        <h3 class="card-title mb-3">{{ sick.diesease }}</h3>
+        {% if sick.keyword %}
+        <p class="text-muted mb-2">
+            <i class="bi bi-tags"></i> <strong>キーワード:</strong> {{ sick.keyword }}
+        </p>
+        {% endif %}
+        <p class="text-muted small">
+            作成: {{ sick.created_at|date:'Y年m月d日 H:i' }} | 
+            更新: {{ sick.updated_at|date:'Y年m月d日 H:i' }}
+        </p>
+    </div>
+</div>
+
+<!-- タブメニュー -->
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="disease-tab" data-bs-toggle="tab" data-bs-target="#disease" type="button" role="tab">
+            <i class="bi bi-info-circle"></i> 疾患情報
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="protocol-tab" data-bs-toggle="tab" data-bs-target="#protocol" type="button" role="tab">
+            <i class="bi bi-camera"></i> 撮影プロトコル
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="contrast-tab" data-bs-toggle="tab" data-bs-target="#contrast" type="button" role="tab">
+            <i class="bi bi-droplet"></i> 造影プロトコル
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="processing-tab" data-bs-toggle="tab" data-bs-target="#processing" type="button" role="tab">
+            <i class="bi bi-image"></i> 画像処理
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- 疾患情報 -->
+    <div class="tab-pane fade show active" id="disease" role="tabpanel">
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">疾患詳細</h5>
+            </div>
+            <div class="card-body">
+                {{ sick.diesease_text|linebreaks }}
+            </div>
+        </div>
+        {% if sick.diesease_img %}
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">疾患関連画像</h5>
+            </div>
+            <div class="card-body">
+                <img src="{{ sick.diesease_img.url }}" class="img-fluid" alt="疾患画像" style="max-width: 400px;">
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 撮影プロトコル -->
+    <div class="tab-pane fade" id="protocol" role="tabpanel">
+        {% if sick.protocol %}
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">{{ sick.protocol }}</h5>
+            </div>
+            <div class="card-body">
+                {{ sick.protocol_text|linebreaks }}
+            </div>
+        </div>
+        {% if sick.protocol_img %}
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">撮影プロトコル画像</h5>
+            </div>
+            <div class="card-body">
+                <img src="{{ sick.protocol_img.url }}" class="img-fluid" alt="プロトコル画像" style="max-width: 400px;">
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="alert alert-info">撮影プロトコルが設定されていません。</div>
+        {% endif %}
+    </div>
+
+    <!-- 造影プロトコル -->
+    <div class="tab-pane fade" id="contrast" role="tabpanel">
+        {% if sick.contrast %}
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">{{ sick.contrast }}</h5>
+            </div>
+            <div class="card-body">
+                {{ sick.contrast_text|linebreaks }}
+            </div>
+        </div>
+        {% if sick.contrast_img %}
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">造影プロトコル画像</h5>
+            </div>
+            <div class="card-body">
+                <img src="{{ sick.contrast_img.url }}" class="img-fluid" alt="造影プロトコル画像" style="max-width: 400px;">
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="alert alert-info">造影プロトコルが設定されていません。</div>
+        {% endif %}
+    </div>
+
+    <!-- 画像処理 -->
+    <div class="tab-pane fade" id="processing" role="tabpanel">
+        {% if sick.processing %}
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">{{ sick.processing }}</h5>
+            </div>
+            <div class="card-body">
+                {{ sick.processing_text|linebreaks }}
+            </div>
+        </div>
+        {% if sick.processing_img %}
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">画像処理関連画像</h5>
+            </div>
+            <div class="card-body">
+                <img src="{{ sick.processing_img.url }}" class="img-fluid" alt="画像処理関連画像" style="max-width: 400px;">
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="alert alert-info">画像処理が設定されていません。</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

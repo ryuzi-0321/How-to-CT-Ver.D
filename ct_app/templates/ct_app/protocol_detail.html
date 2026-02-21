@@ -1,0 +1,47 @@
+{% extends 'ct_app/base.html' %}
+
+{% block title %}{{ protocol.title }} - How to CT{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-6">
+        <a href="{% url 'protocol_list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> プロトコル一覧に戻る
+        </a>
+    </div>
+    <div class="col-6 text-end">
+        <a href="{% url 'protocol_update' protocol.pk %}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> 編集
+        </a>
+        <form method="post" action="{% url 'protocol_delete' protocol.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger" onclick="return confirm('削除してよろしいですか？')">
+                <i class="bi bi-trash"></i> 削除
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="protocol-section">
+    <div class="mb-3">
+        <span class="protocol-badge">{{ protocol.get_category_display }}</span>
+    </div>
+    
+    <h3>{{ protocol.title }}</h3>
+    <p class="text-muted small">
+        作成: {{ protocol.created_at|date:'Y年m月d日 H:i' }} | 
+        更新: {{ protocol.updated_at|date:'Y年m月d日 H:i' }}
+    </p>
+    
+    <div class="mt-4">
+        {{ protocol.content|linebreaks }}
+    </div>
+    
+    {% if protocol.protocol_img %}
+    <div class="mt-4">
+        <h5>プロトコル画像</h5>
+        <img src="{{ protocol.protocol_img.url }}" class="img-fluid" alt="プロトコル画像" style="max-width: 500px;">
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

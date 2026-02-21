@@ -1,0 +1,57 @@
+{% extends 'ct_app/base.html' %}
+
+{% block title %}CTプロトコル - How to CT{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-8">
+        <div class="btn-group" role="group">
+            <a href="{% url 'protocol_list' %}" class="btn btn-outline-primary {% if not selected_category %}active{% endif %}">
+                すべて
+            </a>
+            {% for value, label in categories %}
+            <a href="{% url 'protocol_list' %}?category={{ value }}" class="btn btn-outline-primary {% if selected_category == value %}active{% endif %}">
+                {{ label }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'protocol_create' %}" class="btn btn-success">
+            <i class="bi bi-plus-lg"></i> 新規プロトコル作成
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    {% if protocols %}
+        {% for protocol in protocols %}
+        <div class="col-md-6">
+            <div class="card protocol-section mb-3">
+                <div class="card-header">
+                    <span class="protocol-badge">{{ protocol.get_category_display }}</span>
+                    <h5 class="card-title mb-0 d-inline">{{ protocol.title }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-muted">{{ protocol.content|truncatewords:30 }}</p>
+                    <p class="small text-secondary">更新: {{ protocol.updated_at|date:'Y年m月d日' }}</p>
+                    <a href="{% url 'protocol_detail' protocol.pk %}" class="btn btn-primary btn-sm">
+                        詳細を見る
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            {% if selected_category %}
+            「{{ selected_category }}」のプロトコルがありません。
+            {% else %}
+            プロトコルがありません。
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

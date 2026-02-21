@@ -1,0 +1,66 @@
+{% extends 'ct_app/base.html' %}
+
+{% block title %}疾患検索 - How to CT{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-8">
+        <form method="get" action="{% url 'sick_search' %}" class="search-box d-flex gap-2">
+            <input type="text" name="q" class="form-control" placeholder="疾患名、キーワード、プロトコルで検索..." value="{{ query }}">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search"></i> 検索
+            </button>
+        </form>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'sick_create' %}" class="btn btn-success">
+            <i class="bi bi-plus-lg"></i> 新規疾患作成
+        </a>
+    </div>
+</div>
+
+{% if query %}
+<div class="alert alert-info">
+    「<strong>{{ query }}</strong>」で検索した結果: <strong>{{ sicks.count }}</strong>件
+</div>
+{% endif %}
+
+<div class="row">
+    {% if sicks %}
+        {% for sick in sicks %}
+        <div class="col-md-6">
+            <div class="card disease-card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ sick.diesease }}</h5>
+                    {% if sick.keyword %}
+                    <p class="text-muted small mb-2">
+                        <i class="bi bi-tags"></i> {{ sick.keyword }}
+                    </p>
+                    {% endif %}
+                    {% if sick.protocol %}
+                    <p class="mb-2">
+                        <span class="protocol-badge">{{ sick.protocol }}</span>
+                    </p>
+                    {% endif %}
+                    <p class="card-text text-muted">{{ sick.diesease_text|truncatewords:20 }}</p>
+                    <p class="small text-secondary">更新日: {{ sick.updated_at|date:'Y年m月d日' }}</p>
+                    <a href="{% url 'sick_detail' sick.pk %}" class="btn btn-primary btn-sm">
+                        詳細を見る
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-warning">
+            {% if query %}
+            「{{ query }}」に該当する疾患が見つかりません。
+            {% else %}
+            疾患データがありません。
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

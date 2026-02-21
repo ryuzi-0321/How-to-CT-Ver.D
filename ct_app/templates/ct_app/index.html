@@ -1,0 +1,111 @@
+{% extends 'ct_app/base.html' %}
+
+{% block title %}ホーム - How to CT{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h2 class="section-title">
+            <i class="bi bi-house-heart"></i> ようこそ
+        </h2>
+        <div class="card disease-card">
+            <div class="card-body">
+                <h5 class="card-title">How to CTについて</h5>
+                <p class="card-text">
+                    このシステムは、診療放射線技師向けのCT検査マニュアルです。
+                    疾患別の撮影プロトコル、造影手順、画像処理方法を検索・参照できます。
+                </p>
+                <div class="mt-3">
+                    <a href="{% url 'sick_list' %}" class="btn btn-primary">
+                        <i class="bi bi-search"></i> 疾患検索を開始
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5><i class="bi bi-database"></i> システム情報</h5>
+                {% with sick_count=sicks|length form_count=forms|length %}
+                <p class="mb-0">
+                    <strong>{{ sick_count|add:0 }}</strong> 疾患データ
+                </p>
+                <p>
+                    <strong>{{ form_count }}</strong> お知らせ
+                </p>
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="section-title">
+            <i class="bi bi-megaphone"></i> 最新のお知らせ
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    {% if forms %}
+        {% for form in forms %}
+        <div class="col-md-6">
+            <div class="notice-item">
+                <h5>{{ form.title }}</h5>
+                <p class="text-muted small">{{ form.created_at|date:'Y年m月d日 H:i' }}</p>
+                <p>{{ form.main|truncatewords:30 }}</p>
+                <a href="{% url 'form_detail' form.pk %}" class="btn btn-sm btn-outline-primary">
+                    詳細を見る
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            お知らせがまだ投稿されていません。
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="section-title">
+            <i class="bi bi-plus-circle"></i> データ作成
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-plus-lg"></i> 疾患データ</h5>
+                <p class="card-text">新しい疾患データを作成します</p>
+                <a href="{% url 'sick_create' %}" class="btn btn-primary btn-sm">作成</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-plus-lg"></i> お知らせ</h5>
+                <p class="card-text">新しいお知らせを投稿します</p>
+                <a href="{% url 'form_create' %}" class="btn btn-primary btn-sm">作成</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-plus-lg"></i> プロトコル</h5>
+                <p class="card-text">新しいCTプロトコルを作成します</p>
+                <a href="{% url 'protocol_create' %}" class="btn btn-primary btn-sm">作成</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'ct_app/base.html' %}
+
+{% block title %}お知らせ - How to CT{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-12 text-end">
+        <a href="{% url 'form_create' %}" class="btn btn-success">
+            <i class="bi bi-plus-lg"></i> 新規お知らせ作成
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    {% if forms %}
+        {% for form in forms %}
+        <div class="col-md-6">
+            <div class="notice-item">
+                <h5>{{ form.title }}</h5>
+                <p class="text-muted small">{{ form.created_at|date:'Y年m月d日 H:i' }}</p>
+                <p>{{ form.main|truncatewords:30 }}</p>
+                <a href="{% url 'form_detail' form.pk %}" class="btn btn-sm btn-primary">
+                    詳細を見る
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            お知らせがありません。
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

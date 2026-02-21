@@ -1,0 +1,61 @@
+{% extends 'ct_app/base.html' %}
+
+{% block title %}プロトコル{% if protocol %}編集{% else %}作成{% endif %} - How to CT{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">プロトコル情報</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }} <span class="text-danger">*</span></label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                        <div class="invalid-feedback d-block">{{ form.category.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }} <span class="text-danger">*</span></label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                        <div class="invalid-feedback d-block">{{ form.title.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.content.id_for_label }}" class="form-label">{{ form.content.label }} <span class="text-danger">*</span></label>
+                        {{ form.content }}
+                        {% if form.content.errors %}
+                        <div class="invalid-feedback d-block">{{ form.content.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.protocol_img.id_for_label }}" class="form-label">{{ form.protocol_img.label }}</label>
+                        {{ form.protocol_img }}
+                        {% if form.protocol_img.errors %}
+                        <div class="invalid-feedback d-block">{{ form.protocol_img.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg"></i> {% if protocol %}更新{% else %}作成{% endif %}
+                </button>
+                <a href="{% url 'protocol_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-x-lg"></i> キャンセル
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
