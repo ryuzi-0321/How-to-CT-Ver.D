@@ -1,5 +1,8 @@
 import os
 from pathlib import Path
+from django.core.management.utils import get_random_secret_key
+SECRET_KEY = get_random_secret_key()  
+
 
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -8,9 +11,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-ct-app-development-key-change-in-production'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['localhost', '.pythonanywhere.com', '{houka362}.pythonanywhere.com'
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -73,3 +77,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Session settings
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 86400  # 24 hours
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
