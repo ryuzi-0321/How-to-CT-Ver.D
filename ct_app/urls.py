@@ -26,4 +26,13 @@ urlpatterns = [
     path('protocol/create/', views.ProtocolCreateView.as_view(), name='protocol_create'),
     path('protocol/<int:pk>/update/', views.ProtocolUpdateView.as_view(), name='protocol_update'),
     path('protocol/<int:pk>/delete/', views.ProtocolDeleteView.as_view(), name='protocol_delete'),
+    
+    # バックアップ・復元関連
+    path('backup/', views.BackupPageView.as_view(), name='backup'),
+    path('backup/export/', views.ExportBackupView.as_view(), name='backup_export'),
+    path('backup/import/', views.ImportBackupView.as_view(), name='backup_import'),
+    
+    # urls.py
+    path('api/get_protocol_data/', views.get_protocol_data, name='get_protocol_data'),
+    path('api/protocol_autocomplete/', views.protocol_autocomplete, name='protocol_autocomplete'),
 ]

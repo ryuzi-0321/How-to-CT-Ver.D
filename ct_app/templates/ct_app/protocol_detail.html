@@ -36,6 +36,11 @@
     <div class="mt-4">
         {{ protocol.content|linebreaks }}
     </div>
+
+    <div class="card mt-3">
+        <div class="card-header bg-info text-white">撮影詳細</div>
+        <div class="card-body">{{ protocol.protocol_detail|linebreaks }}</div>
+    </div>
     
     {% if protocol.protocol_img %}
     <div class="mt-4">

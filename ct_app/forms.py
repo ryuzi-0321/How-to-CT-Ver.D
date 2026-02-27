@@ -24,6 +24,12 @@ class SickForm(forms.ModelForm):
             'contrast': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '造影プロトコル'}),
             'contrast_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': '造影詳細'}),
         }
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if field_name != 'diesease':
+                field.required = False
 
 class FormForm(forms.ModelForm):
     """お知らせフォーム"""
@@ -34,14 +40,27 @@ class FormForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'タイトル'}),
             'main': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'お知らせ内容'}),
         }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if field_name != 'title':
+                field.required = False    
 
 class ProtocolForm(forms.ModelForm):
     """CTプロトコルフォーム"""
     class Meta:
         model = Protocol
-        fields = ['category', 'title', 'content', 'protocol_img']
+        fields = ['category', 'title', 'content', 'protocol_detail', 'contrast_detail', 'processing_detail','protocol_img']
         widgets = {
             'category': forms.Select(attrs={'class': 'form-control'}),
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'プロトコルタイトル'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'プロトコル内容'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'プロトコル概要'}),
+            'protocol_detail': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': '撮影手順・条件など'}),
+            'contrast_detail': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': '造影剤量・タイミングなど'}),
+            'processing_detail': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': '再構成・3D処理など'}),
         }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if field_name != 'title' and field_name != 'category':
+                field.required = False    

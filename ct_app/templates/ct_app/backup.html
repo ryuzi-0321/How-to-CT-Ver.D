@@ -1,0 +1,232 @@
+{% extends 'ct_app/base.html' %}
+
+{% block title %}バックアップ管理 - How to CT{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- ページヘッダー -->
+    <div class="main-header">
+        <h1><i class="bi bi-cloud-arrow-up"></i> バックアップ管理</h1>
+        <p class="mb-0 mt-2">データベースとメディアファイルのバックアップ・復元を行うことができます</p>
+    </div>
+
+    <!-- メッセージ表示 -->
+    {% if success %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle"></i> {{ success }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i> {{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- バックアップエクスポート -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-download"></i> バックアップをダウンロード</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        現在のデータベースとメディアファイル全体をZIPファイルにして、
+                        ダウンロードすることができます。
+                    </p>
+                    <div class="alert alert-info mb-3">
+                        <small>
+                            <i class="bi bi-info-circle"></i> 
+                            含まれるもの：
+                            <ul class="mb-0 mt-2">
+                                <li>DB.json（すべてのデータベースレコード）</li>
+                                <li>メディアフォルダ内のすべてのファイル</li>
+                            </ul>
+                        </small>
+                    </div>
+                    <a href="{% url 'backup_export' %}" class="btn btn-primary w-100">
+                        <i class="bi bi-cloud-down"></i> バックアップをダウンロード
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- バックアップインポート -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-upload"></i> バックアップを復元</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        以前にダウンロードしたバックアップファイル（ZIPファイル）をアップロードして、
+                        データを復元することができます。
+                    </p>
+                    <div class="alert alert-warning mb-3">
+                        <small>
+                            <i class="bi bi-exclamation-triangle"></i> 
+                            注意：復元時に現在のデータが上書きされます。復元前に必ずバックアップを保存してください。
+                        </small>
+                    </div>
+                    <form method="post" action="{% url 'backup_import' %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="backupFile" class="form-label">ZIPファイルを選択:</label>
+                            <input type="file" class="form-control" id="backupFile" name="backup_file" 
+                                   accept=".zip" required>
+                            <small class="text-muted d-block mt-2">
+                                ※ .zip形式のファイルのみ対応しています
+                            </small>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-arrow-repeat"></i> 復元実行
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- バックアップ履歴 -->
+    <div class="card mt-5">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-clock-history"></i> バックアップ履歴</h5>
+        </div>
+        <div class="card-body">
+            {% if histories %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>実行日時</th>
+                            <th>操作</th>
+                            <th>ファイル名</th>
+                            <th>ステータス</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for history in histories %}
+                        <tr>
+                            <td>
+                                <small class="text-muted">
+                                    {{ history.created_at|date:"Y年m月d日 H:i:s" }}
+                                </small>
+                            </td>
+                            <td>
+                                {% if history.backup_type == 'export' %}
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-download"></i> ダウンロード
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning">
+                                        <i class="bi bi-upload"></i> 復元
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-monospace">
+                                    {% if history.filename %}
+                                        {{ history.filename }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </small>
+                            </td>
+                            <td>
+                                {% if history.status == 'success' %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> 成功
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-x-circle"></i> 失敗
+                                    </span>
+                                    {% if history.error_message %}
+                                        <br>
+                                        <small class="text-muted d-block mt-1" title="{{ history.error_message }}">
+                                            エラー: {{ history.error_message|truncatewords:10 }}
+                                        </small>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">
+                <i class="bi bi-info-circle"></i> バックアップ履歴がまだありません
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 説明セクション -->
+    <div class="card mt-5">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-question-circle"></i> 使用方法</h5>
+        </div>
+        <div class="card-body">
+            <h6>バックアップの作成方法：</h6>
+            <ol>
+                <li>「バックアップをダウンロード」ボタンをクリック</li>
+                <li>自動的にZIPファイルがダウンロードされます</li>
+                <li>安全な場所に保存してください</li>
+            </ol>
+
+            <hr>
+
+            <h6>バックアップの復元方法：</h6>
+            <ol>
+                <li>上のファイル選択フォームから以前にダウンロードしたZIPファイルを選択</li>
+                <li>「復元実行」ボタンをクリック</li>
+                <li>復元が完了するまでお待ちください</li>
+            </ol>
+
+            <hr>
+
+            <h6>重要な注意事項：</h6>
+            <ul>
+                <li>復元実行時に、復元ファイルのデータで現在のデータが上書きされます</li>
+                <li>復元前に必ず最新のバックアップを取得してください</li>
+                <li>大容量のメディアファイルがある場合、バックアップ・復元に時間がかかる可能性があります</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+    .alert {
+        margin-bottom: 1.5rem;
+    }
+    
+    .card {
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .btn {
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 0.75rem;
+    }
+    
+    .table-responsive {
+        border-radius: 4px;
+    }
+    
+    .text-monospace {
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+

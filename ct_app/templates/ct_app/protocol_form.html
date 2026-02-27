@@ -4,8 +4,7 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-md-8">
-        <form method="post" enctype="multipart/form-data">
+    <div class="col-md-10 mx-auto"> <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             
             <div class="card mb-3">
@@ -13,41 +12,44 @@
                     <h5 class="mb-0">プロトコル情報</h5>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }} <span class="text-danger">*</span></label>
-                        {{ form.category }}
-                        {% if form.category.errors %}
-                        <div class="invalid-feedback d-block">{{ form.category.errors }}</div>
-                        {% endif %}
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }} <span class="text-danger">*</span></label>
+                            {{ form.category }}
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }} <span class="text-danger">*</span></label>
+                            {{ form.title }}
+                        </div>
                     </div>
-                    
+
                     <div class="mb-3">
-                        <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }} <span class="text-danger">*</span></label>
-                        {{ form.title }}
-                        {% if form.title.errors %}
-                        <div class="invalid-feedback d-block">{{ form.title.errors }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.content.id_for_label }}" class="form-label">{{ form.content.label }} <span class="text-danger">*</span></label>
+                        <label for="{{ form.content.id_for_label }}" class="form-label">{{ form.content.label }}</label>
                         {{ form.content }}
-                        {% if form.content.errors %}
-                        <div class="invalid-feedback d-block">{{ form.content.errors }}</div>
-                        {% endif %}
                     </div>
-                    
+
+                    <hr> <div class="mb-3">
+                        <label for="{{ form.protocol_detail.id_for_label }}" class="form-label">撮影詳細</label>
+                        {{ form.protocol_detail }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.contrast_detail.id_for_label }}" class="form-label">造影詳細</label>
+                        {{ form.contrast_detail }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.processing_detail.id_for_label }}" class="form-label">画像処理詳細</label>
+                        {{ form.processing_detail }}
+                    </div>
                     <div class="mb-3">
                         <label for="{{ form.protocol_img.id_for_label }}" class="form-label">{{ form.protocol_img.label }}</label>
                         {{ form.protocol_img }}
-                        {% if form.protocol_img.errors %}
-                        <div class="invalid-feedback d-block">{{ form.protocol_img.errors }}</div>
-                        {% endif %}
                     </div>
                 </div>
             </div>
 
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 mb-5">
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check-lg"></i> {% if protocol %}更新{% else %}作成{% endif %}
                 </button>

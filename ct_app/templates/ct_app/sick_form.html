@@ -22,7 +22,7 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="{{ form.diesease_text.id_for_label }}" class="form-label">{{ form.diesease_text.label }} <span class="text-danger">*</span></label>
+                        <label for="{{ form.diesease_text.id_for_label }}" class="form-label">{{ form.diesease_text.label }}</label>
                         {{ form.diesease_text }}
                         {% if form.diesease_text.errors %}
                         <div class="invalid-feedback d-block">{{ form.diesease_text.errors }}</div>
@@ -54,6 +54,8 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label for="{{ form.protocol.id_for_label }}" class="form-label">{{ form.protocol.label }}</label>
+                        <input type="text" name="protocol" class="form-control" list="protocol-list" autocomplete="off">
+                        <datalist id="protocol-list"></datalist>
                         {{ form.protocol }}
                         {% if form.protocol.errors %}
                         <div class="invalid-feedback d-block">{{ form.protocol.errors }}</div>
@@ -159,11 +161,11 @@
                 <h6>必須項目</h6>
                 <ul class="small">
                     <li>疾患名</li>
-                    <li>疾患詳細</li>
                 </ul>
                 
                 <h6 class="mt-3">オプション</h6>
                 <ul class="small">
+                    <li>疾患詳細</li>
                     <li>キーワード・症状</li>
                     <li>プロトコル情報</li>
                     <li>造影情報</li>
@@ -174,4 +176,60 @@
         </div>
     </div>
 </div>
+{% block extra_js %}
+<script>
+const protocolInput = document.querySelector('input[name="protocol"]');
+const datalist = document.getElementById('protocol-list');
+
+if (protocolInput) {
+    // 1. 文字入力時のオートコンプリート（候補リスト作成）
+    protocolInput.addEventListener('input', function() {
+        const term = this.value;
+        if (term.length < 1) return;
+
+        fetch(`/api/protocol_autocomplete/?term=${encodeURIComponent(term)}`)
+            .then(response => response.json())
+            .then(titles => {
+                datalist.innerHTML = '';
+                titles.forEach(title => {
+                    const option = document.createElement('option');
+                    option.value = title;
+                    datalist.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Autocomplete Error:', error));
+    });
+
+    // 2. 項目選択時（確定時）のデータ自動入力
+    protocolInput.addEventListener('change', function() { 
+        const title = this.value;
+        if (!title) return;
+
+        fetch(`/api/get_protocol_data/?title=${encodeURIComponent(title)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    // 確認ダイアログを表示
+                    if (confirm(`「${title}」の既存データが見つかりました。詳細を自動入力しますか？`)) {
+                        const fields = {
+                            'textarea[name="protocol_text"]': data.protocol_text,
+                            'input[name="processing"]': data.processing,
+                            'textarea[name="processing_text"]': data.processing_text,
+                            'input[name="contrast"]': data.contrast,
+                            'textarea[name="contrast_text"]': data.contrast_text
+                        };
+
+                        // 各フィールドに値を代入
+                        for (const [selector, value] of Object.entries(fields)) {
+                            const el = document.querySelector(selector);
+                            if (el) el.value = value || '';
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Data Fetch Error:', error));
+    });
+}
+</script>
+{% endblock %}
 {% endblock %}
