@@ -54,9 +54,8 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label for="{{ form.protocol.id_for_label }}" class="form-label">{{ form.protocol.label }}</label>
-                        <input type="text" name="protocol" class="form-control" list="protocol-list" autocomplete="off">
+                        <input type="text" name="protocol" class="form-control" id="{{ form.protocol.id_for_label }}" list="protocol-list" autocomplete="off" value="{{ form.protocol.value|default:'' }}">
                         <datalist id="protocol-list"></datalist>
-                        {{ form.protocol }}
                         {% if form.protocol.errors %}
                         <div class="invalid-feedback d-block">{{ form.protocol.errors }}</div>
                         {% endif %}
