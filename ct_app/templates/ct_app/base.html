@@ -149,6 +149,27 @@
             margin-bottom: 1.5rem;
             font-weight: bold;
         }
+
+        .clickable-card {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .clickable-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2) !important;
+        }
+
+        .stretched-link::after {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1;
+            content: "";
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>

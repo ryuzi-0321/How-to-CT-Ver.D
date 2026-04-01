@@ -25,12 +25,22 @@ class Sick(models.Model):
     
     def __str__(self):
         return self.diesease
+    
+class SickImage(models.Model):
+    CATEGORY_CHOICES = [
+        ('disease', '疾患情報'),
+        ('protocol', '撮影プロトコル'),
+        ('contrast', '造影プロトコル'),
+        ('processing', '画像処理'),
+    ]
+    sick = models.ForeignKey(Sick, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='sick_images/')
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)    
 
 class Form(models.Model):
     """お知らせモデル"""
     title = models.CharField(max_length=255)
     main = models.TextField()
-    post_img = models.ImageField(upload_to='notice_images/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -39,6 +49,18 @@ class Form(models.Model):
     
     def __str__(self):
         return self.title
+    
+class NoticeImage(models.Model):
+    """お知らせ画像モデル"""
+    form = models.ForeignKey(Form, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='notice_images/')
+    
+    def __str__(self):
+        return f"Image for {self.form.title}"    
+    
+class ProtocolImage(models.Model):
+    protocol = models.ForeignKey('Protocol', on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='protocol_images/')        
 
 class Protocol(models.Model):
     """CTプロトコルモデル"""

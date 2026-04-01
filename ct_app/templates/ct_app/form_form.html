@@ -30,15 +30,32 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="{{ form.post_img.id_for_label }}" class="form-label">{{ form.post_img.label }}</label>
-                        {{ form.post_img }}
-                        {% if form.post_img.errors %}
-                        <div class="invalid-feedback d-block">{{ form.post_img.errors }}</div>
+                        <label for="{{ form.images.id_for_label }}" class="form-label">添付画像（複数選択可）</label>
+                        {{ form.images }}
+                        {% if form.images.errors %}
+                        <div class="invalid-feedback d-block">{{ form.images.errors }}</div>
                         {% endif %}
+
+                        <div class="form-text">
+                            ※Ctrlキー（MacはCommand）を押しながらクリックで複数枚選べます。
+                        </div>    
                     </div>
                 </div>
             </div>
 
+            {% if form_obj and form_obj.images.all %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6>現在の添付画像</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for img_obj in form_obj.images.all %}
+                            <img src="{{ img_obj.image.url }}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check-lg"></i> {% if form_obj %}更新{% else %}作成{% endif %}

@@ -3,6 +3,11 @@ from .models import Sick, Form, Protocol
 
 class SickForm(forms.ModelForm):
     """疾患データフォーム"""
+    # images = forms.ImageField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False, label="画像アップロード")
+    disease_images = forms.ImageField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False, label="疾患画像")
+    protocol_images = forms.ImageField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False, label="撮影画像")
+    contrast_images = forms.ImageField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False, label="造影画像")
+    processing_images = forms.ImageField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False, label="処理画像")
     class Meta:
         model = Sick
         fields = [
@@ -10,8 +15,6 @@ class SickForm(forms.ModelForm):
             'protocol', 'protocol_text',
             'processing', 'processing_text',
             'contrast', 'contrast_text',
-            'diesease_img', 'protocol_img',
-            'processing_img', 'contrast_img'
         ]
         widgets = {
             'diesease': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '疾患名'}),
@@ -33,9 +36,10 @@ class SickForm(forms.ModelForm):
 
 class FormForm(forms.ModelForm):
     """お知らせフォーム"""
+    images = forms.ImageField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False, label="画像アップロード")
     class Meta:
         model = Form
-        fields = ['title', 'main', 'post_img']
+        fields = ['title', 'main']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'タイトル'}),
             'main': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'お知らせ内容'}),
@@ -45,12 +49,30 @@ class FormForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             if field_name != 'title':
                 field.required = False    
+                
+class NoticeForm(forms.ModelForm):
+    """お知らせフォーム """
+    images = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False)
+    
+    class Meta:
+        model = Form
+        fields = ['title', 'main']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'タイトル'}),
+            'main': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'お知らせ内容'}),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if field_name != 'title':
+                field.required = False                
 
 class ProtocolForm(forms.ModelForm):
     """CTプロトコルフォーム"""
+    images = forms.ImageField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False, label="画像アップロード")
     class Meta:
         model = Protocol
-        fields = ['category', 'title', 'content', 'protocol_detail', 'contrast_detail', 'processing_detail','protocol_img']
+        fields = ['title','category', 'content', 'protocol_detail', 'contrast_detail', 'processing_detail']
         widgets = {
             'category': forms.Select(attrs={'class': 'form-control'}),
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'プロトコルタイトル'}),

@@ -38,11 +38,8 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="{{ form.diesease_img.id_for_label }}" class="form-label">{{ form.diesease_img.label }}</label>
-                        {{ form.diesease_img }}
-                        {% if form.diesease_img.errors %}
-                        <div class="invalid-feedback d-block">{{ form.diesease_img.errors }}</div>
-                        {% endif %}
+                        <label>疾患画像 (複数可)</label>
+                        {{ form.disease_images }}
                     </div>
                 </div>
             </div>
@@ -70,11 +67,8 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="{{ form.protocol_img.id_for_label }}" class="form-label">{{ form.protocol_img.label }}</label>
-                        {{ form.protocol_img }}
-                        {% if form.protocol_img.errors %}
-                        <div class="invalid-feedback d-block">{{ form.protocol_img.errors }}</div>
-                        {% endif %}
+                        <label>撮影プロトコル画像 (複数可)</label>
+                        {{ form.protocol_images }}
                     </div>
                 </div>
             </div>
@@ -101,11 +95,19 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="{{ form.contrast_img.id_for_label }}" class="form-label">{{ form.contrast_img.label }}</label>
-                        {{ form.contrast_img }}
-                        {% if form.contrast_img.errors %}
-                        <div class="invalid-feedback d-block">{{ form.contrast_img.errors }}</div>
+                        <label>造影プロトコルの画像 (複数可):</label>
+                        {% if sick %}
+                            <div class="row g-1 mb-2">
+                                {% for img_obj in sick.images.all %}
+                                    {% if img_obj.category == 'contrast' %}
+                                        <div class="col-2">
+                                            <img src="{{ img_obj.image.url }}" class="img-fluid rounded border shadow-sm">
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
                         {% endif %}
+                        {{ form.contrast_images }} 
                     </div>
                 </div>
             </div>
@@ -132,11 +134,8 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="{{ form.processing_img.id_for_label }}" class="form-label">{{ form.processing_img.label }}</label>
-                        {{ form.processing_img }}
-                        {% if form.processing_img.errors %}
-                        <div class="invalid-feedback d-block">{{ form.processing_img.errors }}</div>
-                        {% endif %}
+                        <label>画像処理の画像 (複数可):</label>
+                        {{ form.processing_images }} 
                     </div>
                 </div>
             </div>

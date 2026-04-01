@@ -4,7 +4,7 @@ from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
 from django.conf import settings
-from .models import Sick, Form, Protocol, BackupHistory
+from .models import Sick, Form, Protocol, BackupHistory, NoticeImage, SickImage
 from .forms import SickForm, FormForm, ProtocolForm
 
 import os
@@ -49,6 +49,25 @@ def protocol_autocomplete(request):
     
     titles = list(set(protocol_titles + sick_titles))
     return JsonResponse(titles, safe=False)
+
+def form_create(request):
+    if request.method == 'POST':
+        form = FormForm(request.POST, request.FILES)
+        files = request.FILES.getlist('images')
+        if form.is_valid():
+            notice = form.save()
+            # 画像を保存
+            for file in files:
+                NoticeImage.objects.create(form=notice, image=file)
+            return redirect('form_list')
+    else:
+        form = FormForm()
+    
+    context = {
+        'page_title': '新規お知らせ作成',
+        'form': form,
+    }
+    return render(request, 'ct_app/form_form.html', context)
 
 class IndexView(View):
     """ホームページ"""
@@ -117,18 +136,44 @@ class SickCreateView(View):
     
     def post(self, request):
         form = SickForm(request.POST, request.FILES)
+        
         if form.is_valid():
-            form.save()
-            return redirect('sick_detail', pk=form.instance.pk)
+            # 1. 疾患の基本情報を保存 (変数名を小文字のsickにして衝突を避ける)
+            sick = form.save()
+
+            # 2. カテゴリー（タブ）とフォームのフィールド名を紐付ける辞書
+            # ※forms.pyで定義したフィールド名と一致させてください
+            image_mappings = {
+                'disease': 'disease_images',      # 疾患情報タブ
+                'protocol': 'protocol_images',    # 撮影プロトコルタブ
+                'contrast': 'contrast_images',    # 造影プロトコルタブ
+                'processing': 'processing_images',# 画像処理タブ
+            }
+
+            # 3. ループでそれぞれのボタンから来た画像を保存
+            for category, field_name in image_mappings.items():
+                files = request.FILES.getlist(field_name) # 各フィールドからファイルリストを取得
+                for f in files:
+                    SickImage.objects.create(
+                        sick=sick, 
+                        image=f, 
+                        category=category  # ここで「どのタブか」を保存！
+                    )
+
+            return redirect('sick_detail', pk=sick.pk)
+
         context = {
             'page_title': '新規疾患作成',
             'form': form,
         }
         return render(request, 'ct_app/sick_form.html', context)
 
+# views.py の SickUpdateView を修正
+
 class SickUpdateView(View):
     """疾患編集"""
     def get(self, request, pk):
+        # (get メソッドはそのまま)
         sick = get_object_or_404(Sick, pk=pk)
         form = SickForm(instance=sick)
         context = {
@@ -141,9 +186,39 @@ class SickUpdateView(View):
     def post(self, request, pk):
         sick = get_object_or_404(Sick, pk=pk)
         form = SickForm(request.POST, request.FILES, instance=sick)
+        
         if form.is_valid():
-            form.save()
+            sick = form.save()
+
+            image_mappings = {
+                'disease': 'disease_images',
+                'protocol': 'protocol_images',
+                'contrast': 'contrast_images',
+                'processing': 'processing_images',
+            }
+
+            for category, field_name in image_mappings.items():
+                files = request.FILES.getlist(field_name)
+                
+                # ★★★ 重要：ここを追加！ ★★★
+                if files:
+                    # そのカテゴリーの古い画像をデータベースとファイルの両方から削除
+                    images_to_delete = sick.images.filter(category=category)
+                    for old_img in images_to_delete:
+                        if old_img.image:
+                            # 物理ファイルの削除
+                            if os.path.isfile(old_img.image.path):
+                                os.remove(old_img.image.path)
+                    
+                    # データベースのレコードを削除
+                    images_to_delete.delete()
+
+                # その後、新しい画像を保存
+                for f in files:
+                    SickImage.objects.create(sick=sick, image=f, category=category)
+            
             return redirect('sick_detail', pk=sick.pk)
+            
         context = {
             'page_title': '疾患編集',
             'form': form,
@@ -181,18 +256,20 @@ class FormDetailView(View):
 class FormCreateView(View):
     """お知らせ作成"""
     def get(self, request):
-        form = FormForm()
         context = {
             'page_title': '新規お知らせ作成',
-            'form': form,
+            'form': FormForm(),
         }
         return render(request, 'ct_app/form_form.html', context)
     
     def post(self, request):
         form = FormForm(request.POST, request.FILES)
+        files = request.FILES.getlist('images')
         if form.is_valid():
-            form.save()
-            return redirect('form_detail', pk=form.instance.pk)
+            notice = form.save()
+            for file in files:
+                NoticeImage.objects.create(notice=notice, image=file)
+            return redirect('form_detail', pk=notice.pk)
         context = {
             'page_title': '新規お知らせ作成',
             'form': form,
@@ -215,8 +292,12 @@ class FormUpdateView(View):
         form_obj = get_object_or_404(Form, pk=pk)
         form = FormForm(request.POST, request.FILES, instance=form_obj)
         if form.is_valid():
-            form.save()
-            return redirect('form_detail', pk=form_obj.pk)
+            notice = form.save()
+            files = request.FILES.getlist('images')
+            for file in files:
+                NoticeImage.objects.create(form=notice, image=file)
+
+            return redirect('form_detail', pk=notice.pk)
         context = {
             'page_title': 'お知らせ編集',
             'form': form,

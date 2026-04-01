@@ -35,7 +35,7 @@
                     疾患別の撮影プロトコル、造影手順、画像処理方法を検索・参照できます。
                 </p>
                 <div class="mt-3">
-                    <a href="{% url 'sick_list' %}" class="btn btn-primary px-4">
+                    <a href="{% url 'sick_list' %}" class="btn btn-primary px-4 stretched-link">
                         <i class="bi bi-search"></i> 疾患検索を開始
                     </a>
                 </div>
@@ -56,13 +56,19 @@
     {% if forms %}
         {% for form in forms|slice:":5" %}
             <div class="col">
-                <div class="notice-item h-100 d-flex flex-column border p-2 rounded shadow-sm bg-white position-relative {% if '重要' in form.title %}is-important{% endif %}">
+                <div class="notice-item h-100 clickable-card d-flex flex-column border p-2 rounded shadow-sm bg-white position-relative {% if '重要' in form.title %}is-important{% endif %}">
                     <h6 class="fw-bold text-truncate mb-1" title="{{ form.title }}">
                         {% if '重要' in form.title %}
                             <span class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i></span>
                         {% endif %}
                         {{ form.title }}
                     </h6>
+
+                    {% if form.post_img %}
+                    <div class="my-1 text-center" style="height: 60px; overflow: hidden;">
+                        <img src="{{ first_image.image.url }}" class="rounded border shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
+                    </div>
+                    {% endif %}
                     <p class="text-muted mb-1" style="font-size: 0.7rem;">{{ form.created_at|date:'Y/m/d H:i' }}</p>
                     <p class="small text-secondary text-truncate mb-2">{{ form.main }}</p>
                     
@@ -105,7 +111,7 @@
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-plus-lg"></i> 疾患データ</h5>
                 <p class="card-text">新しい疾患データを作成します</p>
-                <a href="{% url 'sick_create' %}" class="btn btn-primary btn-sm">作成</a>
+                <a href="{% url 'sick_create' %}" class="btn btn-primary btn-sm stretched-link">作成</a>
             </div>
         </div>
     </div>
@@ -114,7 +120,7 @@
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-plus-lg"></i> お知らせ</h5>
                 <p class="card-text">新しいお知らせを投稿します</p>
-                <a href="{% url 'form_create' %}" class="btn btn-primary btn-sm">作成</a>
+                <a href="{% url 'form_create' %}" class="btn btn-primary btn-sm stretched-link">作成</a>
             </div>
         </div>
     </div>
@@ -123,7 +129,7 @@
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-plus-lg"></i> プロトコル</h5>
                 <p class="card-text">新しいCTプロトコルを作成します</p>
-                <a href="{% url 'protocol_create' %}" class="btn btn-primary btn-sm">作成</a>
+                <a href="{% url 'protocol_create' %}" class="btn btn-primary btn-sm stretched-link">作成</a>
             </div>
         </div>
     </div>
