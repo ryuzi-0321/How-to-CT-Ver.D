@@ -1,13 +1,17 @@
 from django import forms
 from .models import Sick, Form, Protocol
 
+# 1. 自作ウィジェット（これはOK！）
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
 class SickForm(forms.ModelForm):
-    """疾患データフォーム"""
-    # images = forms.ImageField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False, label="画像アップロード")
-    disease_images = forms.ImageField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False, label="疾患画像")
-    protocol_images = forms.ImageField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False, label="撮影画像")
-    contrast_images = forms.ImageField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False, label="造影画像")
-    processing_images = forms.ImageField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False, label="処理画像")
+    # 疾患画像、撮影画像、造影画像、処理画像すべて自作の MultipleFileInput を使用
+    disease_images = forms.ImageField(widget=MultipleFileInput(attrs={'multiple': True}), required=False, label="疾患画像")
+    protocol_images = forms.ImageField(widget=MultipleFileInput(attrs={'multiple': True}), required=False, label="撮影画像")
+    contrast_images = forms.ImageField(widget=MultipleFileInput(attrs={'multiple': True}), required=False, label="造影画像")
+    processing_images = forms.ImageField(widget=MultipleFileInput(attrs={'multiple': True}), required=False, label="処理画像")
+    
     class Meta:
         model = Sick
         fields = [
@@ -27,7 +31,7 @@ class SickForm(forms.ModelForm):
             'contrast': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '造影プロトコル'}),
             'contrast_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': '造影詳細'}),
         }
-        
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
@@ -35,8 +39,8 @@ class SickForm(forms.ModelForm):
                 field.required = False
 
 class FormForm(forms.ModelForm):
-    """お知らせフォーム"""
-    images = forms.ImageField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False, label="画像アップロード")
+    # 【修正箇所】forms. を削除
+    images = forms.ImageField(widget=MultipleFileInput(attrs={'multiple': True}), required=False, label="画像アップロード")
     class Meta:
         model = Form
         fields = ['title', 'main']
@@ -48,12 +52,12 @@ class FormForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             if field_name != 'title':
-                field.required = False    
-                
+                field.required = False
+
 class NoticeForm(forms.ModelForm):
-    """お知らせフォーム """
-    images = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False)
-    
+    # 【修正箇所】forms. を削除
+    images = forms.FileField(widget=MultipleFileInput(attrs={'multiple': True}), required=False)
+
     class Meta:
         model = Form
         fields = ['title', 'main']
@@ -65,11 +69,11 @@ class NoticeForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             if field_name != 'title':
-                field.required = False                
+                field.required = False
 
 class ProtocolForm(forms.ModelForm):
-    """CTプロトコルフォーム"""
-    images = forms.ImageField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False, label="画像アップロード")
+    # 【修正箇所】forms. を削除
+    images = forms.ImageField(widget=MultipleFileInput(attrs={'multiple': True}), required=False, label="画像アップロード")
     class Meta:
         model = Protocol
         fields = ['title','category', 'content', 'protocol_detail', 'contrast_detail', 'processing_detail']
@@ -85,4 +89,4 @@ class ProtocolForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             if field_name != 'title' and field_name != 'category':
-                field.required = False    
+                field.required = False

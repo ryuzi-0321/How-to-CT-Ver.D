@@ -18,14 +18,14 @@ class Sick(models.Model):
     contrast_img = models.ImageField(upload_to='contrast_images/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ['diesease']
         verbose_name_plural = "Sicks"
-    
+
     def __str__(self):
         return self.diesease
-    
+
 class SickImage(models.Model):
     CATEGORY_CHOICES = [
         ('disease', '疾患情報'),
@@ -35,7 +35,7 @@ class SickImage(models.Model):
     ]
     sick = models.ForeignKey(Sick, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='sick_images/')
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)    
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
 
 class Form(models.Model):
     """お知らせモデル"""
@@ -43,24 +43,25 @@ class Form(models.Model):
     main = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+    post_img = models.ImageField(upload_to='post_images/', null=True, blank=True)
+
     class Meta:
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return self.title
-    
+
 class NoticeImage(models.Model):
     """お知らせ画像モデル"""
     form = models.ForeignKey(Form, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='notice_images/')
-    
+
     def __str__(self):
-        return f"Image for {self.form.title}"    
-    
+        return f"Image for {self.form.title}"
+
 class ProtocolImage(models.Model):
     protocol = models.ForeignKey('Protocol', on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='protocol_images/')        
+    image = models.ImageField(upload_to='protocol_images/')
 
 class Protocol(models.Model):
     """CTプロトコルモデル"""
@@ -73,7 +74,7 @@ class Protocol(models.Model):
         ('上肢', '上肢'),
         ('特殊', '特殊'),
     ]
-    
+
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
     title = models.CharField(max_length=255)
     content = models.TextField(verbose_name="概要", null=True, blank=True)
@@ -83,11 +84,11 @@ class Protocol(models.Model):
     protocol_img = models.ImageField(upload_to='protocol_images/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ['category', 'title']
         verbose_name_plural = "Protocols"
-    
+
     def __str__(self):
         return f"[{self.category}] {self.title}"
 
@@ -98,24 +99,24 @@ class BackupHistory(models.Model):
         ('export', 'バックアップ実行'),
         ('import', 'バックアップ復元'),
     ]
-    
+
     backup_type = models.CharField(
-        max_length=20, 
-        choices=BACKUP_TYPE_CHOICES, 
+        max_length=20,
+        choices=BACKUP_TYPE_CHOICES,
         default='export'
     )
     created_at = models.DateTimeField(auto_now_add=True)
     filename = models.CharField(max_length=255, blank=True, null=True)
     status = models.CharField(
-        max_length=20, 
-        choices=[('success', '成功'), ('failed', '失敗')], 
+        max_length=20,
+        choices=[('success', '成功'), ('failed', '失敗')],
         default='success'
     )
     error_message = models.TextField(blank=True, null=True)
-    
+
     class Meta:
         ordering = ['-created_at']
         verbose_name_plural = "Backup Histories"
-    
+
     def __str__(self):
         return f"{self.get_backup_type_display()} - {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
