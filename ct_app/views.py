@@ -4,7 +4,7 @@ from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
 from django.conf import settings
-from .models import Sick, Form, Protocol, BackupHistory, NoticeImage, SickImage
+from .models import Sick, Form, Protocol, BackupHistory, NoticeImage, SickImage,ProtocolImage
 from .forms import SickForm, FormForm, ProtocolForm
 
 import os
@@ -527,6 +527,14 @@ class ImportBackupView(View):
                         'histories': BackupHistory.objects.all()[:10],
                     }
                     return render(request, 'ct_app/backup.html', context)
+                
+                Sick.objects.all().delete()
+                Form.objects.all().delete()
+                Protocol.objects.all().delete()
+                NoticeImage.objects.all().delete()
+                SickImage.objects.all().delete()
+                ProtocolImage.objects.all().delete()
+
                 
                 # DBを復元
                 with open(db_file, 'r', encoding='utf-8') as f:
