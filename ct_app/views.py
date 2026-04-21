@@ -14,6 +14,9 @@ import tempfile
 import json
 from io import StringIO, BytesIO
 from datetime import datetime
+import pandas as pd
+from django.utils.timezone import now
+import io
 
 def get_protocol_data(request):
     title = request.GET.get('title', None)
@@ -411,68 +414,117 @@ class ExportBackupView(View):
     """バックアップ作成・ダウンロード"""
     def get(self, request):
         zip_filename = None
-        try:
-            # 一時ディレクトリを作成
-            with tempfile.TemporaryDirectory() as temp_dir:
-                # DBデータをJSONでダンプ
-                db_file = os.path.join(temp_dir, 'db.json')
-                with open(db_file, 'w', encoding='utf-8') as f:
-                    call_command('dumpdata', stdout=f)
+        export_format = request.GET.get('format', 'zip')
+        timestamp = now().strftime('%Y%m%d_%H%M%S')
+        
+        if export_format == 'excel':
+            import io  # 関数内でインポートしてもOK
+            try:
+                # メモリ上にバイナリデータを作成するためのバッファ
+                output = io.BytesIO()
                 
-                # メディアファイルをコピー
-                media_backup_dir = os.path.join(temp_dir, 'media')
-                if os.path.exists(settings.MEDIA_ROOT):
-                    shutil.copytree(settings.MEDIA_ROOT, media_backup_dir)
-                else:
-                    os.makedirs(media_backup_dir)
+                # output（メモリ）に対してExcelを書き込む
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    # 各モデルのデータを取得
+                    df_sick = pd.DataFrame(list(Sick.objects.all().values()))
+                    df_form = pd.DataFrame(list(Form.objects.all().values()))
+                    df_protocol = pd.DataFrame(list(Protocol.objects.all().values()))
+
+                    # 日時カラムのタイムゾーンを解除する関数
+                    def remove_timezone(df):
+                        if not df.empty:
+                            for col in df.columns:
+                                # 日時型のカラムを探してタイムゾーンを消す
+                                if pd.api.types.is_datetime64_any_dtype(df[col]):
+                                    df[col] = df[col].dt.tz_localize(None)
+                        return df
+
+                    # タイムゾーンを解除してからExcelに書き込む
+                    remove_timezone(df_sick).to_excel(writer, sheet_name='Sicks', index=False)
+                    remove_timezone(df_form).to_excel(writer, sheet_name='Forms', index=False)
+                    remove_timezone(df_protocol).to_excel(writer, sheet_name='Protocols', index=False)
+                              
+                # ポインタを先頭に戻す
+                output.seek(0)
                 
-                # ZIPファイルを作成
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                zip_filename = f'backup_{timestamp}.zip'
-                zip_path = os.path.join(temp_dir, zip_filename)
+                # 履歴を作成
+                BackupHistory.objects.create(backup_type='export', filename=f'backup_{timestamp}.xlsx', status='success')
                 
-                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                    # db.jsonを追加
-                    zipf.write(db_file, arcname='db.json')
+                # レスポンスを作成してバイナリを流し込む
+                response = HttpResponse(
+                    output.read(), 
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
+                response['Content-Disposition'] = f'attachment; filename="backup_{timestamp}.xlsx"'
+                return response
+            
+            except Exception as e:
+                BackupHistory.objects.create(backup_type='export', status='failed', error_message=str(e))
+                return render(request, 'ct_app/backup.html', {'error': f'Excel作成失敗: {e}'})
+            
+        else:           
+            try:
+                # 一時ディレクトリを作成
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    # DBデータをJSONでダンプ
+                    db_file = os.path.join(temp_dir, 'db.json')
+                    with open(db_file, 'w', encoding='utf-8') as f:
+                        call_command('dumpdata', stdout=f)
                     
-                    # mediaディレクトリを再帰的に追加
-                    if os.path.exists(media_backup_dir):
-                        for root, dirs, files in os.walk(media_backup_dir):
-                            for file in files:
-                                file_path = os.path.join(root, file)
-                                arcname = os.path.relpath(file_path, temp_dir)
-                                zipf.write(file_path, arcname=arcname)
-                
-                # ZIPファイルを読み込んでレスポンス
-                with open(zip_path, 'rb') as f:
-                    zip_content = f.read()
-                
-                # バックアップ履歴を記録（成功）
+                    # メディアファイルをコピー
+                    media_backup_dir = os.path.join(temp_dir, 'media')
+                    if os.path.exists(settings.MEDIA_ROOT):
+                        shutil.copytree(settings.MEDIA_ROOT, media_backup_dir)
+                    else:
+                        os.makedirs(media_backup_dir)
+                    
+                    # ZIPファイルを作成
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    zip_filename = f'backup_{timestamp}.zip'
+                    zip_path = os.path.join(temp_dir, zip_filename)
+                    
+                    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                        # db.jsonを追加
+                        zipf.write(db_file, arcname='db.json')
+                        
+                        # mediaディレクトリを再帰的に追加
+                        if os.path.exists(media_backup_dir):
+                            for root, dirs, files in os.walk(media_backup_dir):
+                                for file in files:
+                                    file_path = os.path.join(root, file)
+                                    arcname = os.path.relpath(file_path, temp_dir)
+                                    zipf.write(file_path, arcname=arcname)
+                    
+                    # ZIPファイルを読み込んでレスポンス
+                    with open(zip_path, 'rb') as f:
+                        zip_content = f.read()
+                    
+                    # バックアップ履歴を記録（成功）
+                    BackupHistory.objects.create(
+                        backup_type='export',
+                        filename=zip_filename,
+                        status='success'
+                    )
+                    
+                    response = HttpResponse(zip_content, content_type='application/zip')
+                    response['Content-Disposition'] = f'attachment; filename="{zip_filename}"'
+                    return response
+            
+            except Exception as e:
+                # エラーが発生した場合
                 BackupHistory.objects.create(
                     backup_type='export',
                     filename=zip_filename,
-                    status='success'
+                    status='failed',
+                    error_message=str(e)
                 )
                 
-                response = HttpResponse(zip_content, content_type='application/zip')
-                response['Content-Disposition'] = f'attachment; filename="{zip_filename}"'
-                return response
-        
-        except Exception as e:
-            # エラーが発生した場合
-            BackupHistory.objects.create(
-                backup_type='export',
-                filename=zip_filename,
-                status='failed',
-                error_message=str(e)
-            )
-            
-            context = {
-                'page_title': 'バックアップ管理',
-                'error': f'バックアップ作成に失敗しました: {str(e)}',
-                'histories': BackupHistory.objects.all()[:10],
-            }
-            return render(request, 'ct_app/backup.html', context)
+                context = {
+                    'page_title': 'バックアップ管理',
+                    'error': f'バックアップ作成に失敗しました: {str(e)}',
+                    'histories': BackupHistory.objects.all()[:10],
+                }
+                return render(request, 'ct_app/backup.html', context)
 
 
 class ImportBackupView(View):
@@ -480,93 +532,100 @@ class ImportBackupView(View):
     def post(self, request):
         try:
             if 'backup_file' not in request.FILES:
-                context = {
-                    'page_title': 'バックアップ管理',
-                    'error': 'ファイルが選択されていません',
-                    'histories': BackupHistory.objects.all()[:10],
-                }
-                return render(request, 'ct_app/backup.html', context)
+                return render(request, 'ct_app/backup.html', {'error': 'ファイルが選択されていません'})
             
             backup_file = request.FILES['backup_file']
             
-            # アップロードされたファイルが ZIP かどうかチェック
-            if not backup_file.name.endswith('.zip'):
-                context = {
-                    'page_title': 'バックアップ管理',
-                    'error': 'ZIPファイルのみ対応しています',
-                    'histories': BackupHistory.objects.all()[:10],
-                }
-                return render(request, 'ct_app/backup.html', context)
+            if backup_file.name.endswith('.xlsx'):
+                Sick.objects.all().delete()
+                Form.objects.all().delete()
+                Protocol.objects.all().delete()
+                
+                df_sicks = pd.read_excel(backup_file, sheet_name='Sicks').fillna('')
+                df_forms = pd.read_excel(backup_file, sheet_name='Forms').fillna('')
+                df_protocols = pd.read_excel(backup_file, sheet_name='Protocols').fillna('')
+                
+                for _, row in df_sicks.iterrows():
+                    Sick.objects.create(**row.to_dict())
+                for _, row in df_forms.iterrows():
+                    Form.objects.create(**row.to_dict())
+                for _, row in df_protocols.iterrows():
+                    Protocol.objects.create(**row.to_dict())
+                    
+                BackupHistory.objects.create(backup_type='import', filename=backup_file.name, status='success')
+                return render(request, 'ct_app/backup.html', {'success': 'Excelからテキストデータを復元しました'})
             
-            # 一時ディレクトリで展開
-            with tempfile.TemporaryDirectory() as temp_dir:
-                zip_path = os.path.join(temp_dir, 'backup.zip')
+            elif backup_file.name.endswith('.zip'):        
                 
-                # ZIPファイルを保存
-                with open(zip_path, 'wb') as f:
-                    for chunk in backup_file.chunks():
-                        f.write(chunk)
-                
-                # ZIPを展開
-                with zipfile.ZipFile(zip_path, 'r') as zipf:
-                    zipf.extractall(temp_dir)
-                
-                # db.jsonを確認
-                db_file = os.path.join(temp_dir, 'db.json')
-                if not os.path.exists(db_file):
+                # 一時ディレクトリで展開
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    zip_path = os.path.join(temp_dir, 'backup.zip')
+                    
+                    # ZIPファイルを保存
+                    with open(zip_path, 'wb') as f:
+                        for chunk in backup_file.chunks():
+                            f.write(chunk)
+                    
+                    # ZIPを展開
+                    with zipfile.ZipFile(zip_path, 'r') as zipf:
+                        zipf.extractall(temp_dir)
+                    
+                    # db.jsonを確認
+                    db_file = os.path.join(temp_dir, 'db.json')
+                    if not os.path.exists(db_file):
+                        BackupHistory.objects.create(
+                            backup_type='import',
+                            filename=backup_file.name,
+                            status='failed',
+                            error_message='db.json が見つかりません'
+                        )
+                        
+                        context = {
+                            'page_title': 'バックアップ管理',
+                            'error': 'バックアップファイル内に db.json が見つかりません',
+                            'histories': BackupHistory.objects.all()[:10],
+                        }
+                        return render(request, 'ct_app/backup.html', context)
+                    
+                        Sick.objects.all().delete()
+                        Form.objects.all().delete()
+                        Protocol.objects.all().delete()
+                        NoticeImage.objects.all().delete()
+                        SickImage.objects.all().delete()
+                        ProtocolImage.objects.all().delete()
+
+                    
+                    # DBを復元
+                    with open(db_file, 'r', encoding='utf-8') as f:
+                        call_command('loaddata', f.name, verbosity=0)
+                    
+                    # メディアファイルを復元
+                    media_backup_dir = os.path.join(temp_dir, 'media')
+                    if os.path.exists(media_backup_dir):
+                        # 既存のメディアファイルをバックアップ
+                        if os.path.exists(settings.MEDIA_ROOT):
+                            backup_media = settings.MEDIA_ROOT + '_backup'
+                            if os.path.exists(backup_media):
+                                shutil.rmtree(backup_media)
+                            shutil.move(settings.MEDIA_ROOT, backup_media)
+                        
+                        # 復元したメディアをコピー
+                        shutil.copytree(media_backup_dir, settings.MEDIA_ROOT)
+                    
+                    # バックアップ履歴を記録（成功）
                     BackupHistory.objects.create(
                         backup_type='import',
                         filename=backup_file.name,
-                        status='failed',
-                        error_message='db.json が見つかりません'
+                        status='success'
                     )
                     
                     context = {
                         'page_title': 'バックアップ管理',
-                        'error': 'バックアップファイル内に db.json が見つかりません',
+                        'success': 'バックアップを復元しました',
                         'histories': BackupHistory.objects.all()[:10],
                     }
                     return render(request, 'ct_app/backup.html', context)
-                
-                Sick.objects.all().delete()
-                Form.objects.all().delete()
-                Protocol.objects.all().delete()
-                NoticeImage.objects.all().delete()
-                SickImage.objects.all().delete()
-                ProtocolImage.objects.all().delete()
-
-                
-                # DBを復元
-                with open(db_file, 'r', encoding='utf-8') as f:
-                    call_command('loaddata', f.name, verbosity=0)
-                
-                # メディアファイルを復元
-                media_backup_dir = os.path.join(temp_dir, 'media')
-                if os.path.exists(media_backup_dir):
-                    # 既存のメディアファイルをバックアップ
-                    if os.path.exists(settings.MEDIA_ROOT):
-                        backup_media = settings.MEDIA_ROOT + '_backup'
-                        if os.path.exists(backup_media):
-                            shutil.rmtree(backup_media)
-                        shutil.move(settings.MEDIA_ROOT, backup_media)
-                    
-                    # 復元したメディアをコピー
-                    shutil.copytree(media_backup_dir, settings.MEDIA_ROOT)
-                
-                # バックアップ履歴を記録（成功）
-                BackupHistory.objects.create(
-                    backup_type='import',
-                    filename=backup_file.name,
-                    status='success'
-                )
-                
-                context = {
-                    'page_title': 'バックアップ管理',
-                    'success': 'バックアップを復元しました',
-                    'histories': BackupHistory.objects.all()[:10],
-                }
-                return render(request, 'ct_app/backup.html', context)
-        
+            
         except Exception as e:
             BackupHistory.objects.create(
                 backup_type='import',
