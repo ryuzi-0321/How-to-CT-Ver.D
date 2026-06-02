@@ -1,5 +1,5 @@
 from django import forms
-from .models import Sick, Form, Protocol
+from .models import Sick, Form, Protocol, NightShift
 
 # 1. 自作ウィジェット（これはOK！）
 class MultipleFileInput(forms.ClearableFileInput):
@@ -90,3 +90,22 @@ class ProtocolForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             if field_name != 'title' and field_name != 'category':
                 field.required = False
+
+class NightShiftForm(forms.ModelForm):
+    """夜勤対応フォーム"""
+    images = forms.ImageField(widget=MultipleFileInput(attrs={'multiple': True}), required=False, label="画像アップロード")
+    
+    class Meta:
+        model = NightShift
+        fields = ['name', 'content', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '対応名'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': '対応内容'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': '説明（オプション）'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].required = True
+        self.fields['content'].required = True
+        self.fields['description'].required = False

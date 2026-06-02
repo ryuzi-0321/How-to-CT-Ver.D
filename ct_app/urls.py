@@ -27,6 +27,13 @@ urlpatterns = [
     path('protocol/<int:pk>/update/', views.ProtocolUpdateView.as_view(), name='protocol_update'),
     path('protocol/<int:pk>/delete/', views.ProtocolDeleteView.as_view(), name='protocol_delete'),
     
+    # 夜勤対応関連
+    path('nightshift/', views.NightShiftListView.as_view(), name='nightshift_list'),
+    path('nightshift/<int:pk>/', views.NightShiftDetailView.as_view(), name='nightshift_detail'),
+    path('nightshift/create/', views.NightShiftCreateView.as_view(), name='nightshift_create'),
+    path('nightshift/<int:pk>/update/', views.NightShiftUpdateView.as_view(), name='nightshift_update'),
+    path('nightshift/<int:pk>/delete/', views.NightShiftDeleteView.as_view(), name='nightshift_delete'),
+    
     # バックアップ・復元関連
     path('backup/', views.BackupPageView.as_view(), name='backup'),
     path('backup/export/', views.ExportBackupView.as_view(), name='backup_export'),

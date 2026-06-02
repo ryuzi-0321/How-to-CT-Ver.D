@@ -3,7 +3,7 @@
 {% block title %}ホーム - How to CT{% endblock %}
 
 {% block header_info %}
-    {% with sick_count=sicks|length form_count=forms|length protocol_count=protocols|length %}
+    {% with sick_count=sicks|length form_count=forms|length protocol_count=protocols|length night_shift_count=night_shifts|length %}
     <div class="d-flex gap-3 justify-content-end text-white">
         <div class="text-center">
             <small class="d-block opacity-75" style="font-size: 0.7rem;">疾患データ</small>
@@ -16,6 +16,10 @@
         <div class="text-center">
             <small class="d-block opacity-75" style="font-size: 0.7rem;">プロトコル</small>
             <span class="fs-4 fw-bold">{{ protocol_count }}</span>
+        </div>
+        <div class="text-center">
+            <small class="d-block opacity-75" style="font-size: 0.7rem;">夜勤対応</small>
+            <span class="fs-4 fw-bold">{{ night_shift_count }}</span>
         </div>
     </div>
     {% endwith %}
@@ -100,13 +104,66 @@
 <div class="row mt-4">
     <div class="col-12">
         <h2 class="section-title">
+            <i class="bi bi-moon"></i> 夜勤対応に関するお知らせ
+        </h2>
+    </div>
+</div>
+
+<div class="row row-cols-1 row-cols-md-5 g-3">
+    {% if night_shifts %}
+        {% for night_shift in night_shifts|slice:":5" %}
+            <div class="col">
+                <div class="notice-item h-100 clickable-card d-flex flex-column border p-2 rounded shadow-sm bg-white position-relative {% if '重要' in night_shift.title %}is-important{% endif %}">
+                    <h6 class="fw-bold text-truncate mb-1" title="{{ night_shift.name }}">
+                        {% if '重要' in night_shift.name %}
+                            <span class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                        {% endif %}
+                        {{ night_shift.name }}
+                    </h6>
+
+                    {% if night_shift.post_img %}
+                    <div class="my-1 text-center" style="height: 60px; overflow: hidden;">
+                        <img src="{{ first_image.image.url }}" class="rounded border shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
+                    </div>
+                    {% endif %}
+                    <p class="text-muted mb-1" style="font-size: 0.7rem;">{{ night_shift.created_at|date:'Y/m/d H:i' }}</p>
+                    <p class="small text-secondary text-truncate mb-2">{{ night_shift.content }}</p>
+
+                    <div class="mt-auto">
+                        <a href="{% url 'nightshift_detail' night_shift.pk %}" class="btn btn-sm btn-outline-primary w-100 stretched-link" style="font-size: 0.7rem;">
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info">夜勤対応のお知らせがまだ投稿されていません。</div>
+        </div>
+    {% endif %}
+</div>
+
+{% if night_shifts.count > 5 %}
+<div class="row mt-3">
+    <div class="col-12 text-end">
+        <a href="{% url 'night_shift_list' %}" class="btn btn-link text-decoration-none">
+            もっと見る <i class="bi bi-chevron-right"></i>
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="section-title">
             <i class="bi bi-plus-circle"></i> データ作成
         </h2>
     </div>
 </div>
 
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-plus-lg"></i> 疾患データ</h5>
@@ -115,7 +172,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-plus-lg"></i> お知らせ</h5>
@@ -124,12 +181,21 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-plus-lg"></i> プロトコル</h5>
                 <p class="card-text">新しいCTプロトコルを作成します</p>
                 <a href="{% url 'protocol_create' %}" class="btn btn-primary btn-sm stretched-link">作成</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-plus-lg"></i> 夜勤対応</h5>
+                <p class="card-text">新しい夜勤対応を投稿します</p>
+                <a href="{% url 'nightshift_create' %}" class="btn btn-primary btn-sm stretched-link">作成</a>
             </div>
         </div>
     </div>

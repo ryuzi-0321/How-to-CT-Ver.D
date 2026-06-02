@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Sick, Form, Protocol
+from .models import Sick, Form, Protocol, NightShift, NightShiftImage
 
 @admin.register(Sick)
 class SickAdmin(admin.ModelAdmin):
@@ -18,3 +18,9 @@ class ProtocolAdmin(admin.ModelAdmin):
     list_display = ('category', 'title', 'created_at', 'updated_at')
     search_fields = ('title', 'category')
     list_filter = ('category', 'created_at')
+
+@admin.register(NightShift)
+class NightShiftAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_at', 'updated_at')
+    search_fields = ('name',)
+    list_filter = ('created_at',)

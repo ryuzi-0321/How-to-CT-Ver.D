@@ -4,8 +4,8 @@ from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
 from django.conf import settings
-from .models import Sick, Form, Protocol, BackupHistory, NoticeImage, SickImage,ProtocolImage
-from .forms import SickForm, FormForm, ProtocolForm
+from .models import Sick, Form, Protocol, NightShift, NightShiftImage, BackupHistory, NoticeImage, SickImage,ProtocolImage
+from .forms import SickForm, FormForm, ProtocolForm, NightShiftForm
 
 import os
 import shutil
@@ -21,7 +21,7 @@ import io
 def get_protocol_data(request):
     title = request.GET.get('title', None)
     data = Protocol.objects.filter(title=title).first()
-    
+   
     if data:
         return JsonResponse({
             'exists': True,
@@ -31,9 +31,8 @@ def get_protocol_data(request):
             'contrast': '', # 必要に応じて
             'contrast_text': data.contrast_detail,
         })
-        
+
     data = Sick.objects.filter(protocol=title).order_by('-created_at').first()
-    
     if data:
         return JsonResponse({
             'exists': True,
@@ -49,7 +48,7 @@ def protocol_autocomplete(request):
     term = request.GET.get('term', '')
     protocol_titles = list(Protocol.objects.filter(title__icontains=term).values_list('title', flat=True))
     sick_titles = list(Sick.objects.filter(protocol__icontains=term).values_list('protocol', flat=True))
-    
+  
     titles = list(set(protocol_titles + sick_titles))
     return JsonResponse(titles, safe=False)
 
@@ -72,342 +71,691 @@ def form_create(request):
     }
     return render(request, 'ct_app/form_form.html', context)
 
+def night_shift_create(request):
+    if request.method == 'POST':
+        form = NightShiftForm(request.POST, request.FILES)
+        files = request.FILES.getlist('images')
+        if form.is_valid():
+            nightshift = form.save()
+            # 画像を保存
+            for file in files:
+                NightShiftImage.objects.create(nightshift=nightshift, image=file)
+            return redirect('night_shift_list')
+    else:
+        form = NightShiftForm()
+    
+    context = {
+        'page_title': '新規夜勤対応作成',
+        'form': form,
+    }
+    return render(request, 'ct_app/nightshift_form.html', context)
+
 class IndexView(View):
     """ホームページ"""
     def get(self, request):
         forms = Form.objects.all().order_by('-created_at')
         sicks = Sick.objects.all()
         protocols = Protocol.objects.all()
+        night_shifts = NightShift.objects.all().order_by('-created_at')
+        nightshift_count = NightShift.objects.count()
         context = {
-            'page_title': 'ホーム',
-            'forms': forms,
-            'sicks': sicks,
-            'protocols': protocols,
+                'page_title': 'ホーム',
+                'forms': forms,
+                'sicks': sicks,
+                'protocols': protocols,
+                'night_shifts': night_shifts,
+                'nightshift_count': nightshift_count,
         }
         return render(request, 'ct_app/index.html', context)
 
+
+
 class SickListView(View):
+
     """疾患一覧"""
+
     def get(self, request):
+
         sicks = Sick.objects.all()
+
         context = {
+
             'page_title': '疾患検索',
+
             'sicks': sicks,
+
         }
+
         return render(request, 'ct_app/sick_list.html', context)
+
+
 
 class SickSearchView(View):
+
     """疾患検索"""
+
     def get(self, request):
+
         query = request.GET.get('q', '')
+
         sicks = []
+
         
+
         if query:
+
             sicks = Sick.objects.filter(
+
                 Q(diesease__icontains=query) |
+
                 Q(diesease_text__icontains=query) |
+
                 Q(keyword__icontains=query) |
+
                 Q(protocol__icontains=query)
+
             )
+
         
+
         context = {
+
             'page_title': '疾患検索',
+
             'sicks': sicks,
+
             'query': query,
+
         }
+
         return render(request, 'ct_app/sick_list.html', context)
 
+
+
 class SickDetailView(View):
+
     """疾患詳細"""
+
     def get(self, request, pk):
+
         sick = get_object_or_404(Sick, pk=pk)
+
         context = {
+
             'page_title': sick.diesease,
+
             'sick': sick,
+
         }
+
         return render(request, 'ct_app/sick_detail.html', context)
 
+
+
 class SickCreateView(View):
+
     """疾患作成"""
+
     def get(self, request):
+
         form = SickForm()
+
         context = {
+
             'page_title': '新規疾患作成',
+
             'form': form,
+
         }
+
         return render(request, 'ct_app/sick_form.html', context)
+
     
+
     def post(self, request):
+
         form = SickForm(request.POST, request.FILES)
+
         
+
         if form.is_valid():
+
             # 1. 疾患の基本情報を保存 (変数名を小文字のsickにして衝突を避ける)
+
             sick = form.save()
 
+
+
             # 2. カテゴリー（タブ）とフォームのフィールド名を紐付ける辞書
+
             # ※forms.pyで定義したフィールド名と一致させてください
+
             image_mappings = {
+
                 'disease': 'disease_images',      # 疾患情報タブ
+
                 'protocol': 'protocol_images',    # 撮影プロトコルタブ
+
                 'contrast': 'contrast_images',    # 造影プロトコルタブ
+
                 'processing': 'processing_images',# 画像処理タブ
+
             }
 
+
+
             # 3. ループでそれぞれのボタンから来た画像を保存
+
             for category, field_name in image_mappings.items():
+
                 files = request.FILES.getlist(field_name) # 各フィールドからファイルリストを取得
+
                 for f in files:
+
                     SickImage.objects.create(
+
                         sick=sick, 
+
                         image=f, 
+
                         category=category  # ここで「どのタブか」を保存！
+
                     )
+
+
 
             return redirect('sick_detail', pk=sick.pk)
 
+
+
         context = {
+
             'page_title': '新規疾患作成',
+
             'form': form,
+
         }
+
         return render(request, 'ct_app/sick_form.html', context)
+
+
 
 # views.py の SickUpdateView を修正
 
+
+
 class SickUpdateView(View):
+
     """疾患編集"""
+
     def get(self, request, pk):
+
         # (get メソッドはそのまま)
+
         sick = get_object_or_404(Sick, pk=pk)
+
         form = SickForm(instance=sick)
+
         context = {
+
             'page_title': '疾患編集',
+
             'form': form,
+
             'sick': sick,
+
         }
+
         return render(request, 'ct_app/sick_form.html', context)
+
     
+
     def post(self, request, pk):
+
         sick = get_object_or_404(Sick, pk=pk)
+
         form = SickForm(request.POST, request.FILES, instance=sick)
+
         
+
         if form.is_valid():
+
             sick = form.save()
 
+
+
             image_mappings = {
+
                 'disease': 'disease_images',
+
                 'protocol': 'protocol_images',
+
                 'contrast': 'contrast_images',
+
                 'processing': 'processing_images',
+
             }
 
+
+
             for category, field_name in image_mappings.items():
+
                 files = request.FILES.getlist(field_name)
+
                 
+
                 # ★★★ 重要：ここを追加！ ★★★
+
                 if files:
+
                     # そのカテゴリーの古い画像をデータベースとファイルの両方から削除
+
                     images_to_delete = sick.images.filter(category=category)
+
                     for old_img in images_to_delete:
+
                         if old_img.image:
+
                             # 物理ファイルの削除
+
                             if os.path.isfile(old_img.image.path):
+
                                 os.remove(old_img.image.path)
+
                     
+
                     # データベースのレコードを削除
+
                     images_to_delete.delete()
 
+
+
                 # その後、新しい画像を保存
+
                 for f in files:
+
                     SickImage.objects.create(sick=sick, image=f, category=category)
+
             
+
             return redirect('sick_detail', pk=sick.pk)
+
             
+
         context = {
+
             'page_title': '疾患編集',
+
             'form': form,
+
             'sick': sick,
+
         }
+
         return render(request, 'ct_app/sick_form.html', context)
 
+
+
 class SickDeleteView(View):
+
     """疾患削除"""
+
     def post(self, request, pk):
+
         sick = get_object_or_404(Sick, pk=pk)
+
         sick.delete()
+
         return redirect('sick_list')
 
+
+
 class FormListView(View):
+
     """お知らせ一覧"""
+
     def get(self, request):
+
         forms = Form.objects.all()
+
         context = {
+
             'page_title': 'お知らせ',
+
             'forms': forms,
+
         }
+
         return render(request, 'ct_app/form_list.html', context)
 
+
+
 class FormDetailView(View):
+
     """お知らせ詳細"""
+
     def get(self, request, pk):
+
         form = get_object_or_404(Form, pk=pk)
+
         context = {
+
             'page_title': form.title,
+
             'form': form,
+
         }
+
         return render(request, 'ct_app/form_detail.html', context)
 
+
+
 class FormCreateView(View):
+
     """お知らせ作成"""
+
     def get(self, request):
+
         context = {
+
             'page_title': '新規お知らせ作成',
+
             'form': FormForm(),
+
         }
+
         return render(request, 'ct_app/form_form.html', context)
+
     
+
     def post(self, request):
+
         form = FormForm(request.POST, request.FILES)
+
         files = request.FILES.getlist('images')
+
         if form.is_valid():
+
             notice = form.save()
+
             for file in files:
+
                 NoticeImage.objects.create(notice=notice, image=file)
+
             return redirect('form_detail', pk=notice.pk)
+
         context = {
+
             'page_title': '新規お知らせ作成',
+
             'form': form,
+
         }
+
         return render(request, 'ct_app/form_form.html', context)
+
+
 
 class FormUpdateView(View):
+
     """お知らせ編集"""
+
     def get(self, request, pk):
+
         form_obj = get_object_or_404(Form, pk=pk)
+
         form = FormForm(instance=form_obj)
+
         context = {
+
             'page_title': 'お知らせ編集',
+
             'form': form,
+
             'form_obj': form_obj,
+
         }
+
         return render(request, 'ct_app/form_form.html', context)
+
     
+
     def post(self, request, pk):
+
         form_obj = get_object_or_404(Form, pk=pk)
+
         form = FormForm(request.POST, request.FILES, instance=form_obj)
+
         if form.is_valid():
+
             notice = form.save()
+
             files = request.FILES.getlist('images')
+
             for file in files:
+
                 NoticeImage.objects.create(form=notice, image=file)
 
+
+
             return redirect('form_detail', pk=notice.pk)
+
         context = {
+
             'page_title': 'お知らせ編集',
+
             'form': form,
+
             'form_obj': form_obj,
+
         }
+
         return render(request, 'ct_app/form_form.html', context)
 
+
+
 class FormDeleteView(View):
+
     """お知らせ削除"""
+
     def post(self, request, pk):
+
         form = get_object_or_404(Form, pk=pk)
+
         form.delete()
+
         return redirect('form_list')
 
+
+
 class ProtocolListView(View):
+
     """CTプロトコル一覧"""
+
     def get(self, request):
+
         category = request.GET.get('category', '')
+
         if category:
+
             protocols = Protocol.objects.filter(category=category)
+
         else:
+
             protocols = Protocol.objects.all()
+
         
+
         categories = Protocol.CATEGORY_CHOICES
+
         context = {
+
             'page_title': 'CTプロトコル',
+
             'protocols': protocols,
+
             'categories': categories,
+
             'selected_category': category,
+
         }
+
         return render(request, 'ct_app/protocol_list.html', context)
 
+
+
 class ProtocolDetailView(View):
+
     """CTプロトコル詳細"""
+
     def get(self, request, pk):
+
         protocol = get_object_or_404(Protocol, pk=pk)
+
         context = {
+
             'page_title': protocol.title,
+
             'protocol': protocol,
+
         }
+
         return render(request, 'ct_app/protocol_detail.html', context)
 
+
+
 class ProtocolCreateView(View):
+
     """CTプロトコル作成"""
+
     def get(self, request):
+
         form = ProtocolForm()
+
         context = {
+
             'page_title': '新規プロトコル作成',
+
             'form': form,
+
         }
+
         return render(request, 'ct_app/protocol_form.html', context)
+
     
+
     def post(self, request):
+
         form = ProtocolForm(request.POST, request.FILES)
+
         if form.is_valid():
+
             form.save()
+
             return redirect('protocol_detail', pk=form.instance.pk)
+
         context = {
+
             'page_title': '新規プロトコル作成',
+
             'form': form,
+
         }
+
         return render(request, 'ct_app/protocol_form.html', context)
+
+
 
 class ProtocolUpdateView(View):
+
     """CTプロトコル編集"""
+
     def get(self, request, pk):
+
         protocol = get_object_or_404(Protocol, pk=pk)
+
         form = ProtocolForm(instance=protocol)
+
         context = {
+
             'page_title': 'プロトコル編集',
+
             'form': form,
+
             'protocol': protocol,
+
         }
-        return render(request, 'ct_app/protocol_form.html', context)
-    
-    def post(self, request, pk):
-        protocol = get_object_or_404(Protocol, pk=pk)
-        form = ProtocolForm(request.POST, request.FILES, instance=protocol)
-        if form.is_valid():
-            form.save()
-            return redirect('protocol_detail', pk=protocol.pk)
-        context = {
-            'page_title': 'プロトコル編集',
-            'form': form,
-            'protocol': protocol,
-        }
+
         return render(request, 'ct_app/protocol_form.html', context)
 
-class ProtocolDeleteView(View):
-    """CTプロトコル削除"""
+    
+
     def post(self, request, pk):
+
         protocol = get_object_or_404(Protocol, pk=pk)
+
+        form = ProtocolForm(request.POST, request.FILES, instance=protocol)
+
+        if form.is_valid():
+
+            form.save()
+
+            return redirect('protocol_detail', pk=protocol.pk)
+
+        context = {
+
+            'page_title': 'プロトコル編集',
+
+            'form': form,
+
+            'protocol': protocol,
+
+        }
+
+        return render(request, 'ct_app/protocol_form.html', context)
+
+
+
+class ProtocolDeleteView(View):
+
+    """CTプロトコル削除"""
+
+    def post(self, request, pk):
+
+        protocol = get_object_or_404(Protocol, pk=pk)
+
         protocol.delete()
+
         return redirect('protocol_list')
+
+
+
 
 
 # ===== バックアップ・復元機能 =====
 
+
+
 class BackupPageView(View):
+
     """バックアップ管理ページ"""
+
     def get(self, request):
+
         histories = BackupHistory.objects.all()[:10]
+
         context = {
+
             'page_title': 'バックアップ管理',
+
             'histories': histories,
+
         }
+
         return render(request, 'ct_app/backup.html', context)
+
+
+
 
 
 class ExportBackupView(View):
@@ -416,22 +764,25 @@ class ExportBackupView(View):
         zip_filename = None
         export_format = request.GET.get('format', 'zip')
         timestamp = now().strftime('%Y%m%d_%H%M%S')
-        
         if export_format == 'excel':
             import io  # 関数内でインポートしてもOK
             try:
                 # メモリ上にバイナリデータを作成するためのバッファ
                 output = io.BytesIO()
-                
                 # output（メモリ）に対してExcelを書き込む
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     # 各モデルのデータを取得
                     df_sick = pd.DataFrame(list(Sick.objects.all().values()))
                     df_form = pd.DataFrame(list(Form.objects.all().values()))
                     df_protocol = pd.DataFrame(list(Protocol.objects.all().values()))
+                    df_nightshift = pd.DataFrame(list(NightShift.objects.all().values()))
+
+
 
                     # 日時カラムのタイムゾーンを解除する関数
+
                     def remove_timezone(df):
+
                         if not df.empty:
                             for col in df.columns:
                                 # 日時型のカラムを探してタイムゾーンを消す
@@ -443,13 +794,11 @@ class ExportBackupView(View):
                     remove_timezone(df_sick).to_excel(writer, sheet_name='Sicks', index=False)
                     remove_timezone(df_form).to_excel(writer, sheet_name='Forms', index=False)
                     remove_timezone(df_protocol).to_excel(writer, sheet_name='Protocols', index=False)
-                              
+                    remove_timezone(df_nightshift).to_excel(writer, sheet_name='NightShifts', index=False)
                 # ポインタを先頭に戻す
                 output.seek(0)
-                
                 # 履歴を作成
                 BackupHistory.objects.create(backup_type='export', filename=f'backup_{timestamp}.xlsx', status='success')
-                
                 # レスポンスを作成してバイナリを流し込む
                 response = HttpResponse(
                     output.read(), 
@@ -457,11 +806,9 @@ class ExportBackupView(View):
                 )
                 response['Content-Disposition'] = f'attachment; filename="backup_{timestamp}.xlsx"'
                 return response
-            
             except Exception as e:
                 BackupHistory.objects.create(backup_type='export', status='failed', error_message=str(e))
                 return render(request, 'ct_app/backup.html', {'error': f'Excel作成失敗: {e}'})
-            
         else:           
             try:
                 # 一時ディレクトリを作成
@@ -470,23 +817,19 @@ class ExportBackupView(View):
                     db_file = os.path.join(temp_dir, 'db.json')
                     with open(db_file, 'w', encoding='utf-8') as f:
                         call_command('dumpdata', stdout=f)
-                    
                     # メディアファイルをコピー
                     media_backup_dir = os.path.join(temp_dir, 'media')
                     if os.path.exists(settings.MEDIA_ROOT):
                         shutil.copytree(settings.MEDIA_ROOT, media_backup_dir)
                     else:
                         os.makedirs(media_backup_dir)
-                    
                     # ZIPファイルを作成
                     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                     zip_filename = f'backup_{timestamp}.zip'
                     zip_path = os.path.join(temp_dir, zip_filename)
-                    
                     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                         # db.jsonを追加
                         zipf.write(db_file, arcname='db.json')
-                        
                         # mediaディレクトリを再帰的に追加
                         if os.path.exists(media_backup_dir):
                             for root, dirs, files in os.walk(media_backup_dir):
@@ -494,22 +837,18 @@ class ExportBackupView(View):
                                     file_path = os.path.join(root, file)
                                     arcname = os.path.relpath(file_path, temp_dir)
                                     zipf.write(file_path, arcname=arcname)
-                    
                     # ZIPファイルを読み込んでレスポンス
                     with open(zip_path, 'rb') as f:
                         zip_content = f.read()
-                    
                     # バックアップ履歴を記録（成功）
                     BackupHistory.objects.create(
                         backup_type='export',
                         filename=zip_filename,
                         status='success'
                     )
-                    
                     response = HttpResponse(zip_content, content_type='application/zip')
                     response['Content-Disposition'] = f'attachment; filename="{zip_filename}"'
                     return response
-            
             except Exception as e:
                 # エラーが発生した場合
                 BackupHistory.objects.create(
@@ -518,7 +857,6 @@ class ExportBackupView(View):
                     status='failed',
                     error_message=str(e)
                 )
-                
                 context = {
                     'page_title': 'バックアップ管理',
                     'error': f'バックアップ作成に失敗しました: {str(e)}',
@@ -533,43 +871,39 @@ class ImportBackupView(View):
         try:
             if 'backup_file' not in request.FILES:
                 return render(request, 'ct_app/backup.html', {'error': 'ファイルが選択されていません'})
-            
             backup_file = request.FILES['backup_file']
-            
             if backup_file.name.endswith('.xlsx'):
                 Sick.objects.all().delete()
                 Form.objects.all().delete()
                 Protocol.objects.all().delete()
-                
+                NightShift.objects.all().delete()
                 df_sicks = pd.read_excel(backup_file, sheet_name='Sicks').fillna('')
                 df_forms = pd.read_excel(backup_file, sheet_name='Forms').fillna('')
                 df_protocols = pd.read_excel(backup_file, sheet_name='Protocols').fillna('')
-                
+                df_nightshifts = pd.read_excel(backup_file, sheet_name='NightShifts').fillna('')
                 for _, row in df_sicks.iterrows():
                     Sick.objects.create(**row.to_dict())
                 for _, row in df_forms.iterrows():
                     Form.objects.create(**row.to_dict())
                 for _, row in df_protocols.iterrows():
                     Protocol.objects.create(**row.to_dict())
-                    
+                for _, row in df_nightshifts.iterrows():
+                    NightShift.objects.create(**row.to_dict())
                 BackupHistory.objects.create(backup_type='import', filename=backup_file.name, status='success')
                 return render(request, 'ct_app/backup.html', {'success': 'Excelからテキストデータを復元しました'})
-            
             elif backup_file.name.endswith('.zip'):        
-                
                 # 一時ディレクトリで展開
+
                 with tempfile.TemporaryDirectory() as temp_dir:
                     zip_path = os.path.join(temp_dir, 'backup.zip')
-                    
                     # ZIPファイルを保存
                     with open(zip_path, 'wb') as f:
                         for chunk in backup_file.chunks():
                             f.write(chunk)
-                    
                     # ZIPを展開
+
                     with zipfile.ZipFile(zip_path, 'r') as zipf:
                         zipf.extractall(temp_dir)
-                    
                     # db.jsonを確認
                     db_file = os.path.join(temp_dir, 'db.json')
                     if not os.path.exists(db_file):
@@ -579,26 +913,21 @@ class ImportBackupView(View):
                             status='failed',
                             error_message='db.json が見つかりません'
                         )
-                        
                         context = {
                             'page_title': 'バックアップ管理',
                             'error': 'バックアップファイル内に db.json が見つかりません',
                             'histories': BackupHistory.objects.all()[:10],
                         }
                         return render(request, 'ct_app/backup.html', context)
-                    
                         Sick.objects.all().delete()
                         Form.objects.all().delete()
                         Protocol.objects.all().delete()
                         NoticeImage.objects.all().delete()
                         SickImage.objects.all().delete()
                         ProtocolImage.objects.all().delete()
-
-                    
                     # DBを復元
                     with open(db_file, 'r', encoding='utf-8') as f:
                         call_command('loaddata', f.name, verbosity=0)
-                    
                     # メディアファイルを復元
                     media_backup_dir = os.path.join(temp_dir, 'media')
                     if os.path.exists(media_backup_dir):
@@ -608,24 +937,20 @@ class ImportBackupView(View):
                             if os.path.exists(backup_media):
                                 shutil.rmtree(backup_media)
                             shutil.move(settings.MEDIA_ROOT, backup_media)
-                        
                         # 復元したメディアをコピー
                         shutil.copytree(media_backup_dir, settings.MEDIA_ROOT)
-                    
                     # バックアップ履歴を記録（成功）
                     BackupHistory.objects.create(
                         backup_type='import',
                         filename=backup_file.name,
                         status='success'
                     )
-                    
                     context = {
                         'page_title': 'バックアップ管理',
                         'success': 'バックアップを復元しました',
                         'histories': BackupHistory.objects.all()[:10],
                     }
                     return render(request, 'ct_app/backup.html', context)
-            
         except Exception as e:
             BackupHistory.objects.create(
                 backup_type='import',
@@ -633,10 +958,114 @@ class ImportBackupView(View):
                 status='failed',
                 error_message=str(e)
             )
-            
             context = {
                 'page_title': 'バックアップ管理',
                 'error': f'復元に失敗しました: {str(e)}',
                 'histories': BackupHistory.objects.all()[:10],
             }
             return render(request, 'ct_app/backup.html', context)
+# ===== 夜勤対応 =====
+
+class NightShiftListView(View):
+    """夜勤対応一覧"""
+    def get(self, request):
+        nightshifts = NightShift.objects.all()
+        context = {
+            'page_title': '夜勤対応',
+            'nightshifts': nightshifts,
+        }
+        return render(request, 'ct_app/nightshift_list.html', context)
+
+
+class NightShiftDetailView(View):
+    """夜勤対応詳細"""
+    def get(self, request, pk):
+        nightshift = get_object_or_404(NightShift, pk=pk)
+        context = {
+            'page_title': nightshift.name,
+            'nightshift': nightshift,
+        }
+        return render(request, 'ct_app/nightshift_detail.html', context)
+
+
+class NightShiftCreateView(View):
+    """夜勤対応作成"""
+    def get(self, request):
+        form = NightShiftForm()
+        context = {
+            'page_title': '新規夜勤対応作成',
+            'form': form,
+        }
+        return render(request, 'ct_app/nightshift_form.html', context)
+    
+    def post(self, request):
+        form = NightShiftForm(request.POST, request.FILES)
+        if form.is_valid():
+            nightshift = form.save()
+            
+            # 画像を保存
+            files = request.FILES.getlist('images')
+            for file in files:
+                NightShiftImage.objects.create(nightshift=nightshift, image=file)
+            
+            return redirect('nightshift_detail', pk=nightshift.pk)
+        
+        context = {
+            'page_title': '新規夜勤対応作成',
+            'form': form,
+        }
+        return render(request, 'ct_app/nightshift_form.html', context)
+
+
+class NightShiftUpdateView(View):
+    """夜勤対応編集"""
+    def get(self, request, pk):
+        nightshift = get_object_or_404(NightShift, pk=pk)
+        form = NightShiftForm(instance=nightshift)
+        context = {
+            'page_title': '夜勤対応編集',
+            'form': form,
+            'nightshift': nightshift,
+        }
+        return render(request, 'ct_app/nightshift_form.html', context)
+    
+    def post(self, request, pk):
+        nightshift = get_object_or_404(NightShift, pk=pk)
+        form = NightShiftForm(request.POST, request.FILES, instance=nightshift)
+        if form.is_valid():
+            nightshift = form.save()
+            
+            # 新しい画像がアップロードされた場合
+            files = request.FILES.getlist('images')
+            if files:
+                # 古い画像をデータベースとファイルの両方から削除
+                images_to_delete = nightshift.images.all()
+                for old_img in images_to_delete:
+                    if old_img.image:
+                        # 物理ファイルの削除
+                        if os.path.isfile(old_img.image.path):
+                            os.remove(old_img.image.path)
+                
+                # データベースのレコードを削除
+                images_to_delete.delete()
+                
+                # 新しい画像を保存
+                for file in files:
+                    NightShiftImage.objects.create(nightshift=nightshift, image=file)
+            
+            return redirect('nightshift_detail', pk=nightshift.pk)
+        
+        context = {
+            'page_title': '夜勤対応編集',
+            'form': form,
+            'nightshift': nightshift,
+        }
+        return render(request, 'ct_app/nightshift_form.html', context)
+
+
+class NightShiftDeleteView(View):
+    """夜勤対応削除"""
+    def post(self, request, pk):
+        nightshift = get_object_or_404(NightShift, pk=pk)
+        nightshift.delete()
+        return redirect('nightshift_list')

@@ -198,6 +198,9 @@
                         <a class="nav-link" href="{% url 'protocol_list' %}">CTプロトコル</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'nightshift_list' %}"><i class="bi bi-moon"></i> 夜勤対応</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{% url 'backup' %}">バックアップ</a>
                     </li>
                 </ul>
@@ -247,10 +250,20 @@
                 </div>
                 <div class="col-md-4">
                     <h5>リンク</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="{% url 'sick_list' %}">疾患検索</a></li>
-                        <li><a href="{% url 'protocol_list' %}">CTプロトコル</a></li>
-                    </ul>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <ul class="list-unstyled mb-0">
+                                <li><a href="{% url 'sick_list' %}">疾患検索</a></li>
+                                <li><a href="{% url 'protocol_list' %}">CTプロトコル</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-6">
+                            <ul class="list-unstyled mb-0">
+                                <li><a href="{% url 'form_list' %}">お知らせ</a></li>
+                                <li><a href="{% url 'nightshift_list' %}">夜勤対応</a></li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-4">
                     <h5>ご利用ありがとうございます</h5>
@@ -260,7 +273,7 @@
             <hr>
             <div class="row">
                 <div class="col-12 text-center">
-                    <p class="mb-0">© 2024 How to CT. All rights reserved.</p>
+                    <p class="mb-0">© 2026 How to CT. All rights reserved.</p>
                 </div>
             </div>
         </div>

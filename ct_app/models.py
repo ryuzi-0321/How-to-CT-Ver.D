@@ -93,6 +93,31 @@ class Protocol(models.Model):
         return f"[{self.category}] {self.title}"
 
 
+class NightShift(models.Model):
+    """夜勤対応モデル"""
+    name = models.CharField(max_length=255, unique=True)
+    content = models.TextField()
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name_plural = "NightShifts"
+
+    def __str__(self):
+        return self.name
+
+
+class NightShiftImage(models.Model):
+    """夜勤対応画像モデル"""
+    nightshift = models.ForeignKey(NightShift, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='nightshift_images/')
+
+    def __str__(self):
+        return f"Image for {self.nightshift.name}"
+
+
 class BackupHistory(models.Model):
     """バックアップ履歴モデル"""
     BACKUP_TYPE_CHOICES = [
