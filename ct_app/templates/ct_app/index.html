@@ -3,26 +3,28 @@
 {% block title %}ホーム - How to CT{% endblock %}
 
 {% block header_info %}
-    {% with sick_count=sicks|length form_count=forms|length protocol_count=protocols|length night_shift_count=night_shifts|length %}
     <div class="d-flex gap-3 justify-content-end text-white">
         <div class="text-center">
             <small class="d-block opacity-75" style="font-size: 0.7rem;">疾患データ</small>
-            <span class="fs-4 fw-bold">{{ sick_count }}</span>
+            <span class="fs-4 fw-bold">{{ sicks_count }}</span>
         </div>
         <div class="text-center">
             <small class="d-block opacity-75" style="font-size: 0.7rem;">お知らせ</small>
-            <span class="fs-4 fw-bold">{{ form_count }}</span>
+            <span class="fs-4 fw-bold">{{ forms_count }}</span>
         </div>
         <div class="text-center">
             <small class="d-block opacity-75" style="font-size: 0.7rem;">プロトコル</small>
-            <span class="fs-4 fw-bold">{{ protocol_count }}</span>
+            <span class="fs-4 fw-bold">{{ protocols_count }}</span>
         </div>
         <div class="text-center">
             <small class="d-block opacity-75" style="font-size: 0.7rem;">夜勤対応</small>
-            <span class="fs-4 fw-bold">{{ night_shift_count }}</span>
+            <span class="fs-4 fw-bold">{{ night_shifts_count }}</span>
+        </div>
+        <div class="text-center">
+            <small class="d-block opacity-75" style="font-size: 0.7rem;">掲示板</small>
+            <span class="fs-4 fw-bold">{{ question_count }}</span>
         </div>
     </div>
-    {% endwith %}
 {% endblock %}
 
 {% block content %}
@@ -57,8 +59,8 @@
 </div>
 
 <div class="row row-cols-1 row-cols-md-5 g-3">
-    {% if forms %}
-        {% for form in forms|slice:":5" %}
+    {% if form_list %}
+        {% for form in form_list|slice:":5" %}
             <div class="col">
                 <div class="notice-item h-100 clickable-card d-flex flex-column border p-2 rounded shadow-sm bg-white position-relative {% if '重要' in form.title %}is-important{% endif %}">
                     <h6 class="fw-bold text-truncate mb-1" title="{{ form.title }}">
@@ -91,7 +93,7 @@
     {% endif %}
 </div>
 
-{% if forms.count > 5 %}
+{% if form_list.count > 5 %}
 <div class="row mt-3">
     <div class="col-12 text-end">
         <a href="{% url 'form_list' %}" class="btn btn-link text-decoration-none">
@@ -110,8 +112,8 @@
 </div>
 
 <div class="row row-cols-1 row-cols-md-5 g-3">
-    {% if night_shifts %}
-        {% for night_shift in night_shifts|slice:":5" %}
+    {% if nightshift_list %}
+        {% for night_shift in nightshift_list|slice:":5" %}
             <div class="col">
                 <div class="notice-item h-100 clickable-card d-flex flex-column border p-2 rounded shadow-sm bg-white position-relative {% if '重要' in night_shift.title %}is-important{% endif %}">
                     <h6 class="fw-bold text-truncate mb-1" title="{{ night_shift.name }}">
@@ -144,15 +146,68 @@
     {% endif %}
 </div>
 
-{% if night_shifts.count > 5 %}
+{% if nightshift_list.count > 5 %}
 <div class="row mt-3">
     <div class="col-12 text-end">
-        <a href="{% url 'night_shift_list' %}" class="btn btn-link text-decoration-none">
+        <a href="{% url 'nightshift_list' %}" class="btn btn-link text-decoration-none">
             もっと見る <i class="bi bi-chevron-right"></i>
         </a>
     </div>
 </div>
 {% endif %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="section-title">
+            <i class="bi bi-chat-dots"></i> 掲示板
+        </h2>
+    </div>
+</div>
+
+<div class="row row-cols-1 row-cols-md-5 g-3">
+    {% if questions %}
+        {% for question in questions|slice:":5" %}
+            <div class="col">
+                <div class="notice-item h-100 clickable-card d-flex flex-column border p-2 rounded shadow-sm bg-white position-relative {% if '重要' in question.title %}is-important{% endif %}">
+                    <h6 class="fw-bold text-truncate mb-1" title="{{ question.title }}">
+                        {% if '重要' in question.title %}
+                            <span class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                        {% endif %}
+                        {{ question.title }}
+                    </h6>
+
+                    {% if question.post_img %}
+                    <div class="my-1 text-center" style="height: 60px; overflow: hidden;">
+                        <img src="{{ first_image.image.url }}" class="rounded border shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
+                    </div>
+                    {% endif %}
+                    <p class="text-muted mb-1" style="font-size: 0.7rem;">{{ question.created_at|date:'Y/m/d H:i' }}</p>
+                    <p class="small text-secondary text-truncate mb-2">{{ question.content }}</p>
+
+                    <div class="mt-auto">
+                        <a href="{% url 'question_detail' question.pk %}" class="btn btn-sm btn-outline-primary w-100 stretched-link" style="font-size: 0.7rem;">
+                            詳細を見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info">掲示板の投稿がまだありません。</div>
+        </div>
+    {% endif %}
+</div>
+
+{% if questions.count > 5 %}
+<div class="row mt-3">
+    <div class="col-12 text-end">
+        <a href="{% url 'question_list' %}" class="btn btn-link text-decoration-none">
+            もっと見る <i class="bi bi-chevron-right"></i>
+        </a>
+    </div>
+</div>
+{% endif %}
+
 
 <div class="row mt-4">
     <div class="col-12">
@@ -199,5 +254,15 @@
             </div>
         </div>
     </div>
+        <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-plus-lg"></i> 掲示板</h5>
+                <p class="card-text">新しい掲示板投稿を作成します</p>
+                <a href="{% url 'question_create' %}" class="btn btn-primary btn-sm stretched-link">作成</a>
+            </div>
+        </div>
+    </div>
+
 </div>
 {% endblock %}

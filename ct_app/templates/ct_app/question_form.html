@@ -1,0 +1,54 @@
+{% extends 'ct_app/base.html' %}
+
+{% block title %}新規質問 - How to CT{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>新しく質問する</h2>
+    <hr>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="id_title" class="form-label">タイトル</label>
+                    {{ form.title }}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_content" class="form-label">質問内容（具体的な状況や困っていること）</label>
+                    {{ form.content }}
+                </div>
+                
+                <!-- 🚨 Djangoの自動生成を使わず、安全なHTML要素として配置 -->
+                <div class="mb-3">
+                    <label for="id_related_protocol" class="form-label">関連するプロトコル（任意）</label>
+                    <select name="related_protocol" id="id_related_protocol" class="form-select">
+                        <option value="">---------</option>
+                        {% for protocol in view.model.related_protocol.field.model.objects.all %}
+                            <option value="{{ protocol.id }}">[{{ protocol.category }}] {{ protocol.title }}</option>
+                        {% empty %}
+                            <!-- 万が一モデルの参照がバグっていてもエラーを吐かせないための回避策 -->
+                            <option value="">※プロトコルが読み込めません</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary mt-3">質問を投稿する</button>
+                <a href="{% url 'question_list' %}" class="btn btn-secondary mt-3">キャンセル</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const fields = document.querySelectorAll('input[type="text"], textarea');
+        fields.forEach(field => {
+            field.classList.add('form-control');
+        });
+    });
+</script>
+{% endblock %}

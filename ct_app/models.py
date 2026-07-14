@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 class Sick(models.Model):
     """疾患データモデル"""
@@ -116,7 +118,55 @@ class NightShiftImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.nightshift.name}"
+    
+class Question(models.Model):
+    """質問モデル"""
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='questions')
+    title = models.CharField(max_length=255, verbose_name="質問タイトル")
+    content = models.TextField(verbose_name="質問内容")
+    answer_text = models.TextField(blank=True)
+    
+    related_protocols = models.ForeignKey(
+        Protocol,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='questions',
+        verbose_name="関連するプロトコル"
+    )
 
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="投稿日時")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新日時")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = "Questions"
+
+    def __str__(self):
+        return self.title
+    
+class Answer(models.Model):
+    """回答モデル"""
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='answers')
+    content = models.TextField(verbose_name="回答内容")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="投稿日時")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新日時")
+    suggested_protocols = models.ForeignKey(
+        Protocol,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='suggested_answers',
+        verbose_name="参考プロトコル"
+    )
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name_plural = "Answers"
+
+    def __str__(self):
+        return f"Answer by {self.author.username} to '{self.question.title}'"    
 
 class BackupHistory(models.Model):
     """バックアップ履歴モデル"""

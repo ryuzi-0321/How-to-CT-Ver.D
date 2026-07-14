@@ -203,6 +203,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'backup' %}">バックアップ</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'question_list' %}"><i class="bi bi-chat-dots"></i> 掲示板</a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -261,6 +264,11 @@
                             <ul class="list-unstyled mb-0">
                                 <li><a href="{% url 'form_list' %}">お知らせ</a></li>
                                 <li><a href="{% url 'nightshift_list' %}">夜勤対応</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-6">
+                            <ul class="list-unstyled mb-0">
+                                <li><a href="{% url 'question_list' %}">掲示板</a></li>
                             </ul>
                         </div>
                     </div>

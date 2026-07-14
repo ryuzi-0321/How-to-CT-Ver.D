@@ -1,0 +1,98 @@
+{% extends 'ct_app/base.html' %}
+
+{% block title %}質問詳細 - How to CT{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-6">
+        <a href="{% url 'question_list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> 検索に戻る
+        </a>
+    </div>
+    <div class="col-6 text-end">
+        <a href="{% url 'question_update' question.pk %}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> 編集
+        </a>
+        <form method="post" action="{% url 'question_delete' question.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger" onclick="return confirm('削除してよろしいですか？')">
+                <i class="bi bi-trash"></i> 削除
+            </button>
+        </form>
+    </div>
+</div>
+<div class="container mt-4">
+    <!-- 質問内容 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="card-title">{{ question.title }}</h2>
+            <p class="text-muted">
+                投稿者: {{ question.author.username }} | 投稿日時: {{ question.created_at|date:"Y/m/d H:i" }}
+            </p>
+            <hr>
+            <p class="card-text" style="white-space: pre-wrap;">{{ question.content }}</p>
+            
+            {% if question.related_protocol %}
+                <div class="alert alert-secondary mt-3">
+                    <strong>関連するプロトコル:</strong> 
+                    <a href="{% url 'protocol_detail' question.related_protocol.pk %}" class="alert-link">
+                        [{{ question.related_protocol.category }}] {{ question.related_protocol.title }}
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 回答一覧 -->
+    <h4>回答・コメント ({{ answers|length }})</h4>
+    <div class="list-group mb-4">
+        {% for answer in answers %}
+            <div class="list-group-item">
+                <p class="mb-1" style="white-space: pre-wrap;">{{ answer.content }}</p>
+                
+                <!-- 回答者がプロトコルを提案している場合 -->
+                {% if answer.suggested_protocol %}
+                    <div class="mt-2 p-2 bg-light border rounded">
+                        <small class="text-muted d-block">💡 このプロトコルが参考になります：</small>
+                        <a href="{% url 'protocol_detail' answer.suggested_protocol.pk %}" class="fw-bold">
+                            [{{ answer.suggested_protocol.category }}] {{ answer.suggested_protocol.title }}
+                        </a>
+                    </div>
+                {% endif %}
+                
+                <small class="text-muted d-block mt-2">
+                    回答者: {{ answer.author.username }} | {{ answer.created_at|date:"Y/m/d H:i" }}
+                </small>
+            </div>
+        {% empty %}
+            <p class="text-muted mb-4">まだ回答はありません。</p>
+        {% endfor %}
+    </div>
+
+    <!-- 回答投稿フォーム（ログイン不要で常に表示） -->
+    <div class="card mb-5">
+        <div class="card-header">回答を投稿する</div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="content" class="form-label">回答内容</label>
+                    <textarea class="form-control" id="content" name="content" rows="4" required placeholder="ここに回答を入力してください"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="suggested_protocol" class="form-label">参考プロトコル（任意）</label>
+                    <select class="form-select" id="suggested_protocol" name="suggested_protocol">
+                        <option value="">-- プロトコルを選択 --</option>
+                        {% for protocol in protocols %}
+                            <option value="{{ protocol.id }}">[{{ protocol.category }}] {{ protocol.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-success">回答を送信</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

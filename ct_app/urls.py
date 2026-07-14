@@ -3,7 +3,7 @@ from . import views
 
 urlpatterns = [
     # ホーム
-    path('', views.IndexView.as_view(), name='index'),
+    path('', views.index, name='index'),
     
     # 疾患関連
     path('sick/', views.SickListView.as_view(), name='sick_list'),
@@ -42,4 +42,12 @@ urlpatterns = [
     # urls.py
     path('api/get_protocol_data/', views.get_protocol_data, name='get_protocol_data'),
     path('api/protocol_autocomplete/', views.protocol_autocomplete, name='protocol_autocomplete'),
+    
+    # 掲示板機能
+    path('board/', views.QuestionListView.as_view(), name='question_list'),
+    path('board/<int:pk>/', views.question_detail, name='question_detail'),
+    path('board/create/', views.QuestionCreateView.as_view(), name='question_create'),
+    path('board/<int:pk>/update/', views.QuestionUpdateView.as_view(), name='question_update'),
+    path('board/<int:pk>/delete/', views.QuestionDeleteView.as_view(), name='question_delete'),
+    path('board/<int:question_id>/answer/create/', views.answer_create, name='answer_create'),
 ]

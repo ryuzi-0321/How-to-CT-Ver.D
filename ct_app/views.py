@@ -1,11 +1,14 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.contrib.auth import get_user_model
+from django.urls import reverse_lazy
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
 from django.conf import settings
-from .models import Sick, Form, Protocol, NightShift, NightShiftImage, BackupHistory, NoticeImage, SickImage,ProtocolImage
-from .forms import SickForm, FormForm, ProtocolForm, NightShiftForm
+from .models import Sick, Form, Protocol, NightShift, NightShiftImage, BackupHistory, NoticeImage, SickImage,ProtocolImage, Question, Answer
+from .forms import SickForm, FormForm, ProtocolForm, NightShiftForm, QuestionForm, AnswerForm
 
 import os
 import shutil
@@ -80,7 +83,7 @@ def night_shift_create(request):
             # 画像を保存
             for file in files:
                 NightShiftImage.objects.create(nightshift=nightshift, image=file)
-            return redirect('night_shift_list')
+            return redirect('nightshift_list')
     else:
         form = NightShiftForm()
     
@@ -737,26 +740,14 @@ class ProtocolDeleteView(View):
 
 
 class BackupPageView(View):
-
     """バックアップ管理ページ"""
-
     def get(self, request):
-
         histories = BackupHistory.objects.all()[:10]
-
         context = {
-
             'page_title': 'バックアップ管理',
-
             'histories': histories,
-
         }
-
         return render(request, 'ct_app/backup.html', context)
-
-
-
-
 
 class ExportBackupView(View):
     """バックアップ作成・ダウンロード"""
@@ -776,6 +767,7 @@ class ExportBackupView(View):
                     df_form = pd.DataFrame(list(Form.objects.all().values()))
                     df_protocol = pd.DataFrame(list(Protocol.objects.all().values()))
                     df_nightshift = pd.DataFrame(list(NightShift.objects.all().values()))
+                    df_question = pd.DataFrame(list(Question.objects.all().values()))
 
 
 
@@ -795,6 +787,7 @@ class ExportBackupView(View):
                     remove_timezone(df_form).to_excel(writer, sheet_name='Forms', index=False)
                     remove_timezone(df_protocol).to_excel(writer, sheet_name='Protocols', index=False)
                     remove_timezone(df_nightshift).to_excel(writer, sheet_name='NightShifts', index=False)
+                    remove_timezone(df_question).to_excel(writer, sheet_name='Questions', index=False)
                 # ポインタを先頭に戻す
                 output.seek(0)
                 # 履歴を作成
@@ -877,10 +870,12 @@ class ImportBackupView(View):
                 Form.objects.all().delete()
                 Protocol.objects.all().delete()
                 NightShift.objects.all().delete()
+                Question.objects.all().delete()
                 df_sicks = pd.read_excel(backup_file, sheet_name='Sicks').fillna('')
                 df_forms = pd.read_excel(backup_file, sheet_name='Forms').fillna('')
                 df_protocols = pd.read_excel(backup_file, sheet_name='Protocols').fillna('')
                 df_nightshifts = pd.read_excel(backup_file, sheet_name='NightShifts').fillna('')
+                df_questions = pd.read_excel(backup_file, sheet_name='Questions').fillna('')
                 for _, row in df_sicks.iterrows():
                     Sick.objects.create(**row.to_dict())
                 for _, row in df_forms.iterrows():
@@ -889,6 +884,8 @@ class ImportBackupView(View):
                     Protocol.objects.create(**row.to_dict())
                 for _, row in df_nightshifts.iterrows():
                     NightShift.objects.create(**row.to_dict())
+                for _, row in df_questions.iterrows():
+                    Question.objects.create(**row.to_dict())
                 BackupHistory.objects.create(backup_type='import', filename=backup_file.name, status='success')
                 return render(request, 'ct_app/backup.html', {'success': 'Excelからテキストデータを復元しました'})
             elif backup_file.name.endswith('.zip'):        
@@ -925,6 +922,7 @@ class ImportBackupView(View):
                         NoticeImage.objects.all().delete()
                         SickImage.objects.all().delete()
                         ProtocolImage.objects.all().delete()
+                        Question.objects.all().delete()
                     # DBを復元
                     with open(db_file, 'r', encoding='utf-8') as f:
                         call_command('loaddata', f.name, verbosity=0)
@@ -1069,3 +1067,146 @@ class NightShiftDeleteView(View):
         nightshift = get_object_or_404(NightShift, pk=pk)
         nightshift.delete()
         return redirect('nightshift_list')
+    
+# 1. 質問一覧画面
+class QuestionListView(ListView):
+    model = Question
+    template_name = 'ct_app/question_list.html'
+    context_object_name = 'questions'
+    ordering = ['-created_at']  # 新しい質問を上に
+
+# 2. 質問作成画面（ログイン必須）
+class QuestionCreateView(CreateView):
+    model = Question
+    template_name = 'ct_app/question_form.html'
+    fields = ['title', 'content']  # 'related_protocol' をコメントアウト
+    success_url = reverse_lazy('question_list')
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        User = get_user_model()
+        if not User.objects.exists():
+            # ユーザーが存在しない場合はエラーを返す
+            default_user = User.objects.create_superuser(
+                username='admin',
+                email='admin@example.com',
+                password='adminpassword'
+            )
+        else:
+            default_user = User.objects.first()  # 最初のユーザーを取得
+        if self.request.user.is_authenticated:
+            self.object.author = self.request.user
+        else:
+            # ログインしていない場合は最初のユーザー（管理者など）をセット
+            self.object.author = User.objects.first()
+        related_protocol_id = self.request.POST.get('related_protocol')
+        if related_protocol_id:
+            self.object.related_protocol = get_object_or_404(Protocol, id=related_protocol_id)
+            
+        self.object.save()    
+
+        return redirect(self.get_success_url())
+
+    # 3. 質問詳細 ＆ 回答投稿画面
+def question_detail(request, pk):
+    question = get_object_or_404(Question, pk=pk)
+    
+    if request.method == 'POST':
+        # 🚨 ログインしていない場合の安全装置（テストユーザーを割り当てる）
+        User = get_user_model()
+        if request.user.is_authenticated:
+            author = request.user
+        else:
+            # データベースにユーザーがいなければ作成し、いれば最初のユーザーを使う
+            if not User.objects.exists():
+                author = User.objects.create_user(
+                    username='test_user', 
+                    email='test@example.com', 
+                    password='password123'
+                )
+            else:
+                author = User.objects.first()
+
+        content = request.POST.get('content')
+        suggested_protocol_id = request.POST.get('suggested_protocol')
+        
+        # 回答オブジェクトの作成と保存
+        answer = Answer(
+            question=question,
+            author=author,  # ログイン制限をなくし、判別したauthorをセット
+            content=content
+        )
+        
+        if suggested_protocol_id:
+            answer.suggested_protocol_id = suggested_protocol_id
+            
+        answer.save()
+        return redirect('question_detail', pk=pk)
+
+    # GETリクエスト時の処理
+    answers = question.answers.all()  # 質問に紐づく回答一覧を取得（リレーション名に合わせて調整してください）
+    # もし protocols をテンプレートに渡す必要がある場合
+    from .models import Protocol # 必要に応じてインポート
+    protocols = Protocol.objects.all() 
+
+    context = {
+        'question': question,
+        'answers': answers,
+        'protocols': protocols,
+    }
+    return render(request, 'ct_app/question_detail.html', context)
+    
+def index(request):
+    questions = Question.objects.all().order_by('-created_at')
+    sicks_count = Sick.objects.count()
+    forms_count = Form.objects.count()
+    protocols_count = Protocol.objects.count()
+    night_shifts_count = NightShift.objects.count()
+    question_count = questions.count()
+    sicks_list = Sick.objects.all().order_by('-created_at')
+    forms_list = Form.objects.all().order_by('-created_at')
+    protocols_list = Protocol.objects.all().order_by('-created_at')
+    nightshift_list = NightShift.objects.all().order_by('-created_at') if hasattr(NightShift, 'created_at') else NightShift.objects.all()
+    context = {
+        'page_title': 'ホーム',
+        'sick_list': sicks_list,
+        'form_list': forms_list,
+        'protocol_list': protocols_list,
+        'nightshift_list': nightshift_list,
+        'questions': questions,
+        'sicks_count': sicks_count,
+        'forms_count': forms_count,
+        'protocols_count': protocols_count,
+        'night_shifts_count': night_shifts_count,
+        'question_count': question_count,
+    }
+    return render(request, 'ct_app/index.html', context)
+
+class QuestionUpdateView(UpdateView):
+    def get(self, request, pk):
+        question = get_object_or_404(Question, pk=pk)
+        form = QuestionForm(instance=question)
+        context = {
+            'page_title': '掲示板編集',
+            'form': form,
+            'question': question,
+        }
+        return render(request, 'ct_app/question_form.html', context)
+
+class QuestionDeleteView(DeleteView):
+    def post(self, request, pk):
+        question = get_object_or_404(Question, pk=pk)
+        question.delete()
+        return redirect('question_list')
+    
+def answer_create(request, question_id):
+    question = get_object_or_404(Question, pk=question_id)
+    
+    if request.method == 'POST':
+        form = AnswerForm(request.POST)
+        if form.is_valid():
+            answer = form.save(commit=False)
+            answer.question = question  # 紐付ける質問を設定
+            answer.save()
+            
+    return redirect('ct_app:question_detail', pk=question_id)    

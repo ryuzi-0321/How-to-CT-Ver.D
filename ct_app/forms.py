@@ -1,5 +1,5 @@
 from django import forms
-from .models import Sick, Form, Protocol, NightShift
+from .models import Sick, Form, Protocol, NightShift, Question, Answer 
 
 # 1. 自作ウィジェット（これはOK！）
 class MultipleFileInput(forms.ClearableFileInput):
@@ -109,3 +109,23 @@ class NightShiftForm(forms.ModelForm):
         self.fields['name'].required = True
         self.fields['content'].required = True
         self.fields['description'].required = False
+        
+class QuestionForm(forms.ModelForm):
+    """掲示板質問フォーム"""
+    class Meta:
+        model = Question
+        fields = ['title', 'content', 'related_protocols']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '質問タイトル'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': '質問内容'}),
+            'related_protocols': forms.SelectMultiple(attrs={'class': 'form-control'}),
+        }
+        
+class AnswerForm(forms.ModelForm):
+    """掲示板回答フォーム"""
+    class Meta:
+        model = Answer
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': '回答内容'}),
+        }                

@@ -1,0 +1,35 @@
+{% extends 'ct_app/base.html' %}
+
+{% block title %}掲示板 - How to CT{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>掲示板</h2>
+        <a href="{% url 'question_create' %}" class="btn btn-primary">質問を投稿する</a>
+    </div>
+
+    <div class="list-group">
+        {% for question in questions %}
+            <a href="{% url 'question_detail' question.pk %}" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ question.title }}</h5>
+                    <small class="text-muted">{{ question.created_at|date:"Y/m/d H:i" }}</small>
+                </div>
+                <p class="mb-1 text-truncate">{{ question.content }}</p>
+                
+                <!-- 関連プロトコルがある場合はバッジを表示 -->
+                {% if question.related_protocol %}
+                    <span class="badge bg-info text-dark mt-2">
+                        関連プロトコル: {{ question.related_protocol.category }} - {{ question.related_protocol.title }}
+                    </span>
+                {% endif %}
+                
+                <small class="text-muted d-block mt-1">投稿者: {{ question.author.username }}</small>
+            </a>
+        {% empty %}
+            <p class="text-muted">まだ質問はありません。最初の質問を投稿してみましょう！</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
