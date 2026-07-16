@@ -4,8 +4,12 @@
 
 {% block content %}
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>掲示板</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-1">掲示板</h2>
+            <p class="text-muted fs-6 mb-0">撮影技術やプロトコルの相談、日常業務の疑問を共有し、みんなで解決するためのQ&Aコーナーです。</p>
+            <p class="text-muted fs-6 mb-0">質問が投稿されたら、解決にむけてスタッフが回答を投稿しましょう。</p>
+        </div>
         <a href="{% url 'question_create' %}" class="btn btn-primary">質問を投稿する</a>
     </div>
 
