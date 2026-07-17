@@ -50,6 +50,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'ct_app.context_processors.maintenance_status',
             ],
         },
     },
@@ -90,3 +91,5 @@ SESSION_COOKIE_AGE = 86400  # 24 hours
 CSRF_COOKIE_SECURE = True  # Set to True in production with HTTPS
 SESSION_COOKIE_SECURE = True  # Set to True in production with HTTPS
 
+# メンテナンス中なら True、普段は False にする
+IS_MAINTENANCE = False
