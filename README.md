@@ -143,11 +143,15 @@ python manage.py migrate
 ```bash
 python manage.py collectstatic
 ```
+### メンテナンスモードにする場合
+setting.pyの一番下
+IS_MAINTENANCE = False　→　Trueにする。
+```
 
-## ライセンス
+### ライセンス
 
 このプロジェクトは内部用途のみです。
 
-## サポート
+### サポート
 
 問題が発生した場合は、GitHubのIssueを作成してください。
