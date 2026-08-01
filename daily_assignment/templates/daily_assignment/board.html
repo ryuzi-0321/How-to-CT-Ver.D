@@ -1,0 +1,321 @@
+{% extends "ct_app/base.html" %}
+{% load static %}
+
+{% block title %}
+当日配置表 - How to CT
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'daily_assignment/board.css' %}">
+{% endblock %}
+
+{% block content %}
+<header class="assignment-topbar">
+  <div class="assignment-title-area">
+    <div class="assignment-brand">当日配置表</div>
+    <h1>{{ board_date|date:"Y年m月d日" }}</h1>
+    <p>今日の配置・担当を編集します</p>
+  </div>
+
+  <a class="settings-button"
+     href="{% url 'daily_assignment:settings' %}">
+    スタッフ・配置場所設定
+  </a>
+</header>
+<main class="assignment-page">
+  {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+        <div class="message {{ message.tags }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <section class="control-card">
+    <div class="date-navigation">
+      <a class="control-button secondary"
+         href="?date={{ previous_date|date:'Y-m-d' }}">
+        ← 前日
+      </a>
+      <form method="get" class="date-form">
+        <input
+          type="date"
+          name="date"
+          value="{{ board_date|date:'Y-m-d' }}"
+        >
+        <button class="control-button secondary" type="submit">
+          表示
+        </button>
+      </form>
+      <a class="control-button today"
+         href="?date={{ today|date:'Y-m-d' }}">
+        今日
+      </a>
+      <a class="control-button secondary"
+         href="?date={{ next_date|date:'Y-m-d' }}">
+        翌日 →
+      </a>
+    </div>
+    <div class="main-actions">
+      <button
+        id="saveButton"
+        class="control-button primary"
+        type="button">
+        保存
+      </button>
+      <a
+        class="control-button success"
+        href="{% url 'daily_assignment:excel' %}?date={{ board_date|date:'Y-m-d' }}">
+        Excelダウンロード
+      </a>
+    </div>
+  </section>
+  <section class="copy-card">
+  <div class="copy-card-title">
+    配置データ操作
+  </div>
+
+  <div class="copy-card-content">
+
+    <form
+      method="post"
+      action="{% url 'daily_assignment:copy' %}"
+      class="copy-form"
+      id="copyForm"
+      onsubmit="return prepareCopy();">
+
+      {% csrf_token %}
+
+      <input
+        type="hidden"
+        name="date"
+        value="{{ board_date|date:'Y-m-d' }}"
+      >
+
+      <input
+        type="hidden"
+        name="overwrite"
+        id="copyOverwrite"
+        value="0"
+      >
+
+      <label class="copy-date-field">
+        <span>コピー元</span>
+
+        <input
+          type="date"
+          name="source_date"
+          value="{{ previous_date|date:'Y-m-d' }}"
+          required
+        >
+      </label>
+
+      <button
+        class="control-button secondary"
+        type="submit">
+        指定日からコピー
+      </button>
+
+    </form>
+
+    <form
+      method="post"
+      action="{% url 'daily_assignment:clear' %}"
+      onsubmit="return confirm('この日の配置表をすべて空にします。元に戻せません。よろしいですか？');">
+
+      {% csrf_token %}
+
+      <input
+        type="hidden"
+        name="date"
+        value="{{ board_date|date:'Y-m-d' }}"
+      >
+
+      <button
+        class="control-button danger"
+        type="submit">
+        全消去
+      </button>
+
+    </form>
+
+    <div id="saveStatus" class="save-status">
+      最終更新：{{ board.updated_at|date:'Y/m/d H:i:s' }}
+    </div>
+
+  </div>
+</section>
+  
+<div class="board-wrap">
+  <table class="assignment-table">
+    <thead>
+      <tr>
+        <th class="time-head">時間</th>
+
+        {% for group in area_groups %}
+          {% for item in group.areas %}
+            <th colspan="{{ item.area.slot_count }}">
+              <span class="category">{{ item.area.category }}</span>
+              {{ item.area.name }}
+            </th>
+          {% endfor %}
+        {% endfor %}
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for row_key, row_label in row_definitions %}
+        <tr>
+          <th class="time-column">{{ row_label }}</th>
+
+          {% for group in area_groups %}
+            {% for item in group.areas %}
+              {% for row in item.rows %}
+                {% if row.key == row_key %}
+                  {% for slot in row.slots %}
+                    <td>
+                      <input
+                        class="cell-input"
+                        data-area-id="{{ item.area.id }}"
+                        data-row-key="{{ row_key }}"
+                        data-slot-index="{{ slot.index }}"
+                        value="{{ slot.value }}"
+                        list="staffList"
+                        autocomplete="off"
+                      >
+                    </td>
+                  {% endfor %}
+                {% endif %}
+              {% endfor %}
+            {% endfor %}
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+  <datalist id="staffList"></datalist>
+  <section class="meta-grid">
+
+    <div class="meta-field">
+      <label for="{{ form.conference.id_for_label }}">会議等</label>
+      {{ form.conference }}
+    </div>
+
+    <div class="meta-field">
+      <label for="{{ form.two_shift.id_for_label }}">2交代勤務</label>
+      {{ form.two_shift }}
+    </div>
+
+    <div class="meta-field">
+      <label for="{{ form.annual_leave_1.id_for_label }}">年休①</label>
+      {{ form.annual_leave_1 }}
+    </div>
+
+    <div class="meta-field">
+      <label for="{{ form.annual_leave_2.id_for_label }}">年休②</label>
+      {{ form.annual_leave_2 }}
+    </div>
+
+    <div class="meta-field">
+      <label for="{{ form.staffing_am.id_for_label }}">人数状況・午前</label>
+      {{ form.staffing_am }}
+    </div>
+
+    <div class="meta-field">
+      <label for="{{ form.staffing_pm.id_for_label }}">人数状況・午後</label>
+      {{ form.staffing_pm }}
+    </div>
+
+    <div class="meta-field">
+      <label for="{{ form.free_text.id_for_label }}">Free</label>
+      {{ form.free_text }}
+    </div>
+
+    <div class="meta-field wide">
+      <label for="{{ form.comment.id_for_label }}">コメント</label>
+      {{ form.comment }}
+    </div>
+
+    <div class="meta-field">
+      <label for="{{ form.unassigned.id_for_label }}">配置未定</label>
+      {{ form.unassigned }}
+    </div>
+
+    <div class="meta-field">
+      <label for="{{ form.reception_leave.id_for_label }}">受付（年休）</label>
+      {{ form.reception_leave }}
+    </div>
+
+  </section>
+</main>
+<script>
+const staffNames = {{ staff_names_json|safe }};
+const datalist = document.getElementById('staffList');
+staffNames.forEach(name => { const option = document.createElement('option'); option.value = name; datalist.appendChild(option); });
+const saveUrl = "{% url 'daily_assignment:save' %}";
+const boardDate = "{{ board_date|date:'Y-m-d' }}";
+let updatedAt = "{{ board.updated_at|date:'c' }}";
+let dirty = false;
+const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+document.querySelectorAll('input, textarea').forEach(el => { if (el.type !== 'hidden' && el.type !== 'date') el.addEventListener('input', () => { dirty = true; document.getElementById('saveStatus').textContent = '未保存の変更があります'; }); });
+function metaValue(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+async function saveBoard() {
+  const button = document.getElementById('saveButton'); button.disabled = true; button.textContent = '保存中…';
+  const cells = [...document.querySelectorAll('.cell-input')].map(el => ({ area_id: el.dataset.areaId, row_key: el.dataset.rowKey, slot_index: el.dataset.slotIndex, value: el.value }));
+  const meta = { conference: metaValue('id_conference'), two_shift: metaValue('id_two_shift'), annual_leave_1: metaValue('id_annual_leave_1'), annual_leave_2: metaValue('id_annual_leave_2'), staffing_am: metaValue('id_staffing_am'), staffing_pm: metaValue('id_staffing_pm'), free_text: metaValue('id_free_text'), comment: metaValue('id_comment'), unassigned: metaValue('id_unassigned'), reception_leave: metaValue('id_reception_leave') };
+  try {
+    const response = await fetch(saveUrl, { method: 'POST', headers: {'Content-Type':'application/json','X-CSRFToken':csrfToken}, body: JSON.stringify({date:boardDate, updated_at:updatedAt, cells, meta}) });
+    const data = await response.json();
+    if (!response.ok) { alert(data.error || '保存できませんでした。'); if (data.conflict) location.reload(); return; }
+    updatedAt = data.updated_at; dirty = false; document.getElementById('saveStatus').textContent = '保存済み：' + new Date(updatedAt).toLocaleString('ja-JP');
+  } catch (e) { alert('通信エラーで保存できませんでした。'); }
+  finally { button.disabled = false; button.textContent = '保存'; }
+}
+document.getElementById('saveButton').addEventListener('click', saveBoard);
+window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); saveBoard(); } });
+const copyForm = document.getElementById('copyForm');
+const copyOverwrite = document.getElementById('copyOverwrite');
+
+if (copyForm) {
+  copyForm.addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    copyOverwrite.value = '0';
+    const formData = new FormData(copyForm);
+    formData.set('check_only', '1');
+    try {
+      const response = await fetch(copyForm.action, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken,
+        },
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        alert(data.error || 'コピー状態を確認できませんでした。');
+        return;
+      }
+      if (data.has_existing_data) {
+        const confirmed = confirm(
+          'コピー先にはすでにデータがあります。\n' +
+          '現在の内容を削除して上書きしますか？'
+        );
+        if (!confirmed) {
+          return;
+        }
+        copyOverwrite.value = '1';
+      }
+      copyForm.submit();
+    } catch (error) {
+      alert('通信エラーのためコピーできませんでした。');
+    }
+  });
+}
+</script>
+
+{% endblock %}

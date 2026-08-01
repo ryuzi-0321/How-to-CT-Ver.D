@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'ct_app',
+    'daily_assignment',
 ]
 
 MIDDLEWARE = [

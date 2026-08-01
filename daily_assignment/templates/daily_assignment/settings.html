@@ -1,0 +1,473 @@
+{% extends "ct_app/base.html" %}
+{% load static %}
+
+{% block title %}
+スタッフ・配置場所設定
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{% static 'daily_assignment/settings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+
+    <div class="settings-page-header">
+        <div>
+            <h1 class="h3 mb-1">スタッフ・配置場所設定</h1>
+            <p class="text-muted mb-0">
+                当日配置表で使用するスタッフと配置場所を管理します。
+            </p>
+        </div>
+
+        <a href="{% url 'daily_assignment:board' %}"
+           class="settings-back-button">
+            配置表へ戻る
+        </a>
+    </div>
+
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="alert
+                    {% if message.tags == 'success' %}
+                        alert-success
+                    {% elif message.tags == 'error' %}
+                        alert-danger
+                    {% elif message.tags == 'warning' %}
+                        alert-warning
+                    {% else %}
+                        alert-info
+                    {% endif %}
+                    alert-dismissible fade show"
+                     role="alert">
+
+                    {{ message }}
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="alert"
+                            aria-label="閉じる">
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="row g-4">
+
+        <!-- スタッフ設定 -->
+        <div class="col-12">
+            <div class="settings-card">
+                <div class="settings-card-header staff">
+                    <h2 class="h5 mb-0">スタッフ設定</h2>
+                </div>
+
+                <div class="settings-card-body">
+
+                    <!-- スタッフ追加 -->
+                    <div class="settings-add-panel">
+                        <h3 class="h6 mb-3">スタッフを追加</h3>
+
+                        <form method="post"
+                              action="{% url 'daily_assignment:staff_add' %}"
+                              class="row g-3 align-items-end">
+
+                            {% csrf_token %}
+
+                            <div class="col-12 col-md-6">
+                                <label for="staff-name"
+                                       class="form-label">
+                                    スタッフ名
+                                </label>
+
+                                <input type="text"
+                                       id="staff-name"
+                                       name="name"
+                                       class="form-control"
+                                       maxlength="100"
+                                       required>
+                            </div>
+
+                            <div class="col-6 col-md-2">
+                                <label for="staff-order"
+                                       class="form-label">
+                                    表示順
+                                </label>
+
+                                <input type="number"
+                                       id="staff-order"
+                                       name="display_order"
+                                       class="form-control"
+                                       value="0"
+                                       min="0"
+                                       required>
+                            </div>
+
+                            <div class="col-6 col-md-2">
+                                <div class="form-check mb-2">
+                                    <input type="checkbox"
+                                           id="staff-active"
+                                           name="is_active"
+                                           class="form-check-input"
+                                           checked>
+
+                                    <label for="staff-active"
+                                           class="form-check-label">
+                                        使用する
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-2">
+                                <button type="submit"
+                                        class="btn btn-primary w-100">
+                                    追加
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- スタッフ一覧 -->
+                    <div class="settings-list-panel">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover align-middle">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="min-width: 220px;">
+                                            スタッフ名
+                                    </th>
+                                    <th style="width: 120px;">
+                                        表示順
+                                    </th>
+                                    <th style="width: 120px;">
+                                        使用状態
+                                    </th>
+                                    <th style="width: 180px;">
+                                        操作
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for staff in staff_list %}
+                                    <tr>
+                                        <td colspan="4" class="p-0">
+                                            <form method="post"
+                                                  action="{% url 'daily_assignment:staff_update' staff.id %}"
+                                                  class="row g-0 align-items-center">
+
+                                                {% csrf_token %}
+
+                                                <div class="col-12 col-md">
+                                                    <div class="p-2">
+                                                        <input type="text"
+                                                               name="name"
+                                                               class="form-control"
+                                                               value="{{ staff.name }}"
+                                                               maxlength="100"
+                                                               required>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-6 col-md-auto"
+                                                     style="width: 120px;">
+                                                    <div class="p-2">
+                                                        <input type="number"
+                                                               name="display_order"
+                                                               class="form-control"
+                                                               value="{{ staff.display_order }}"
+                                                               min="0"
+                                                               required>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-6 col-md-auto"
+                                                     style="width: 120px;">
+                                                    <div class="p-2 text-center">
+                                                        <div class="form-check form-switch d-inline-block">
+                                                            <input type="checkbox"
+                                                                   name="is_active"
+                                                                   class="form-check-input"
+                                                                   {% if staff.is_active %}checked{% endif %}>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12 col-md-auto"
+                                                     style="width: 180px;">
+                                                    <div class="p-2 d-flex gap-2">
+                                                        <button type="submit"
+                                                                class="btn btn-sm btn-success flex-fill">
+                                                            更新
+                                                        </button>
+
+                                                        <button type="submit"
+                                                                formaction="{% url 'daily_assignment:staff_delete' staff.id %}"
+                                                                class="btn btn-sm btn-danger flex-fill"
+                                                                onclick="return confirm('スタッフ「{{ staff.name|escapejs }}」を削除しますか？');">
+                                                            削除
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="4"
+                                            class="text-center text-muted py-4">
+                                            スタッフはまだ登録されていません。
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- 配置場所設定 -->
+        <div class="col-12">
+            <div class="settings-card">
+                <div class="settings-card-header area">
+                    <h2 class="h5 mb-0">配置場所設定</h2>
+                </div>
+
+                <div class="settings-card-body">
+
+                    <!-- 配置場所追加 -->
+                    <div class="settings-add-panel">
+                        <h3 class="h6 mb-3">配置場所を追加</h3>
+
+                        <form method="post"
+                              action="{% url 'daily_assignment:area_add' %}"
+                              class="row g-3 align-items-end">
+
+                            {% csrf_token %}
+
+                            <div class="col-12 col-md-3">
+                                <label for="area-category"
+                                       class="form-label">
+                                    部門・分類
+                                </label>
+
+                                <input type="text"
+                                       id="area-category"
+                                       name="category"
+                                       class="form-control"
+                                       maxlength="100"
+                                       placeholder="例：CT">
+                            </div>
+
+                            <div class="col-12 col-md-3">
+                                <label for="area-name"
+                                       class="form-label">
+                                    配置場所名
+                                </label>
+
+                                <input type="text"
+                                       id="area-name"
+                                       name="name"
+                                       class="form-control"
+                                       maxlength="100"
+                                       placeholder="例：第1CT室"
+                                       required>
+                            </div>
+
+                            <div class="col-6 col-md-2">
+                                <label for="area-slot-count"
+                                       class="form-label">
+                                    入力列数
+                                </label>
+
+                                <input type="number"
+                                       id="area-slot-count"
+                                       name="slot_count"
+                                       class="form-control"
+                                       value="1"
+                                       min="1"
+                                       max="10"
+                                       required>
+                            </div>
+
+                            <div class="col-6 col-md-1">
+                                <label for="area-order"
+                                       class="form-label">
+                                    表示順
+                                </label>
+
+                                <input type="number"
+                                       id="area-order"
+                                       name="display_order"
+                                       class="form-control"
+                                       value="0"
+                                       min="0"
+                                       required>
+                            </div>
+
+                            <div class="col-6 col-md-1">
+                                <div class="form-check mb-2">
+                                    <input type="checkbox"
+                                           id="area-active"
+                                           name="is_active"
+                                           class="form-check-input"
+                                           checked>
+
+                                    <label for="area-active"
+                                           class="form-check-label">
+                                        使用
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-2">
+                                <button type="submit"
+                                        class="btn btn-success w-100">
+                                    追加
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- 配置場所一覧 -->
+                    <div class="settings-list-panel">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover align-middle settings-table">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="min-width: 160px;">
+                                            部門・分類
+                                    </th>
+                                    <th style="min-width: 220px;">
+                                        配置場所名
+                                    </th>
+                                    <th style="width: 120px;">
+                                        入力列数
+                                    </th>
+                                    <th style="width: 120px;">
+                                        表示順
+                                    </th>
+                                    <th style="width: 120px;">
+                                        使用状態
+                                    </th>
+                                    <th style="width: 180px;">
+                                        操作
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for area in area_list %}
+                                    <tr>
+                                        <td colspan="6" class="p-0">
+                                            <form method="post"
+                                                  action="{% url 'daily_assignment:area_update' area.id %}"
+                                                  class="row g-0 align-items-center">
+
+                                                {% csrf_token %}
+
+                                                <div class="col-12 col-md">
+                                                    <div class="p-2">
+                                                        <input type="text"
+                                                               name="category"
+                                                               class="form-control"
+                                                               value="{{ area.category }}"
+                                                               maxlength="100">
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12 col-md">
+                                                    <div class="p-2">
+                                                        <input type="text"
+                                                               name="name"
+                                                               class="form-control"
+                                                               value="{{ area.name }}"
+                                                               maxlength="100"
+                                                               required>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-6 col-md-auto"
+                                                     style="width: 120px;">
+                                                    <div class="p-2">
+                                                        <input type="number"
+                                                               name="slot_count"
+                                                               class="form-control"
+                                                               value="{{ area.slot_count }}"
+                                                               min="1"
+                                                               max="10"
+                                                               required>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-6 col-md-auto"
+                                                     style="width: 120px;">
+                                                    <div class="p-2">
+                                                        <input type="number"
+                                                               name="display_order"
+                                                               class="form-control"
+                                                               value="{{ area.display_order }}"
+                                                               min="0"
+                                                               required>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-6 col-md-auto"
+                                                     style="width: 120px;">
+                                                    <div class="p-2 text-center">
+                                                        <div class="form-check form-switch d-inline-block">
+                                                            <input type="checkbox"
+                                                                   name="is_active"
+                                                                   class="form-check-input"
+                                                                   {% if area.is_active %}checked{% endif %}>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12 col-md-auto"
+                                                     style="width: 180px;">
+                                                    <div class="p-2 d-flex gap-2">
+                                                        <button type="submit"
+                                                                class="btn btn-sm btn-success flex-fill">
+                                                            更新
+                                                        </button>
+
+                                                        <button type="submit"
+                                                                formaction="{% url 'daily_assignment:area_delete' area.id %}"
+                                                                class="btn btn-sm btn-danger flex-fill"
+                                                                onclick="return confirm('配置場所「{{ area.name|escapejs }}」を削除しますか？');">
+                                                            削除
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="6"
+                                            class="text-center text-muted py-4">
+                                            配置場所はまだ登録されていません。
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="alert alert-info mt-3 mb-0">
+                        過去の配置表で使用済みの配置場所は、削除しても完全には消えず、
+                        自動的に「使用停止」へ切り替わります。
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

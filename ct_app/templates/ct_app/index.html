@@ -24,7 +24,58 @@
             <small class="d-block opacity-75" style="font-size: 0.7rem;">掲示板</small>
             <span class="fs-4 fw-bold">{{ question_count }}</span>
         </div>
+        {% if today_early_staff %}
+            <div class="today-early-card">
+                <small class="d-block">
+                    <i class="bi bi-sunrise-fill"></i>
+                    今日の早出
+                </small>
+
+                <strong>
+                    {% for staff_name in today_early_staff %}
+                        {{ staff_name }}{% if not forloop.last %}・{% endif %}
+                    {% endfor %}
+                </strong>
+            </div>
+        {% endif %}
     </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .today-early-card {
+        min-width: 150px;
+        padding: 8px 14px;
+        text-align: center;
+        color: #17324d;
+        background: linear-gradient(
+            135deg,
+            #fff4c7,
+            #ffd978
+        );
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16);
+    }
+
+    .today-early-card small {
+        margin-bottom: 2px;
+        color: #7a5810;
+        font-size: 0.72rem;
+        font-weight: 700;
+    }
+
+    .today-early-card strong {
+        display: block;
+        font-size: 1rem;
+        line-height: 1.3;
+    }
+
+    .today-early-card .bi {
+        margin-right: 3px;
+        color: #e39a00;
+    }
+</style>
 {% endblock %}
 
 {% block content %}

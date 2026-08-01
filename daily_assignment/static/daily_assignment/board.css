@@ -1,0 +1,666 @@
+:root {
+    --assignment-primary: #1e3c72;
+    --assignment-secondary: #2a5298;
+    --assignment-border: #cbd5e1;
+    --assignment-bg: #f4f7fb;
+    --assignment-header: #17324d;
+}
+
+body {
+    background: var(--assignment-bg);
+}
+
+.assignment-page {
+    width: min(98%, 1800px);
+    margin: 0 auto;
+    padding: 24px 0 48px;
+}
+
+.assignment-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 20px 24px;
+    color: #fff;
+    background: linear-gradient(
+        90deg,
+        var(--assignment-primary),
+        var(--assignment-secondary)
+    );
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+}
+
+.assignment-header h1 {
+    margin: 0;
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    font-weight: 700;
+}
+
+.assignment-header p {
+    margin: 6px 0 0;
+    opacity: 0.9;
+}
+
+.assignment-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 14px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.assignment-toolbar a,
+.assignment-toolbar button {
+    text-decoration: none;
+}
+
+.board-wrap,
+.assignment-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.assignment-table {
+    width: max-content;
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.assignment-table th,
+.assignment-table td {
+    padding: 2px 4px;
+    border: 1px solid var(--assignment-border);
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* 名前を入れる列 */
+.assignment-table tbody td {
+    width: 110px;
+    min-width: 110px;
+    max-width: 110px;
+    padding: 4px;
+}
+
+/* 名前入力欄 */
+.assignment-table .cell-input {
+    box-sizing: border-box;
+    width: 96px;
+    min-width: 96px;
+    max-width: 96px;
+    padding: 7px 5px;
+    text-align: center;
+}
+
+/* 時間列 */
+.assignment-table .time-head,
+.assignment-table .time-column {
+    width: 90px;
+    min-width: 90px;
+    max-width: 90px;
+}
+
+.assignment-table tbody tr:nth-child(odd),
+.assignment-table tbody tr:nth-child(odd) input { 
+    background: #ffffff;
+}
+
+.assignment-table tbody tr:nth-child(even),
+.assignment-table tbody tr:nth-child(even) input {
+    background: #f3f7fc;
+}
+
+.assignment-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    color: #fff;
+    background: var(--assignment-header);
+    font-weight: 700;
+}
+
+.assignment-table .time-column {
+    min-width: 85px;
+    background: #17324d;
+    color: #fff;
+    font-weight: bold;
+}
+
+.assignment-table input,
+.assignment-table textarea,
+.assignment-table select {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    text-align: center;
+    padding: 7px 8px;
+    border: 1px solid #b8c4d0;
+    border-radius: 6px;
+    background: #fff;
+    font-size: 0.95rem;
+    table-layout: auto;
+}
+
+.assignment-table input:focus,
+.assignment-table textarea:focus,
+.assignment-table select:focus {
+    outline: none;
+    border-color: var(--assignment-secondary);
+    box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.15);
+}
+
+.assignment-table input[readonly],
+.assignment-table textarea[readonly] {
+    background: #f1f5f9;
+}
+
+.assignment-section {
+    margin-top: 20px;
+    padding: 18px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.assignment-section h2 {
+    margin: 0 0 14px;
+    color: var(--assignment-primary);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.admin-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 14px;
+    color: var(--assignment-primary);
+    background: #fff;
+    border: 1px solid var(--assignment-primary);
+    border-radius: 7px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+.admin-link:hover {
+    color: #fff;
+    background: var(--assignment-primary);
+}
+
+.save-status {
+    min-height: 24px;
+    margin-top: 10px;
+    color: #526274;
+    font-weight: 600;
+}
+
+.save-status.success {
+    color: #15803d;
+}
+
+.save-status.error {
+    color: #b91c1c;
+}
+
+@media (max-width: 768px) {
+    .assignment-page {
+        width: 100%;
+        padding: 12px;
+    }
+
+    .assignment-header {
+        padding: 16px;
+    }
+
+    .assignment-toolbar {
+        align-items: stretch;
+    }
+
+    .assignment-toolbar > * {
+        flex: 1 1 auto;
+    }
+}
+
+/* 隔行色 */
+.assignment-table tbody tr:nth-child(odd) td,
+.assignment-table tbody tr:nth-child(odd) input {
+    background: #ffffff;
+}
+
+.assignment-table tbody tr:nth-child(even) td,
+.assignment-table tbody tr:nth-child(even) input {
+    background: #cfdff3;
+}
+
+/* 入力中は白くする */
+.assignment-table tbody input:focus {
+    background: #ffffff;
+}
+
+/* 時間列 */
+.assignment-table .time-column {
+    min-width: 65px;
+    padding: 4px 6px;
+    background: #17324d;
+    color: #ffffff;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+/* 補足欄全体 */
+.meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(240px, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+}
+
+/* 各入力欄 */
+.meta-field {
+    position: relative;
+    min-width: 0;
+}
+
+/* 入力欄内の見出し */
+.meta-field label {
+    position: absolute;
+    top: 7px;
+    left: 11px;
+    z-index: 2;
+    color: #526274;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* Djangoフォームのinput・textarea */
+.meta-field input,
+.meta-field textarea,
+.meta-field select {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 25px 10px 8px;
+    border: 1px solid #aebdcc;
+    border-radius: 7px;
+    background: #fff;
+    font-size: 0.95rem;
+}
+
+/* テキストエリア */
+.meta-field textarea {
+    height: 76px;
+    min-height: 76px;
+    resize: vertical;
+}
+
+/* 1行入力欄 */
+.meta-field input {
+    height: 54px;
+}
+
+/* コメント欄を横に広げる */
+.meta-field.wide {
+    grid-column: span 2;
+}
+
+/* フォーカス時 */
+.meta-field input:focus,
+.meta-field textarea:focus,
+.meta-field select:focus {
+    outline: none;
+    border-color: var(--assignment-secondary);
+    box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.15);
+}
+
+@media (max-width: 1000px) {
+    .meta-grid {
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+    }
+}
+
+@media (max-width: 650px) {
+    .meta-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .meta-field.wide {
+        grid-column: span 1;
+    }
+}
+
+/* 上部ヘッダー */
+.assignment-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin: 18px auto 16px;
+    padding: 22px 26px;
+    width: min(96%, 1500px);
+    box-sizing: border-box;
+    color: #fff;
+    background:
+        linear-gradient(
+            135deg,
+            var(--assignment-primary),
+            var(--assignment-secondary)
+        );
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(30, 60, 114, 0.22);
+}
+
+.assignment-title-area {
+    min-width: 0;
+}
+
+.assignment-brand {
+    margin-bottom: 3px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    opacity: 0.8;
+}
+
+.assignment-title-area h1 {
+    margin: 0;
+    font-size: clamp(1.55rem, 3vw, 2.15rem);
+    line-height: 1.2;
+}
+
+.assignment-title-area p {
+    margin: 7px 0 0;
+    font-size: 0.95rem;
+    opacity: 0.88;
+}
+
+/* 設定ボタン */
+.settings-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 11px 16px;
+    color: var(--assignment-primary);
+    background: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 9px;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+    transition:
+        transform 0.15s,
+        box-shadow 0.15s,
+        background 0.15s;
+}
+
+.settings-button:hover {
+    color: var(--assignment-primary);
+    background: #f2f6ff;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(0, 0, 0, 0.16);
+}
+
+/* 操作カード */
+.control-card,
+.copy-card {
+    width: min(96%, 1500px);
+    margin: 0 auto 14px;
+    box-sizing: border-box;
+    background: #fff;
+    border: 1px solid #dbe3ec;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(23, 50, 77, 0.08);
+}
+
+.control-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 16px;
+}
+
+.date-navigation,
+.main-actions,
+.copy-card-content,
+.copy-form {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.date-form {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+}
+
+/* 共通ボタン */
+.control-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 8px 14px;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.93rem;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        transform 0.15s,
+        box-shadow 0.15s,
+        background 0.15s;
+}
+
+.control-button:hover {
+    transform: translateY(-1px);
+}
+
+.control-button.secondary {
+    color: #243b53;
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.control-button.secondary:hover {
+    background: #eef3f8;
+    box-shadow: 0 3px 8px rgba(23, 50, 77, 0.1);
+}
+
+.control-button.today {
+    color: #1e3c72;
+    background: #e8f0ff;
+    border-color: #abc4ed;
+}
+
+.control-button.today:hover {
+    background: #dce9ff;
+}
+
+.control-button.primary {
+    color: #fff;
+    background: var(--assignment-secondary);
+    border-color: var(--assignment-secondary);
+}
+
+.control-button.primary:hover {
+    background: #204784;
+    box-shadow: 0 4px 10px rgba(42, 82, 152, 0.25);
+}
+
+.control-button.success {
+    color: #fff;
+    background: #16834a;
+    border-color: #16834a;
+}
+
+.control-button.success:hover {
+    background: #106b3c;
+    box-shadow: 0 4px 10px rgba(22, 131, 74, 0.24);
+}
+
+.control-button.danger {
+    color: #fff;
+    background: #c83f49;
+    border-color: #c83f49;
+}
+
+.control-button.danger:hover {
+    background: #a92f38;
+    box-shadow: 0 4px 10px rgba(200, 63, 73, 0.23);
+}
+
+/* 日付入力 */
+.date-form input[type="date"],
+.copy-date-field input[type="date"] {
+    min-height: 40px;
+    box-sizing: border-box;
+    padding: 7px 10px;
+    color: #243b53;
+    background: #fff;
+    border: 1px solid #bdc9d6;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.94rem;
+}
+
+.date-form input[type="date"]:focus,
+.copy-date-field input[type="date"]:focus {
+    outline: none;
+    border-color: var(--assignment-secondary);
+    box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.13);
+}
+
+/* コピー操作 */
+.copy-card-title {
+    padding: 11px 16px;
+    color: #17324d;
+    background: #eef3f8;
+    border-bottom: 1px solid #dbe3ec;
+    border-radius: 12px 12px 0 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.copy-card-content {
+    padding: 13px 16px;
+}
+
+.copy-date-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #40566d;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.overwrite-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    color: #40566d;
+    background: #f8fafc;
+    border: 1px solid #dbe3ec;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.overwrite-check input {
+    width: 17px;
+    height: 17px;
+    margin: 0;
+    accent-color: var(--assignment-secondary);
+}
+
+.save-status {
+    margin-left: auto;
+    padding: 8px 11px;
+    color: #526274;
+    background: #f8fafc;
+    border: 1px solid #dbe3ec;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 650;
+}
+
+@media (max-width: 768px) {
+    .assignment-topbar {
+        align-items: stretch;
+        flex-direction: column;
+        margin-top: 10px;
+        padding: 18px;
+    }
+
+    .settings-button {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .control-card {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .date-navigation,
+    .main-actions,
+    .copy-card-content,
+    .copy-form {
+        align-items: stretch;
+    }
+
+    .control-button {
+        flex: 1 1 auto;
+    }
+
+    .date-form {
+        flex: 1 1 100%;
+    }
+
+    .date-form input[type="date"] {
+        flex: 1;
+    }
+
+    .copy-form {
+        width: 100%;
+    }
+
+    .copy-date-field {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .save-status {
+        width: 100%;
+        margin-left: 0;
+        box-sizing: border-box;
+    }
+}

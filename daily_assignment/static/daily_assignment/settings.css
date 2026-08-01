@@ -1,0 +1,176 @@
+.settings-page {
+    width: min(96%, 1400px);
+    margin: 0 auto;
+    padding: 28px 0 48px;
+}
+
+.settings-page-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 22px 26px;
+    color: #fff;
+    background: linear-gradient(90deg, #1e3c72, #2a5298);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+}
+
+.settings-page-header h1 {
+    margin: 0 0 6px;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.settings-page-header p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.settings-back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 16px;
+    color: #1e3c72;
+    background: #fff;
+    border: 1px solid #fff;
+    border-radius: 7px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+.settings-back-button:hover {
+    color: #fff;
+    background: transparent;
+}
+
+.settings-card {
+    overflow: hidden;
+    margin-bottom: 26px;
+    background: #fff;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.09);
+}
+
+.settings-card:hover {
+    transform: none;
+}
+
+.settings-card-header {
+    padding: 15px 20px;
+    color: #fff;
+}
+
+.settings-card-header.staff {
+    background: linear-gradient(90deg, #1e3c72, #2a5298);
+}
+
+.settings-card-header.area {
+    background: linear-gradient(90deg, #176b52, #25966f);
+}
+
+.settings-card-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.settings-card-body {
+    padding: 20px;
+}
+
+.settings-add-panel {
+    margin-bottom: 22px;
+    padding: 18px;
+    background: #f4f7fb;
+    border: 1px solid #d9e2ec;
+    border-radius: 9px;
+}
+
+.settings-add-panel h3 {
+    margin-bottom: 15px;
+    color: #1e3c72;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.settings-table th {
+    white-space: nowrap;
+    color: #fff;
+    background: #17324d;
+    vertical-align: middle;
+}
+
+.settings-table td {
+    vertical-align: middle;
+}
+
+.settings-table input {
+    min-width: 80px;
+}
+
+.settings-table tbody tr:hover {
+    background: #f5f8fc;
+}
+
+.settings-action-buttons {
+    display: flex;
+    gap: 7px;
+}
+
+.settings-action-buttons .btn {
+    flex: 1;
+}
+
+.settings-active-label {
+    display: inline-block;
+    min-width: 70px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.settings-active-label.enabled {
+    color: #146c43;
+    background: #d1e7dd;
+}
+
+.settings-active-label.disabled {
+    color: #842029;
+    background: #f8d7da;
+}
+
+@media (max-width: 768px) {
+    .settings-page {
+        width: 100%;
+        padding: 12px;
+    }
+
+    .settings-page-header {
+        align-items: stretch;
+        padding: 18px;
+    }
+
+    .settings-back-button {
+        width: 100%;
+    }
+
+    .settings-card-body {
+        padding: 12px;
+    }
+
+    .settings-add-panel {
+        padding: 14px;
+    }
+
+    .settings-action-buttons {
+        margin-top: 4px;
+    }
+}

@@ -18,8 +18,9 @@ import json
 from io import StringIO, BytesIO
 from datetime import datetime
 import pandas as pd
-from django.utils.timezone import now
+from django.utils.timezone import now, localdate
 import io
+from daily_assignment.models import AssignmentCell
 
 def get_protocol_data(request):
     title = request.GET.get('title', None)
@@ -768,6 +769,7 @@ class ExportBackupView(View):
                     df_protocol = pd.DataFrame(list(Protocol.objects.all().values()))
                     df_nightshift = pd.DataFrame(list(NightShift.objects.all().values()))
                     df_question = pd.DataFrame(list(Question.objects.all().values()))
+                    df_assignment_cell = pd.DataFrame(list(AssignmentCell.objects.all().values()))
 
 
 
@@ -788,6 +790,7 @@ class ExportBackupView(View):
                     remove_timezone(df_protocol).to_excel(writer, sheet_name='Protocols', index=False)
                     remove_timezone(df_nightshift).to_excel(writer, sheet_name='NightShifts', index=False)
                     remove_timezone(df_question).to_excel(writer, sheet_name='Questions', index=False)
+                    remove_timezone(df_assignment_cell).to_excel(writer, sheet_name='AssignmentCells', index=False)
                 # ポインタを先頭に戻す
                 output.seek(0)
                 # 履歴を作成
@@ -871,11 +874,13 @@ class ImportBackupView(View):
                 Protocol.objects.all().delete()
                 NightShift.objects.all().delete()
                 Question.objects.all().delete()
+                AssignmentCell.objects.all().delete()
                 df_sicks = pd.read_excel(backup_file, sheet_name='Sicks').fillna('')
                 df_forms = pd.read_excel(backup_file, sheet_name='Forms').fillna('')
                 df_protocols = pd.read_excel(backup_file, sheet_name='Protocols').fillna('')
                 df_nightshifts = pd.read_excel(backup_file, sheet_name='NightShifts').fillna('')
                 df_questions = pd.read_excel(backup_file, sheet_name='Questions').fillna('')
+                df_assignment_cells = pd.read_excel(backup_file, sheet_name='AssignmentCells').fillna('')
                 for _, row in df_sicks.iterrows():
                     Sick.objects.create(**row.to_dict())
                 for _, row in df_forms.iterrows():
@@ -886,6 +891,8 @@ class ImportBackupView(View):
                     NightShift.objects.create(**row.to_dict())
                 for _, row in df_questions.iterrows():
                     Question.objects.create(**row.to_dict())
+                for _, row in df_assignment_cells.iterrows():
+                    AssignmentCell.objects.create(**row.to_dict())
                 BackupHistory.objects.create(backup_type='import', filename=backup_file.name, status='success')
                 return render(request, 'ct_app/backup.html', {'success': 'Excelからテキストデータを復元しました'})
             elif backup_file.name.endswith('.zip'):        
@@ -1167,6 +1174,25 @@ def index(request):
     forms_list = Form.objects.all().order_by('-created_at')
     protocols_list = Protocol.objects.all().order_by('-created_at')
     nightshift_list = NightShift.objects.all().order_by('-created_at') if hasattr(NightShift, 'created_at') else NightShift.objects.all()
+        # 今日の配置表の7:30行に入力されている担当者
+    early_shift_values = (
+        AssignmentCell.objects
+        .filter(
+            board__board_date=localdate(),
+            row_key="0730",
+        )
+        .exclude(value="")
+        .values_list("value", flat=True)
+    )
+
+    # 空白を除去し、同じ名前が複数セルにあっても1回だけ表示
+    today_early_staff = []
+
+    for value in early_shift_values:
+        name = value.strip()
+
+        if name and name not in today_early_staff:
+            today_early_staff.append(name)
     context = {
         'page_title': 'ホーム',
         'sick_list': sicks_list,
@@ -1179,6 +1205,7 @@ def index(request):
         'protocols_count': protocols_count,
         'night_shifts_count': night_shifts_count,
         'question_count': question_count,
+        'today_early_staff': today_early_staff,
     }
     return render(request, 'ct_app/index.html', context)
 
