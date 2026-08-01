@@ -16,7 +16,7 @@ import zipfile
 import tempfile
 import json
 from io import StringIO, BytesIO
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 from django.utils.timezone import now, localdate
 import io
@@ -1164,50 +1164,71 @@ def question_detail(request, pk):
     return render(request, 'ct_app/question_detail.html', context)
     
 def index(request):
-    questions = Question.objects.all().order_by('-created_at')
+    questions = Question.objects.all().order_by("-created_at")
+
     sicks_count = Sick.objects.count()
     forms_count = Form.objects.count()
     protocols_count = Protocol.objects.count()
     night_shifts_count = NightShift.objects.count()
     question_count = questions.count()
-    sicks_list = Sick.objects.all().order_by('-created_at')
-    forms_list = Form.objects.all().order_by('-created_at')
-    protocols_list = Protocol.objects.all().order_by('-created_at')
-    nightshift_list = NightShift.objects.all().order_by('-created_at') if hasattr(NightShift, 'created_at') else NightShift.objects.all()
-        # 今日の配置表の7:30行に入力されている担当者
-    early_shift_values = (
-        AssignmentCell.objects
-        .filter(
-            board__board_date=localdate(),
-            row_key="0730",
-        )
-        .exclude(value="")
-        .values_list("value", flat=True)
+
+    sicks_list = Sick.objects.all().order_by("-created_at")
+    forms_list = Form.objects.all().order_by("-created_at")
+    protocols_list = Protocol.objects.all().order_by("-created_at")
+
+    nightshift_list = (
+        NightShift.objects.all().order_by("-created_at")
+        if hasattr(NightShift, "created_at")
+        else NightShift.objects.all()
     )
 
-    # 空白を除去し、同じ名前が複数セルにあっても1回だけ表示
-    today_early_staff = []
+    today = localdate()
+    tomorrow = today + timedelta(days=1)
 
-    for value in early_shift_values:
-        name = value.strip()
+    def get_early_staff(target_date):
+        early_shift_values = (
+            AssignmentCell.objects
+            .filter(
+                board__board_date=target_date,
+                row_key="0730",
+            )
+            .exclude(value="")
+            .values_list("value", flat=True)
+        )
 
-        if name and name not in today_early_staff:
-            today_early_staff.append(name)
+        staff_names = []
+
+        for value in early_shift_values:
+            name = value.strip()
+
+            if name and name not in staff_names:
+                staff_names.append(name)
+
+        return staff_names
+
+    today_early_staff = get_early_staff(today)
+    tomorrow_early_staff = get_early_staff(tomorrow)
+
     context = {
-        'page_title': 'ホーム',
-        'sick_list': sicks_list,
-        'form_list': forms_list,
-        'protocol_list': protocols_list,
-        'nightshift_list': nightshift_list,
-        'questions': questions,
-        'sicks_count': sicks_count,
-        'forms_count': forms_count,
-        'protocols_count': protocols_count,
-        'night_shifts_count': night_shifts_count,
-        'question_count': question_count,
-        'today_early_staff': today_early_staff,
+        "page_title": "ホーム",
+        "sick_list": sicks_list,
+        "form_list": forms_list,
+        "protocol_list": protocols_list,
+        "nightshift_list": nightshift_list,
+        "questions": questions,
+
+        "sicks_count": sicks_count,
+        "forms_count": forms_count,
+        "protocols_count": protocols_count,
+        "night_shifts_count": night_shifts_count,
+        "question_count": question_count,
+
+        "today_early_staff": today_early_staff,
+        "tomorrow_early_staff": tomorrow_early_staff,
+        "tomorrow": tomorrow,
     }
-    return render(request, 'ct_app/index.html', context)
+
+    return render(request, "ct_app/index.html", context)
 
 class QuestionUpdateView(UpdateView):
     def get(self, request, pk):

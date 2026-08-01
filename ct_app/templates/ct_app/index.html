@@ -3,77 +3,266 @@
 {% block title %}ホーム - How to CT{% endblock %}
 
 {% block header_info %}
-    <div class="d-flex gap-3 justify-content-end text-white">
-        <div class="text-center">
-            <small class="d-block opacity-75" style="font-size: 0.7rem;">疾患データ</small>
-            <span class="fs-4 fw-bold">{{ sicks_count }}</span>
-        </div>
-        <div class="text-center">
-            <small class="d-block opacity-75" style="font-size: 0.7rem;">お知らせ</small>
-            <span class="fs-4 fw-bold">{{ forms_count }}</span>
-        </div>
-        <div class="text-center">
-            <small class="d-block opacity-75" style="font-size: 0.7rem;">プロトコル</small>
-            <span class="fs-4 fw-bold">{{ protocols_count }}</span>
-        </div>
-        <div class="text-center">
-            <small class="d-block opacity-75" style="font-size: 0.7rem;">夜勤対応</small>
-            <span class="fs-4 fw-bold">{{ night_shifts_count }}</span>
-        </div>
-        <div class="text-center">
-            <small class="d-block opacity-75" style="font-size: 0.7rem;">掲示板</small>
-            <span class="fs-4 fw-bold">{{ question_count }}</span>
-        </div>
-        {% if today_early_staff %}
-            <div class="today-early-card">
-                <small class="d-block">
-                    <i class="bi bi-sunrise-fill"></i>
-                    今日の早出
-                </small>
+<div class="home-summary">
 
-                <strong>
-                    {% for staff_name in today_early_staff %}
-                        {{ staff_name }}{% if not forloop.last %}・{% endif %}
-                    {% endfor %}
-                </strong>
-            </div>
-        {% endif %}
+    <div class="summary-counts">
+        <div class="summary-item">
+            <span>疾患データ</span>
+            <strong>{{ sicks_count }}</strong>
+        </div>
+
+        <div class="summary-item">
+            <span>お知らせ</span>
+            <strong>{{ forms_count }}</strong>
+        </div>
+
+        <div class="summary-item">
+            <span>プロトコル</span>
+            <strong>{{ protocols_count }}</strong>
+        </div>
+
+        <div class="summary-item">
+            <span>夜勤対応</span>
+            <strong>{{ night_shifts_count }}</strong>
+        </div>
+
+        <div class="summary-item">
+            <span>掲示板</span>
+            <strong>{{ question_count }}</strong>
+        </div>
     </div>
+
+    {% if today_early_staff %}
+        <a
+            class="today-early-card early-card-link"
+            href="{% url 'daily_assignment:board' %}?date={% now 'Y-m-d' %}"
+            aria-label="今日の当日配置表を開く"
+        >
+            <span class="early-label">
+                <i class="bi bi-sunrise-fill"></i>
+                今日の早出
+            </span>
+
+            <strong>
+                {% for staff_name in today_early_staff %}
+                    {{ staff_name }}{% if not forloop.last %}・{% endif %}
+                {% endfor %}
+            </strong>
+
+            <span class="early-open-hint">
+                配置表を見る
+                <i class="bi bi-chevron-right"></i>
+            </span>
+        </a>
+    {% endif %}
+
+    {% if tomorrow_early_staff %}
+        <a
+            class="today-early-card tomorrow-early-card early-card-link"
+            href="{% url 'daily_assignment:board' %}?date={{ tomorrow|date:'Y-m-d' }}"
+            aria-label="明日の当日配置表を開く"
+        >
+            <span class="early-label">
+                <i class="bi bi-calendar-check-fill"></i>
+                明日の早出
+            </span>
+
+            <strong>
+                {% for staff_name in tomorrow_early_staff %}
+                    {{ staff_name }}{% if not forloop.last %}・{% endif %}
+                {% endfor %}
+            </strong>
+
+            <span class="early-open-hint">
+                明日の配置表を見る
+                <i class="bi bi-chevron-right"></i>
+            </span>
+        </a>
+    {% endif %}
+
+</div>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-    .today-early-card {
-        min-width: 150px;
-        padding: 8px 14px;
-        text-align: center;
-        color: #17324d;
-        background: linear-gradient(
-            135deg,
-            #fff4c7,
-            #ffd978
-        );
-        border: 1px solid rgba(255, 255, 255, 0.75);
-        border-radius: 10px;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16);
+    .home-summary {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 20px;
+        width: 100%;
     }
 
-    .today-early-card small {
+    .summary-counts {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(70px, auto));
+        gap: 14px;
+    }
+
+    .summary-item {
+        min-width: 70px;
+        text-align: center;
+    }
+
+    .summary-item span {
+        display: block;
         margin-bottom: 2px;
-        color: #7a5810;
+        color: rgba(255, 255, 255, 0.78);
         font-size: 0.72rem;
+        white-space: nowrap;
+    }
+
+    .summary-item strong {
+        display: block;
+        color: #fff;
+        font-size: 1.55rem;
+        line-height: 1;
+    }
+
+    .today-early-card {
+        flex: 0 0 auto;
+        min-width: 190px;
+        padding: 13px 18px;
+        text-align: center;
+        color: #17324d;
+        background: linear-gradient(135deg, #fff3bd, #ffdc73);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+    }
+
+    .early-label {
+        display: block;
+        margin-bottom: 4px;
+        color: #805b08;
+        font-size: 0.82rem;
         font-weight: 700;
+        white-space: nowrap;
     }
 
     .today-early-card strong {
         display: block;
-        font-size: 1rem;
+        font-size: 1.15rem;
         line-height: 1.3;
     }
 
-    .today-early-card .bi {
-        margin-right: 3px;
-        color: #e39a00;
+    .tomorrow-early-card {
+        background: linear-gradient(135deg, #dcecff, #a9ceff);
+    }
+
+    .tomorrow-early-card .early-label {
+        color: #24558c;
+    }
+
+    .early-card-link {
+    display: block;
+    color: #17324d;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        filter 0.18s ease;
+    }
+
+    .early-card-link:hover {
+        color: #17324d;
+        transform: translateY(-2px);
+        box-shadow: 0 7px 18px rgba(0, 0, 0, 0.2);
+        filter: brightness(1.02);
+    }
+
+    .early-card-link:focus-visible {
+        outline: 3px solid rgba(255, 255, 255, 0.9);
+        outline-offset: 3px;
+    }
+
+    .early-open-hint {
+        display: block;
+        margin-top: 7px;
+        color: #805b08;
+        font-size: 0.72rem;
+        font-weight: 700;
+    }
+
+    .early-open-hint .bi {
+        margin-left: 2px;
+    }
+
+    /* タブレット */
+    @media (max-width: 991px) {
+        .main-header {
+            align-items: stretch !important;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .main-header h1 {
+            text-align: left;
+        }
+
+        .header-info {
+            width: 100%;
+            text-align: left !important;
+        }
+
+        .home-summary {
+            align-items: stretch;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .summary-counts {
+            grid-template-columns: repeat(5, 1fr);
+            width: 100%;
+        }
+
+        .today-early-card {
+            width: 100%;
+            box-sizing: border-box;
+        }
+    }
+
+    /* スマートフォン */
+    @media (max-width: 576px) {
+        .main-header {
+            padding: 18px !important;
+            border-radius: 12px;
+        }
+
+        .main-header h1 {
+            font-size: 1.65rem;
+        }
+
+        .summary-counts {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .summary-item {
+            min-width: 0;
+            padding: 9px 5px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+        }
+
+        .summary-item span {
+            font-size: 0.68rem;
+            white-space: normal;
+        }
+
+        .summary-item strong {
+            font-size: 1.35rem;
+        }
+
+        .today-early-card {
+            min-width: 0;
+            padding: 14px;
+        }
+
+        .today-early-card strong {
+            font-size: 1.25rem;
+        }
     }
 </style>
 {% endblock %}
