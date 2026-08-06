@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'daily_assignment/board.css' %}?v=20260806_2">
+<link rel="stylesheet" href="{% static 'daily_assignment/board.css' %}?v=20260806_3">
 {% endblock %}
 
 {% block content %}
@@ -340,18 +340,24 @@ const BOARD_ZOOM_STORAGE_KEY = 'dailyAssignmentBoardZoom';
 function applyBoardZoom(selectedValue, saveSetting = true) {
   if (!boardZoomSelect || !boardWrap || !assignmentTable) return;
 
+  /* いったん等倍へ戻して、表本来の横幅を測ります。 */
   assignmentTable.style.zoom = '1';
+  boardWrap.classList.remove('auto-fit');
+
   let scale = 1;
 
   if (selectedValue === 'auto') {
-    const availableWidth = boardWrap.clientWidth;
+    const availableWidth = Math.max(boardWrap.clientWidth - 2, 1);
     const tableWidth = assignmentTable.scrollWidth;
 
     if (tableWidth > 0) {
-      scale = Math.min(availableWidth / tableWidth, 1);
+      /* わずかな余白を残して、必ず枠内に収めます。 */
+      scale = Math.min((availableWidth / tableWidth) * 0.995, 1);
     }
 
-    scale = Math.max(scale, 0.6);
+    /* 列数が多い日でも横スクロールを出さないための下限。 */
+    scale = Math.max(scale, 0.4);
+    boardWrap.classList.add('auto-fit');
   } else {
     const parsedScale = Number.parseFloat(selectedValue);
     if (Number.isFinite(parsedScale)) scale = parsedScale;
@@ -392,6 +398,34 @@ window.addEventListener('resize', function () {
 });
 
 window.addEventListener('load', initializeBoardZoom);
+
+/* 入力された名前の長さに合わせて文字だけを自動調整します。 */
+function fitNameText(input) {
+  const length = Array.from(input.value.trim()).length;
+
+  input.classList.remove('name-medium', 'name-long', 'name-very-long');
+
+  if (length >= 9) {
+    input.classList.add('name-very-long');
+  } else if (length >= 7) {
+    input.classList.add('name-long');
+  } else if (length >= 5) {
+    input.classList.add('name-medium');
+  }
+
+  input.title = input.value;
+}
+
+function initializeNameFitting() {
+  document.querySelectorAll('.cell-input').forEach(function (input) {
+    fitNameText(input);
+    input.addEventListener('input', function () {
+      fitNameText(this);
+    });
+  });
+}
+
+window.addEventListener('load', initializeNameFitting);
 
 </script>
 

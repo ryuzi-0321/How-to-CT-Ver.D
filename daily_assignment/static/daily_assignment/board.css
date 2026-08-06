@@ -872,3 +872,78 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* ==================================================
+   配置表をPC画面内へ収めるためのコンパクト表示
+   ================================================== */
+
+/* 自動倍率のときだけ横スクロールを隠します。 */
+.board-wrap.auto-fit {
+    overflow-x: hidden;
+}
+
+/* 表本来の横幅を少し小さくし、縮小時も文字を読みやすくします。 */
+.assignment-table tbody td {
+    width: 76px;
+    min-width: 76px;
+    max-width: 76px;
+    padding: 3px;
+}
+
+.assignment-table .cell-input,
+.assignment-table input.cell-input {
+    box-sizing: border-box;
+    width: 68px;
+    min-width: 68px;
+    max-width: 68px;
+    height: 31px;
+    padding: 4px 3px;
+    font-size: 0.86rem;
+    line-height: 1.1;
+    text-overflow: clip;
+}
+
+.assignment-table .time-head,
+.assignment-table .time-column {
+    width: 62px;
+    min-width: 62px;
+    max-width: 62px;
+}
+
+.assignment-table thead th {
+    padding: 3px 4px;
+    font-size: 0.84rem;
+    line-height: 1.15;
+    white-space: nowrap;
+}
+
+/* 名前が長いときは入力枠を広げず、文字サイズだけを調整します。 */
+.assignment-table .cell-input.name-medium {
+    font-size: 0.76rem;
+}
+
+.assignment-table .cell-input.name-long {
+    font-size: 0.68rem;
+    letter-spacing: -0.04em;
+}
+
+.assignment-table .cell-input.name-very-long {
+    font-size: 0.6rem;
+    letter-spacing: -0.07em;
+}
+
+@media (max-width: 1200px) {
+    .assignment-table tbody td {
+        width: 70px;
+        min-width: 70px;
+        max-width: 70px;
+    }
+
+    .assignment-table .cell-input,
+    .assignment-table input.cell-input {
+        width: 62px;
+        min-width: 62px;
+        max-width: 62px;
+    }
+}
