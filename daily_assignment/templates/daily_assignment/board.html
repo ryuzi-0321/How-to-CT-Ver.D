@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'daily_assignment/board.css' %}?v=20260801_1">
+<link rel="stylesheet" href="{% static 'daily_assignment/board.css' %}?v=20260806_2">
 {% endblock %}
 
 {% block content %}
@@ -34,10 +34,23 @@
   {% endif %}
   <section class="control-card">
     <div class="date-navigation">
-      <a class="control-button secondary"
-         href="?date={{ previous_date|date:'Y-m-d' }}">
-        ← 前日
-      </a>
+      <div class="day-jump-row">
+        <a class="control-button secondary"
+           href="?date={{ previous_date|date:'Y-m-d' }}">
+          ← 前日
+        </a>
+
+        <a class="control-button today"
+           href="?date={{ today|date:'Y-m-d' }}">
+          今日
+        </a>
+
+        <a class="control-button secondary"
+           href="?date={{ next_date|date:'Y-m-d' }}">
+          翌日 →
+        </a>
+      </div>
+
       <form method="get" class="date-form">
         <input
           type="date"
@@ -48,22 +61,27 @@
           表示
         </button>
       </form>
-      <a class="control-button today"
-         href="?date={{ today|date:'Y-m-d' }}">
-        今日
-      </a>
-      <a class="control-button secondary"
-         href="?date={{ next_date|date:'Y-m-d' }}">
-        翌日 →
-      </a>
     </div>
+
     <div class="main-actions">
+      <label class="board-zoom-control" for="boardZoomSelect">
+        <span>表示倍率</span>
+        <select id="boardZoomSelect" aria-label="配置表の表示倍率">
+          <option value="auto">自動</option>
+          <option value="1">100%</option>
+          <option value="0.9">90%</option>
+          <option value="0.8">80%</option>
+          <option value="0.7">70%</option>
+        </select>
+      </label>
+
       <button
         id="saveButton"
         class="control-button primary"
         type="button">
         保存
       </button>
+
       <a
         class="control-button success"
         href="{% url 'daily_assignment:excel' %}?date={{ board_date|date:'Y-m-d' }}">
@@ -71,82 +89,6 @@
       </a>
     </div>
   </section>
-  <section class="copy-card">
-  <div class="copy-card-title">
-    配置データ操作
-  </div>
-
-  <div class="copy-card-content">
-
-    <form
-      method="post"
-      action="{% url 'daily_assignment:copy' %}"
-      class="copy-form"
-      id="copyForm"
-      onsubmit="return prepareCopy();">
-
-      {% csrf_token %}
-
-      <input
-        type="hidden"
-        name="date"
-        value="{{ board_date|date:'Y-m-d' }}"
-      >
-
-      <input
-        type="hidden"
-        name="overwrite"
-        id="copyOverwrite"
-        value="0"
-      >
-
-      <label class="copy-date-field">
-        <span>コピー元</span>
-
-        <input
-          type="date"
-          name="source_date"
-          value="{{ previous_date|date:'Y-m-d' }}"
-          required
-        >
-      </label>
-
-      <button
-        class="control-button secondary"
-        type="submit">
-        指定日からコピー
-      </button>
-
-    </form>
-
-    <form
-      method="post"
-      action="{% url 'daily_assignment:clear' %}"
-      onsubmit="return confirm('この日の配置表をすべて空にします。元に戻せません。よろしいですか？');">
-
-      {% csrf_token %}
-
-      <input
-        type="hidden"
-        name="date"
-        value="{{ board_date|date:'Y-m-d' }}"
-      >
-
-      <button
-        class="control-button danger"
-        type="submit">
-        全消去
-      </button>
-
-    </form>
-
-    <div id="saveStatus" class="save-status">
-      最終更新：{{ board.updated_at|date:'Y/m/d H:i:s' }}
-    </div>
-
-  </div>
-</section>
-  
 <div class="board-wrap">
   <table class="assignment-table">
     <thead>
@@ -250,6 +192,78 @@
     </div>
 
   </section>
+
+  <section class="copy-card copy-card-bottom">
+    <div class="copy-card-title">
+      配置データ操作
+    </div>
+
+    <div class="copy-card-content">
+      <form
+        method="post"
+        action="{% url 'daily_assignment:copy' %}"
+        class="copy-form"
+        id="copyForm">
+
+        {% csrf_token %}
+
+        <input
+          type="hidden"
+          name="date"
+          value="{{ board_date|date:'Y-m-d' }}"
+        >
+
+        <input
+          type="hidden"
+          name="overwrite"
+          id="copyOverwrite"
+          value="0"
+        >
+
+        <label class="copy-date-field">
+          <span>コピー元</span>
+          <input
+            type="date"
+            name="source_date"
+            value="{{ previous_date|date:'Y-m-d' }}"
+            required
+          >
+        </label>
+
+        <button
+          class="control-button secondary"
+          type="submit">
+          指定日からコピー
+        </button>
+      </form>
+
+      <form
+        method="post"
+        action="{% url 'daily_assignment:clear' %}"
+        class="clear-form"
+        onsubmit="return confirm('この日の配置表をすべて空にします。元に戻せません。よろしいですか？');">
+
+        {% csrf_token %}
+
+        <input
+          type="hidden"
+          name="date"
+          value="{{ board_date|date:'Y-m-d' }}"
+        >
+
+        <button
+          class="control-button danger"
+          type="submit">
+          全消去
+        </button>
+      </form>
+
+      <div id="saveStatus" class="save-status">
+        最終更新：{{ board.updated_at|date:'Y/m/d H:i:s' }}
+      </div>
+    </div>
+  </section>
+
 </main>
 <script>
 const staffNames = {{ staff_names_json|safe }};
@@ -316,6 +330,69 @@ if (copyForm) {
     }
   });
 }
+
+/* 配置表の表示倍率 */
+const boardZoomSelect = document.getElementById('boardZoomSelect');
+const boardWrap = document.querySelector('.board-wrap');
+const assignmentTable = document.querySelector('.assignment-table');
+const BOARD_ZOOM_STORAGE_KEY = 'dailyAssignmentBoardZoom';
+
+function applyBoardZoom(selectedValue, saveSetting = true) {
+  if (!boardZoomSelect || !boardWrap || !assignmentTable) return;
+
+  assignmentTable.style.zoom = '1';
+  let scale = 1;
+
+  if (selectedValue === 'auto') {
+    const availableWidth = boardWrap.clientWidth;
+    const tableWidth = assignmentTable.scrollWidth;
+
+    if (tableWidth > 0) {
+      scale = Math.min(availableWidth / tableWidth, 1);
+    }
+
+    scale = Math.max(scale, 0.6);
+  } else {
+    const parsedScale = Number.parseFloat(selectedValue);
+    if (Number.isFinite(parsedScale)) scale = parsedScale;
+  }
+
+  assignmentTable.style.zoom = String(scale);
+
+  if (saveSetting) {
+    localStorage.setItem(BOARD_ZOOM_STORAGE_KEY, selectedValue);
+  }
+}
+
+function initializeBoardZoom() {
+  if (!boardZoomSelect) return;
+
+  const savedValue = localStorage.getItem(BOARD_ZOOM_STORAGE_KEY) || 'auto';
+  const validValues = ['auto', '1', '0.9', '0.8', '0.7'];
+  const initialValue = validValues.includes(savedValue) ? savedValue : 'auto';
+
+  boardZoomSelect.value = initialValue;
+  applyBoardZoom(initialValue, false);
+}
+
+if (boardZoomSelect) {
+  boardZoomSelect.addEventListener('change', function () {
+    applyBoardZoom(this.value);
+  });
+}
+
+let boardZoomResizeTimer = null;
+window.addEventListener('resize', function () {
+  if (!boardZoomSelect || boardZoomSelect.value !== 'auto') return;
+
+  clearTimeout(boardZoomResizeTimer);
+  boardZoomResizeTimer = setTimeout(function () {
+    applyBoardZoom('auto', false);
+  }, 150);
+});
+
+window.addEventListener('load', initializeBoardZoom);
+
 </script>
 
 {% endblock %}

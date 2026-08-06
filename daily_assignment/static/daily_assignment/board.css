@@ -664,3 +664,211 @@ body {
         box-sizing: border-box;
     }
 }
+
+/* ==================================================
+   当日配置表：コンパクト操作欄・表示倍率・下部データ操作
+   ================================================== */
+
+.assignment-table {
+    transform-origin: top left;
+}
+
+.day-jump-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.board-zoom-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 5px 9px;
+    box-sizing: border-box;
+    color: #40566d;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.board-zoom-control select {
+    min-height: 30px;
+    padding: 3px 28px 3px 9px;
+    color: #243b53;
+    background-color: #fff;
+    border: 1px solid #bdc9d6;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.board-zoom-control select:focus {
+    outline: none;
+    border-color: var(--assignment-secondary);
+    box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.13);
+}
+
+.copy-card-bottom {
+    margin-top: 20px;
+    margin-bottom: 0;
+}
+
+.clear-form {
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .assignment-page {
+        padding: 8px 10px 24px;
+    }
+
+    .assignment-topbar {
+        gap: 12px;
+        margin: 8px auto 10px;
+        padding: 14px 16px;
+        border-radius: 12px;
+    }
+
+    .assignment-brand {
+        font-size: 0.75rem;
+    }
+
+    .assignment-title-area h1 {
+        font-size: 1.55rem;
+    }
+
+    .assignment-title-area p {
+        margin-top: 4px;
+        font-size: 0.86rem;
+    }
+
+    .settings-button {
+        min-height: 40px;
+        padding: 8px 12px;
+    }
+
+    .control-card {
+        gap: 9px;
+        margin-bottom: 10px;
+        padding: 10px;
+    }
+
+    .date-navigation {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .day-jump-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+        width: 100%;
+    }
+
+    .day-jump-row .control-button {
+        width: 100%;
+        min-width: 0;
+        padding: 7px 5px;
+    }
+
+    .date-form {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 92px;
+        gap: 7px;
+        width: 100%;
+    }
+
+    .date-form input[type="date"] {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .main-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+        gap: 8px;
+        width: 100%;
+    }
+
+    .board-zoom-control {
+        grid-column: 1 / -1;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 38px;
+    }
+
+    .board-zoom-control select {
+        width: min(52%, 170px);
+    }
+
+    .main-actions .control-button {
+        width: 100%;
+        min-height: 40px;
+    }
+
+    .copy-card-bottom {
+        margin-top: 14px;
+    }
+
+    .copy-card-title {
+        padding: 9px 12px;
+    }
+
+    .copy-card-content {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 9px;
+        padding: 10px;
+    }
+
+    .copy-form {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(135px, 1.25fr);
+        gap: 8px;
+        width: 100%;
+        grid-column: 1 / -1;
+    }
+
+    .copy-date-field {
+        gap: 4px;
+    }
+
+    .copy-date-field input[type="date"] {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .clear-form {
+        align-self: end;
+    }
+
+    .save-status {
+        grid-column: 1 / -1;
+        width: 100%;
+        margin: 0;
+        padding: 7px 9px;
+        font-size: 0.82rem;
+    }
+}
+
+@media (max-width: 430px) {
+    .assignment-title-area h1 {
+        font-size: 1.4rem;
+    }
+
+    .control-button {
+        font-size: 0.88rem;
+    }
+
+    .copy-form {
+        grid-template-columns: 1fr;
+    }
+}
