@@ -94,3 +94,9 @@ SESSION_COOKIE_SECURE = True  # Set to True in production with HTTPS
 
 # メンテナンス中なら True、普段は False にする
 IS_MAINTENANCE = False
+
+IS_PRODUCTION = os.environ.get("DJANGO_ENV") == "production"
+
+DEBUG = not IS_PRODUCTION
+
+SECURE_SSL_REDIRECT = IS_PRODUCTION
