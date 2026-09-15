@@ -947,3 +947,562 @@ body {
         max-width: 62px;
     }
 }
+
+/* ==================================================
+   勤務自動入力・2交代勤務専用欄
+   ================================================== */
+.control-button.auto-duty {
+    color: #fff;
+    background: #7c3aed;
+    border-color: #7c3aed;
+}
+
+.control-button.auto-duty:hover {
+    background: #6d28d9;
+    box-shadow: 0 4px 10px rgba(124, 58, 237, 0.25);
+}
+
+.shift-meta-group {
+    grid-column: 1 / -1;
+    padding: 12px;
+    background: #eef3f8;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+}
+
+.shift-meta-title {
+    margin-bottom: 9px;
+    color: #17324d;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.shift-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(120px, 1fr));
+    gap: 9px;
+}
+
+.shift-field input {
+    height: 54px;
+}
+
+@media (max-width: 1200px) {
+    .shift-meta-grid {
+        grid-template-columns: repeat(3, minmax(150px, 1fr));
+    }
+}
+
+@media (max-width: 650px) {
+    .shift-meta-grid {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+    }
+}
+
+/* 通常配置の自動作成ボタン */
+.control-button.auto-assignment {
+    color: #fff;
+    background: #6d46b8;
+    border-color: #6d46b8;
+}
+
+.control-button.auto-assignment:hover {
+    background: #59379a;
+    box-shadow: 0 4px 10px rgba(109, 70, 184, 0.25);
+}
+
+
+/* ==================================================
+   本日の予定（予定時のみの配置場所）
+   ================================================== */
+.today-plan-card {
+    width: min(96%, 1500px);
+    margin: 0 auto 12px;
+    padding: 10px 14px;
+    box-sizing: border-box;
+    background: #fff;
+    border: 1px solid #dbe3ec;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(23, 50, 77, 0.07);
+}
+
+.today-plan-title {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin-bottom: 8px;
+    color: #17324d;
+    font-weight: 800;
+}
+
+.today-plan-title small {
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.today-plan-switches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.today-plan-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 34px;
+    padding: 5px 10px;
+    margin: 0;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.today-plan-switch:has(input:checked) {
+    background: #e8f4ff;
+    border-color: #7fb3e6;
+}
+
+.today-plan-switch input {
+    width: 17px;
+    height: 17px;
+    margin: 0;
+    accent-color: var(--assignment-secondary);
+}
+
+.today-plan-name {
+    color: #243b53;
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.today-plan-count {
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+/* ==================================================
+   Ver.3 2段ヘッダー・時間枠・昼休憩
+   ================================================== */
+.assignment-table thead .category-head {
+    background: #132a42;
+    color: #fff;
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
+    border-bottom-color: #718096;
+}
+
+.assignment-table thead .area-head {
+    background: #234766;
+    color: #fff;
+    font-size: 0.86rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.assignment-table .time-head {
+    vertical-align: middle;
+}
+
+.assignment-table .disabled-time-cell {
+    background: #e5e7eb !important;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(100,116,139,0.06),
+        rgba(100,116,139,0.06) 5px,
+        rgba(255,255,255,0.15) 5px,
+        rgba(255,255,255,0.15) 10px
+    ) !important;
+}
+
+.assignment-table .merged-time-cell {
+    vertical-align: middle;
+    background: #f8fbff;
+}
+
+.assignment-table tr.lunch-highlight > th,
+.assignment-table tr.lunch-highlight > td,
+.assignment-table tr.lunch-highlight > td input {
+    background-color: #fff3bf !important;
+}
+
+.assignment-table tr.lunch-highlight .disabled-time-cell {
+    background-color: #f4e7ad !important;
+}
+
+.assignment-table .lunch-category,
+.assignment-table .lunch-area-head {
+    background: #735c13;
+}
+
+.assignment-table .lunch-break-cell {
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
+    padding: 4px;
+    background: #fffaf0;
+}
+
+.assignment-table .lunch-input {
+    box-sizing: border-box;
+    width: 108px;
+    min-width: 108px;
+    max-width: 108px;
+    padding: 7px 5px;
+    border: 1px solid #d6bd65;
+    border-radius: 6px;
+    text-align: center;
+    background: #fffdf6;
+    font-size: 0.88rem;
+}
+
+.assignment-table .special-row .time-column {
+    background: #284b63;
+}
+
+/* ==================================================
+   Ver.3.1 配置表リニューアル
+   - サイドメニュー内で横幅を最大利用
+   - 連結セルの入力欄を連結した行数ぶんの高さへ拡張
+   ================================================== */
+.assignment-page,
+.assignment-topbar,
+.control-card,
+.copy-card {
+    width: 100%;
+    max-width: none;
+}
+
+.assignment-topbar {
+    margin-top: 0;
+}
+
+/* rowspanで結合されたTD全体を入力欄として使う */
+.assignment-table .merged-time-cell {
+    position: relative;
+    padding: 3px;
+    vertical-align: middle;
+}
+
+.assignment-table .merged-time-cell > .cell-input {
+    position: absolute;
+    inset: 3px;
+    width: calc(100% - 6px);
+    min-width: 0;
+    max-width: none;
+    height: calc(100% - 6px);
+    min-height: 31px;
+    box-sizing: border-box;
+    display: block;
+    text-align: center;
+}
+
+/* 通常セルの高さをそろえ、rowspanの高さ計算を安定させる */
+.assignment-table tbody tr {
+    height: 37px;
+}
+.assignment-table tbody td,
+.assignment-table tbody th {
+    height: 37px;
+    box-sizing: border-box;
+}
+.assignment-table tbody tr.special-row,
+.assignment-table tbody tr.special-row td,
+.assignment-table tbody tr.special-row th {
+    height: 34px;
+}
+
+/* 連結セルでは奇数/偶数行の背景上書きを受けず、一枚の面に見せる */
+.assignment-table tbody tr:nth-child(odd) td.merged-time-cell,
+.assignment-table tbody tr:nth-child(even) td.merged-time-cell,
+.assignment-table tbody tr:nth-child(odd) td.merged-time-cell input,
+.assignment-table tbody tr:nth-child(even) td.merged-time-cell input {
+    background: #eaf2fc;
+}
+
+.assignment-table .merged-time-cell > .cell-input:focus {
+    background: #fff !important;
+}
+
+@media (max-width: 900px) {
+    .assignment-page { padding-top: 8px; }
+    .assignment-topbar { margin-top: 0; }
+}
+
+
+/* ==================================================
+   Ver.3.2 補足入力欄の整理
+   ================================================== */
+.meta-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; }
+.meta-grid > .shift-meta-group { grid-column: 1 / -1; }
+.meta-conference,.meta-annual-leave,.meta-free { grid-column: span 1; }
+.meta-comment { grid-column: span 2 !important; }
+.meta-unassigned,.meta-reception-leave { grid-column: span 1; }
+.meta-grid .meta-field textarea { min-height: 78px; height: 78px; }
+.meta-grid .meta-comment textarea,.meta-grid .meta-unassigned textarea { min-height: 96px; height: 96px; }
+@media (max-width:1050px){.meta-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.meta-comment,.meta-unassigned,.meta-reception-leave{grid-column:span 1 !important;}}
+@media (max-width:650px){.meta-grid{grid-template-columns:1fr;}.meta-grid>*{grid-column:1 !important;}}
+
+
+
+/* ==================================================
+   Ver.3.4.1 兼任表示・昼休憩カラー
+   ================================================== */
+.assignment-table tr.lunch-highlight > th,
+.assignment-table tr.lunch-highlight > td {
+    background-color: #365f9d !important;
+    color: #ffffff !important;
+}
+.assignment-table tr.lunch-highlight > td input {
+    background-color: #2f568e !important;
+    border-color: #6f91c5 !important;
+    color: #ffffff !important;
+}
+.assignment-table tr.lunch-highlight > td input::placeholder {
+    color: rgba(255,255,255,.72);
+}
+.assignment-table tr.lunch-highlight .disabled-time-cell {
+    background-color: #294d82 !important;
+}
+.assignment-table .cell-input.concurrent-assignment {
+    color: #d71920 !important;
+    font-weight: 800 !important;
+}
+.assignment-table tr.lunch-highlight .cell-input.concurrent-assignment {
+    color: #ffb3b6 !important;
+}
+
+/* Ver.3.6 昼休憩横結合 */
+.lunch-wide-cell{background:#244f87!important;color:#fff!important;text-align:center;font-weight:800;letter-spacing:.08em;border-color:#173c68!important;white-space:nowrap}.lunch-wide-cell span{font-weight:600;font-size:.88em}
+/* Ver.3.8 主担当行 */
+.assignment-table tbody tr.main-assignment-row td:not(.disabled-time-cell){background:#dcecff!important}
+.assignment-table tbody tr.main-assignment-row .cell-input{background:#eaf4ff!important;border-color:#7aa5d5!important;color:#173c65;font-weight:800}
+.assignment-table tbody tr.main-assignment-row .time-column{background:#285a90!important;color:#fff!important}
+
+/* Ver.3.8.1 クイック入力 */
+.quick-meta-entry{margin:14px 0;padding:12px 14px;border:1px solid #c8d7e6;border-radius:12px;background:#f7fbff}.quick-meta-title{font-weight:800;color:#173b65;margin-bottom:8px}.quick-meta-grid{display:grid;gap:8px}.quick-meta-row{display:grid;grid-template-columns:70px minmax(120px,1.1fr) minmax(100px,.8fr) 72px;gap:8px;align-items:center}.quick-meta-row select,.quick-meta-row input{min-width:0;border:1px solid #bdcddd;border-radius:8px;padding:7px 9px;background:#fff}.quick-meeting-row{grid-template-columns:70px minmax(110px,.8fr) minmax(130px,1fr) minmax(130px,1fr) 90px 72px}.quick-add-btn{border:0;border-radius:8px;background:#274e86;color:#fff;font-weight:700;padding:8px 10px}.quick-add-btn:hover{background:#1d3d6d}@media(max-width:900px){.quick-meta-row,.quick-meeting-row{grid-template-columns:1fr 1fr}.quick-meta-row strong{grid-column:1/-1}.quick-add-btn{width:100%}}
+
+/* Ver.3.8.2 クイック入力の選択欄を見やすく */
+.quick-meta-entry .quick-staff-select{min-width:150px;max-width:220px}
+.quick-meta-entry .quick-time-select{min-width:110px}
+.quick-meta-entry select option{color:#173b64;background:#fff}
+@media(max-width:800px){.quick-meta-entry .quick-staff-select,.quick-meta-entry .quick-time-select{min-width:0;width:100%}}
+
+/* ==================================================
+   Ver.3.8.4 クイック追加を補足欄の下へ移動・横幅調整
+   ================================================== */
+.quick-meta-entry {
+    margin: 16px 0 18px;
+    padding: 14px 16px;
+    overflow: hidden;
+}
+.quick-meta-grid {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+}
+.quick-meta-row {
+    display: grid;
+    grid-template-columns: 82px minmax(160px, 260px) minmax(150px, 1fr) 84px;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+}
+.quick-meta-row > * {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.quick-meta-row select,
+.quick-meta-row input {
+    width: 100%;
+}
+.quick-meta-row .quick-add-btn {
+    width: 84px;
+    min-width: 84px;
+    justify-self: end;
+    white-space: nowrap;
+}
+.quick-meeting-row {
+    grid-template-columns:
+        82px
+        minmax(150px, 220px)
+        minmax(150px, 1fr)
+        minmax(180px, 1.15fr)
+        minmax(120px, 160px)
+        84px;
+}
+.quick-meta-entry .quick-staff-select,
+.quick-meta-entry .quick-time-select {
+    min-width: 0;
+    max-width: none;
+}
+
+@media (max-width: 1180px) {
+    .quick-meeting-row {
+        grid-template-columns: 82px minmax(150px, 1fr) minmax(160px, 1fr) 140px 84px;
+    }
+    .quick-meeting-row #quickMeetingCustom {
+        grid-column: 2 / 5;
+    }
+    .quick-meeting-row #quickMeetingPeriod {
+        grid-column: 4;
+        grid-row: 1;
+    }
+    .quick-meeting-row .quick-add-btn {
+        grid-column: 5;
+        grid-row: 1;
+    }
+}
+
+@media (max-width: 800px) {
+    .quick-meta-row,
+    .quick-meeting-row {
+        grid-template-columns: 1fr 1fr;
+    }
+    .quick-meta-row strong,
+    .quick-meeting-row strong {
+        grid-column: 1 / -1;
+    }
+    .quick-meta-row .quick-add-btn,
+    .quick-meeting-row .quick-add-btn {
+        width: 100%;
+        min-width: 0;
+        justify-self: stretch;
+        grid-column: auto;
+        grid-row: auto;
+    }
+    .quick-meeting-row #quickMeetingCustom,
+    .quick-meeting-row #quickMeetingPeriod {
+        grid-column: auto;
+        grid-row: auto;
+    }
+}
+
+
+/* Ver.3.8.5 主担当行：専任者は固定表示 */
+.assignment-table tbody tr.main-assignment-row .cell-input.dedicated-main-cell {
+    background: #c9def5 !important;
+    border-color: #4779ad !important;
+    color: #123a63 !important;
+    font-weight: 900;
+    cursor: default;
+}
+.assignment-table tbody tr.main-assignment-row .cell-input.dedicated-main-cell:focus {
+    box-shadow: none !important;
+}
+
+/* Ver.3.9.6 スタッフ勤務可能時間外（手動入力時の警告表示） */
+.cell-input.staff-out-of-hours{background:#f1f3f5!important;background-image:repeating-linear-gradient(135deg,rgba(100,116,139,.10) 0,rgba(100,116,139,.10) 5px,transparent 5px,transparent 10px)!important;border-color:#94a3b8!important}
+
+/* Ver.3.9.7: 当日欠員再配置 */
+#boardProposalList .proposal-card{border:1px solid #c9d8e8;border-radius:10px;padding:12px;margin-bottom:12px;background:#fff}
+#boardProposalList .proposal-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;color:#173d67}
+#boardProposalList .proposal-body{display:grid;gap:5px;margin-bottom:10px}
+#boardProposalList .proposal-body>div{display:flex;justify-content:space-between;gap:16px;padding:6px 8px;border-radius:6px;background:#f5f8fc}
+
+/* Ver.3.9.8 欠員再配置案の理由表示 */
+.proposal-detail{margin:0 0 10px;padding:8px 10px;border-radius:8px;background:#edf5ff;color:#315a82;font-size:.82rem;line-height:1.5}
+
+/* Ver.3.9.8.9: 各配置の13時→14〜16時 Copy */
+.assignment-table tfoot .copy-row th,
+.assignment-table tfoot .copy-row td {
+    background: #eef4fb;
+    padding: 5px 4px;
+}
+.assignment-table tfoot .copy-label {
+    font-size: .82rem;
+    letter-spacing: .02em;
+}
+.assignment-table .copy-cell {
+    text-align: center;
+}
+.assignment-table .area-copy-btn {
+    width: auto;
+    min-width: 58px;
+    max-width: none;
+    padding: 4px 12px;
+    border: 1px solid #9fb5cf;
+    border-radius: 6px;
+    background: #fff;
+    color: #17324d;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.assignment-table .area-copy-btn:hover {
+    background: #dfeaf7;
+}
+
+.assignment-table .copy-slot-buttons {
+    display: grid;
+    grid-template-columns: repeat(var(--copy-slot-count, 1), minmax(0, 1fr));
+    gap: 4px;
+    width: 100%;
+    align-items: center;
+}
+.assignment-table .copy-slot-buttons .area-copy-btn {
+    width: 100%;
+    min-width: 0;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+/* Ver.3.9.9.1 同一時間帯のスタッフ重複警告 */
+.assignment-table .cell-input.staff-duplicate {
+  color: #d71920 !important;
+  font-weight: 800 !important;
+  border-color: #e58a8d !important;
+}
+.assignment-table tr.lunch-highlight .cell-input.staff-duplicate {
+  color: #ffb3b6 !important;
+  border-color: #ffb3b6 !important;
+}
+
+
+/* Ver.3.9.9.2: 当日コメントテンプレート */
+.meta-comment-templates{grid-column:1 / -1!important}
+.comment-template-list{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding:10px 12px;border:1px solid #cfd8e3;border-radius:8px;background:#fbfcfe;min-height:48px}
+.comment-template-item{display:inline-flex;align-items:center;gap:6px;line-height:1.35;font-weight:700;white-space:nowrap}
+.comment-template-input{width:78px;min-width:58px;padding:3px 6px;border:1px solid #aebdcb;border-radius:5px;font:inherit;font-weight:700;background:#fff;text-align:center}
+.comment-template-text{width:220px;max-width:36vw;text-align:left;font-weight:500}
+.comment-template-input:focus{outline:2px solid rgba(41,98,255,.22);border-color:#5478b8}
+.comment-template-unit{font-weight:700}
+@media(max-width:700px){.comment-template-list{align-items:stretch}.comment-template-item{white-space:normal}.comment-template-text{width:150px;max-width:46vw}}
+
+/* Ver.3.9.9.6: 定型コメントの数字欄を件数入力向けのコンパクト幅に固定 */
+.meta-comment-templates .comment-template-input{
+  display:inline-block;
+  width:64px;
+  min-width:64px;
+  max-width:64px;
+  height:34px;
+  padding:4px 7px;
+  margin:0;
+  text-align:center;
+  box-sizing:border-box;
+}
+.meta-comment-templates .comment-template-text{
+  width:220px;
+  min-width:140px;
+  max-width:36vw;
+  height:34px;
+  text-align:left;
+}
+
+
+/* Ver.3.9.9.7: 定型コメントの見出しと内容が重ならないように余白を確保 */
+.meta-comment-templates .comment-template-list{
+  min-height:64px;
+  padding:30px 12px 10px;
+  align-items:center;
+}
+.meta-comment-templates > label{
+  top:9px;
+  left:12px;
+}

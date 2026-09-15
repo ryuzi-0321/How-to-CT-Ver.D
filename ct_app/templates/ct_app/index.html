@@ -2,269 +2,219 @@
 
 {% block title %}ホーム - How to CT{% endblock %}
 
+{% block extra_css %}
+<style>
+/* PCではホーム見出しと早出・件数カードを同じ横軸に揃える */
+.main-header{
+    flex-direction:row !important;
+    align-items:center !important;
+    gap:24px;
+    padding:1.5rem 2rem;
+}
+.main-header > h1{
+    flex:0 0 auto;
+    width:auto;
+    margin:0 !important;
+    white-space:nowrap;
+    writing-mode:horizontal-tb;
+}
+.main-header .header-info{
+    flex:1 1 auto;
+    min-width:0;
+    width:auto;
+    text-align:right !important;
+}
+
+/* 幅が足りなくなった時だけ上下配置へ戻す */
+@media(max-width:1200px){
+    .main-header{
+        flex-direction:column !important;
+        align-items:stretch !important;
+        gap:12px;
+    }
+    .main-header > h1{
+        width:100%;
+    }
+    .main-header .header-info{
+        width:100%;
+        text-align:left !important;
+    }
+}
+
+.today-work-card,.assignment-preview-shell{border:1px solid #dbe3ec;border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 3px 14px rgba(23,50,77,.08)}
+.today-work-header,.assignment-preview-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:#f5f8fc;border-bottom:1px solid #dbe3ec}.today-work-title,.assignment-preview-title{margin:0;color:#17324d;font-weight:800;font-size:1.05rem}
+.today-duty-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:14px 18px}.today-duty-item{display:flex;align-items:center;gap:9px;min-width:0;padding:10px 12px;border:1px solid #dbe3ec;border-radius:10px;background:#fbfdff}.today-duty-item .label{font-size:.76rem;color:#60758a;font-weight:700;white-space:nowrap}.today-duty-item .value{font-weight:800;color:#17324d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.early-list{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 14px}.early-person{display:inline-flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid #dbe3ec;border-radius:999px;background:#fff;font-size:.86rem}.area-badge{display:inline-flex;padding:2px 7px;border-radius:999px;background:#e8f0ff;color:#1e3c72;font-size:.72rem;font-weight:800}.assignment-preview-shell{margin-top:18px}.assignment-preview-button{display:block;width:100%;border:0;background:#eef3f8;padding:14px;cursor:zoom-in}.assignment-preview-button img{display:block;width:100%;height:auto;max-height:520px;object-fit:contain;background:#fff;border-radius:8px}.assignment-preview-actions{display:flex;justify-content:flex-end;padding:12px 16px}.preview-modal{position:fixed;inset:0;z-index:2000;display:none;background:rgba(8,20,35,.88);padding:24px}.preview-modal.open{display:flex;align-items:center;justify-content:center}.preview-modal-inner{width:min(98vw,1800px);height:min(94vh,1100px);display:flex;flex-direction:column;gap:10px}.preview-modal-top{display:flex;justify-content:flex-end}.preview-modal-close{border:0;border-radius:9px;background:#fff;color:#17324d;font-weight:800;padding:9px 14px}.preview-modal-stage{flex:1;min-height:0;overflow:auto;background:#fff;border-radius:12px;padding:14px}.preview-modal-stage img{display:block;min-width:100%;height:auto}
+@media(max-width:900px){.today-duty-grid{grid-template-columns:1fr}.assignment-preview-button img{max-height:360px}}@media(max-width:600px){.preview-modal{padding:8px}.assignment-preview-toolbar,.today-work-header{align-items:flex-start;flex-direction:column}}
+</style>
+{% endblock %}
+
 {% block header_info %}
-<div class="home-summary">
+<style>
+.header-summary-wrap{
+    display:flex;
+    align-items:stretch;
+    justify-content:flex-end;
+    gap:10px;
+    width:100%;
+    min-width:0;
+}
+.header-early-card,
+.header-count-card{
+    border:1px solid rgba(255,255,255,.28);
+    background:rgba(255,255,255,.10);
+    border-radius:10px;
+}
+.header-early-card{
+    min-width:310px;
+    padding:7px 11px;
+}
+.header-early-title{
+    font-size:.68rem;
+    font-weight:700;
+    opacity:.78;
+    margin-bottom:3px;
+}
+.header-early-row{
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    min-height:24px;
+    line-height:1.25;
+}
+.header-early-row + .header-early-row{
+    border-top:1px solid rgba(255,255,255,.18);
+    margin-top:3px;
+    padding-top:4px;
+}
+.header-early-day{
+    flex:0 0 2.4rem;
+    font-size:.72rem;
+    opacity:.78;
+    padding-top:2px;
+}
+.header-early-people{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px 8px;
+    min-width:0;
+}
+.header-early-person{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    font-size:.82rem;
+    font-weight:700;
+    white-space:nowrap;
+}
+.header-early-badge{
+    display:inline-block;
+    padding:1px 6px;
+    border-radius:999px;
+    background:rgba(255,255,255,.92);
+    color:#245ea8;
+    font-size:.58rem;
+    font-weight:800;
+}
+.header-counts{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(68px,1fr));
+    gap:7px;
+}
+.header-count-card{
+    min-width:68px;
+    padding:7px 8px 6px;
+    text-align:center;
+}
+.header-count-label{
+    display:block;
+    font-size:.62rem;
+    opacity:.76;
+    white-space:nowrap;
+}
+.header-count-value{
+    display:block;
+    font-size:1.15rem;
+    line-height:1.15;
+    font-weight:800;
+}
+@media(max-width:1100px){
+    .header-summary-wrap{flex-wrap:wrap;}
+    .header-early-card{flex:1 1 100%;min-width:0;}
+    .header-counts{flex:1 1 100%;grid-template-columns:repeat(5,1fr);}
+}
+@media(max-width:600px){
+    .header-counts{grid-template-columns:repeat(5,minmax(52px,1fr));gap:4px;}
+    .header-count-card{min-width:0;padding:6px 3px;}
+    .header-count-label{font-size:.55rem;}
+    .header-count-value{font-size:1rem;}
+}
+</style>
 
-    <div class="summary-counts">
-        <div class="summary-item">
-            <span>疾患データ</span>
-            <strong>{{ sicks_count }}</strong>
+<div class="header-summary-wrap">
+    <div class="header-early-card">
+        <div class="header-early-title">早出</div>
+
+        <div class="header-early-row">
+            <span class="header-early-day">今日</span>
+            <div class="header-early-people">
+                {% if early_assignments %}
+                    {% for person in early_assignments %}
+                    <span class="header-early-person">
+                        {{ person.name }}
+                        {% for category in person.categories %}
+                        <span class="header-early-badge">{{ category }}</span>
+                        {% endfor %}
+                    </span>
+                    {% endfor %}
+                {% else %}
+                    <span class="small opacity-75">－</span>
+                {% endif %}
+            </div>
         </div>
 
-        <div class="summary-item">
-            <span>お知らせ</span>
-            <strong>{{ forms_count }}</strong>
-        </div>
-
-        <div class="summary-item">
-            <span>プロトコル</span>
-            <strong>{{ protocols_count }}</strong>
-        </div>
-
-        <div class="summary-item">
-            <span>夜勤対応</span>
-            <strong>{{ night_shifts_count }}</strong>
-        </div>
-
-        <div class="summary-item">
-            <span>掲示板</span>
-            <strong>{{ question_count }}</strong>
+        <div class="header-early-row">
+            <span class="header-early-day">明日</span>
+            <div class="header-early-people">
+                {% if tomorrow_early_assignments %}
+                    {% for person in tomorrow_early_assignments %}
+                    <span class="header-early-person">
+                        {{ person.name }}
+                        {% for category in person.categories %}
+                        <span class="header-early-badge">{{ category }}</span>
+                        {% endfor %}
+                    </span>
+                    {% endfor %}
+                {% else %}
+                    <span class="small opacity-75">－</span>
+                {% endif %}
+            </div>
         </div>
     </div>
 
-    {% if today_early_staff %}
-        <a
-            class="today-early-card early-card-link"
-            href="{% url 'daily_assignment:board' %}?date={% now 'Y-m-d' %}"
-            aria-label="今日の当日配置表を開く"
-        >
-            <span class="early-label">
-                <i class="bi bi-sunrise-fill"></i>
-                今日の早出
-            </span>
-
-            <strong>
-                {% for staff_name in today_early_staff %}
-                    {{ staff_name }}{% if not forloop.last %}・{% endif %}
-                {% endfor %}
-            </strong>
-
-            <span class="early-open-hint">
-                配置表を見る
-                <i class="bi bi-chevron-right"></i>
-            </span>
-        </a>
-    {% endif %}
-
-    {% if tomorrow_early_staff %}
-        <a
-            class="today-early-card tomorrow-early-card early-card-link"
-            href="{% url 'daily_assignment:board' %}?date={{ tomorrow|date:'Y-m-d' }}"
-            aria-label="明日の当日配置表を開く"
-        >
-            <span class="early-label">
-                <i class="bi bi-calendar-check-fill"></i>
-                明日の早出
-            </span>
-
-            <strong>
-                {% for staff_name in tomorrow_early_staff %}
-                    {{ staff_name }}{% if not forloop.last %}・{% endif %}
-                {% endfor %}
-            </strong>
-
-            <span class="early-open-hint">
-                明日の配置表を見る
-                <i class="bi bi-chevron-right"></i>
-            </span>
-        </a>
-    {% endif %}
-
+    <div class="header-counts">
+        <div class="header-count-card">
+            <span class="header-count-label">疾患データ</span>
+            <span class="header-count-value">{{ sicks_count }}</span>
+        </div>
+        <div class="header-count-card">
+            <span class="header-count-label">お知らせ</span>
+            <span class="header-count-value">{{ forms_count }}</span>
+        </div>
+        <div class="header-count-card">
+            <span class="header-count-label">プロトコル</span>
+            <span class="header-count-value">{{ protocols_count }}</span>
+        </div>
+        <div class="header-count-card">
+            <span class="header-count-label">夜勤対応</span>
+            <span class="header-count-value">{{ night_shifts_count }}</span>
+        </div>
+        <div class="header-count-card">
+            <span class="header-count-label">掲示板</span>
+            <span class="header-count-value">{{ question_count }}</span>
+        </div>
+    </div>
 </div>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-    .home-summary {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 20px;
-        width: 100%;
-    }
-
-    .summary-counts {
-        display: grid;
-        grid-template-columns: repeat(5, minmax(70px, auto));
-        gap: 14px;
-    }
-
-    .summary-item {
-        min-width: 70px;
-        text-align: center;
-    }
-
-    .summary-item span {
-        display: block;
-        margin-bottom: 2px;
-        color: rgba(255, 255, 255, 0.78);
-        font-size: 0.72rem;
-        white-space: nowrap;
-    }
-
-    .summary-item strong {
-        display: block;
-        color: #fff;
-        font-size: 1.55rem;
-        line-height: 1;
-    }
-
-    .today-early-card {
-        flex: 0 0 auto;
-        min-width: 190px;
-        padding: 13px 18px;
-        text-align: center;
-        color: #17324d;
-        background: linear-gradient(135deg, #fff3bd, #ffdc73);
-        border: 1px solid rgba(255, 255, 255, 0.8);
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
-    }
-
-    .early-label {
-        display: block;
-        margin-bottom: 4px;
-        color: #805b08;
-        font-size: 0.82rem;
-        font-weight: 700;
-        white-space: nowrap;
-    }
-
-    .today-early-card strong {
-        display: block;
-        font-size: 1.15rem;
-        line-height: 1.3;
-    }
-
-    .tomorrow-early-card {
-        background: linear-gradient(135deg, #dcecff, #a9ceff);
-    }
-
-    .tomorrow-early-card .early-label {
-        color: #24558c;
-    }
-
-    .early-card-link {
-        display: block;
-        color: #17324d;
-        text-decoration: none;
-        cursor: pointer;
-        transition:
-            transform 0.18s ease,
-            box-shadow 0.18s ease,
-            filter 0.18s ease;
-    }
-
-    .early-card-link:hover {
-        color: #17324d;
-        transform: translateY(-2px);
-        box-shadow: 0 7px 18px rgba(0, 0, 0, 0.2);
-        filter: brightness(1.02);
-    }
-
-    .early-card-link:focus-visible {
-        outline: 3px solid rgba(255, 255, 255, 0.9);
-        outline-offset: 3px;
-    }
-
-    .early-open-hint {
-        display: block;
-        margin-top: 7px;
-        color: #805b08;
-        font-size: 0.72rem;
-        font-weight: 700;
-    }
-
-    .early-open-hint .bi {
-        margin-left: 2px;
-    }
-
-    /* タブレット */
-    @media (max-width: 991px) {
-        .main-header {
-            align-items: stretch !important;
-            flex-direction: column;
-            gap: 18px;
-        }
-
-        .main-header h1 {
-            text-align: left;
-        }
-
-        .header-info {
-            width: 100%;
-            text-align: left !important;
-        }
-
-        .home-summary {
-            align-items: stretch;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .summary-counts {
-            grid-template-columns: repeat(5, 1fr);
-            width: 100%;
-        }
-
-        .today-early-card {
-            width: 100%;
-            box-sizing: border-box;
-        }
-    }
-
-    /* スマートフォン */
-    @media (max-width: 576px) {
-        .main-header {
-            padding: 18px !important;
-            border-radius: 12px;
-        }
-
-        .main-header h1 {
-            font-size: 1.65rem;
-        }
-
-        .summary-counts {
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
-        .summary-item {
-            min-width: 0;
-            padding: 9px 5px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-        }
-
-        .summary-item span {
-            font-size: 0.68rem;
-            white-space: normal;
-        }
-
-        .summary-item strong {
-            font-size: 1.35rem;
-        }
-
-        .today-early-card {
-            min-width: 0;
-            padding: 14px;
-        }
-
-        .today-early-card strong {
-            font-size: 1.25rem;
-        }
-    }
-</style>
 {% endblock %}
 
 {% block content %}
@@ -289,6 +239,26 @@
         </div>
     </div>
 </div>
+
+<div class="row mt-4">
+  <div class="col-12">
+    <h2 class="section-title"><i class="bi bi-calendar2-check"></i> 本日の勤務</h2>
+    <section class="today-work-card">
+      <div class="today-work-header"><h3 class="today-work-title">{% now "Y年m月d日" %}</h3><a href="{% url 'daily_assignment:board' %}" class="btn btn-sm btn-outline-primary">当日配置表を開く</a></div>
+      {% if today_assignment_exists %}
+      <div class="today-duty-grid">{% for duty in today_duties %}<div class="today-duty-item"><i class="bi {{ duty.icon }}"></i><span class="label">{{ duty.label }}</span><span class="value">{{ duty.value }}</span></div>{% empty %}<div class="today-duty-item"><i class="bi bi-check-circle"></i><span class="value">勤務欄の登録はありません</span></div>{% endfor %}</div>
+      <div class="px-3 pb-2 fw-bold text-secondary small"><i class="bi bi-alarm"></i> 早出・朝の配置</div>
+      <div class="early-list">{% for person in early_assignments %}<span class="early-person"><strong>{{ person.name }}</strong>{% for category in person.categories %}<span class="area-badge">{{ category }}</span>{% endfor %}</span>{% empty %}<span class="text-muted small">早出の配置登録はありません。</span>{% endfor %}</div>
+      {% else %}<div class="p-3 text-muted">本日の配置表はまだ作成されていません。</div>{% endif %}
+    </section>
+    <section class="assignment-preview-shell">
+      <div class="assignment-preview-toolbar"><h3 class="assignment-preview-title"><i class="bi bi-grid-3x3-gap"></i> 本日の勤務配置表</h3><span class="small text-muted">画像をクリックすると拡大できます</span></div>
+      <button type="button" class="assignment-preview-button" id="assignmentPreviewOpen" aria-label="本日の配置表を拡大表示"><img src="{% url 'daily_assignment:preview' %}" alt="本日の勤務配置表プレビュー"></button>
+      <div class="assignment-preview-actions"><a href="{% url 'daily_assignment:board' %}" class="btn btn-primary"><i class="bi bi-box-arrow-up-right"></i> 当日配置表を開く</a></div>
+    </section>
+  </div>
+</div>
+<div class="preview-modal" id="assignmentPreviewModal" aria-hidden="true"><div class="preview-modal-inner"><div class="preview-modal-top"><button type="button" class="preview-modal-close" id="assignmentPreviewClose">× 閉じる</button></div><div class="preview-modal-stage"><img src="{% url 'daily_assignment:preview' %}" alt="本日の勤務配置表 拡大表示"></div></div></div>
 
 <div class="row mt-4">
     <div class="col-12">
@@ -506,3 +476,4 @@
 
 </div>
 {% endblock %}
+{% block extra_js %}<script>(function(){const m=document.getElementById('assignmentPreviewModal'),o=document.getElementById('assignmentPreviewOpen'),c=document.getElementById('assignmentPreviewClose');if(!m||!o||!c)return;const h=()=>{m.classList.remove('open');m.setAttribute('aria-hidden','true');document.body.style.overflow='';};o.addEventListener('click',()=>{m.classList.add('open');m.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';});c.addEventListener('click',h);m.addEventListener('click',e=>{if(e.target===m)h();});document.addEventListener('keydown',e=>{if(e.key==='Escape')h();});})();</script>{% endblock %}

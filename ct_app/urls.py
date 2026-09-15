@@ -38,6 +38,7 @@ urlpatterns = [
     path('backup/', views.BackupPageView.as_view(), name='backup'),
     path('backup/export/', views.ExportBackupView.as_view(), name='backup_export'),
     path('backup/import/', views.ImportBackupView.as_view(), name='backup_import'),
+    path('backup/safety/<str:filename>/', views.SafetyBackupDownloadView.as_view(), name='backup_safety_download'),
     
     # urls.py
     path('api/get_protocol_data/', views.get_protocol_data, name='get_protocol_data'),

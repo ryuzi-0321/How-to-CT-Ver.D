@@ -1,0 +1,234 @@
+
+.monthly-topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;width:min(96%,1600px);margin:18px auto 14px;padding:20px 24px;border-radius:14px;background:linear-gradient(135deg,#17324d,#2a5298);color:#fff;box-shadow:0 8px 24px rgba(30,60,114,.2)}
+.monthly-topbar h1{margin:0;font-size:clamp(1.4rem,3vw,2rem)}
+.monthly-topbar p{margin:7px 0 0;opacity:.88}
+.monthly-brand{font-size:.8rem;font-weight:700;letter-spacing:.08em;opacity:.8}
+.monthly-back,.monthly-button{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:9px;padding:9px 14px;background:#fff;color:#17324d;text-decoration:none;font-weight:700;white-space:nowrap}
+.monthly-page{width:min(96%,1700px);margin:0 auto 28px}
+.monthly-controls{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.month-form{display:flex;gap:8px}
+.month-form input{padding:8px 10px;border:1px solid #b8c4d0;border-radius:8px}
+.monthly-button{border:1px solid #c4cfda;background:#fff}
+.monthly-button.accent,.monthly-button.primary{background:#17324d;color:#fff;border-color:#17324d}
+.monthly-button.secondary{background:#eaf1f7;color:#17324d;border-color:#b9c8d7}
+.monthly-button:disabled{opacity:.5;cursor:not-allowed}
+
+.monthly-alert{margin:0 auto 12px;padding:10px 14px;border-radius:9px;background:#eef4fb;color:#17324d;border:1px solid #c7d7e7}
+.monthly-alert.success{background:#ecf8f0;color:#22623b;border-color:#badcc7}
+.monthly-alert.warning{background:#fff7e8;color:#7b5613;border-color:#ead2a1}
+.monthly-alert.error{background:#fff0f0;color:#8b2525;border-color:#e3bcbc}
+
+.rotation-card{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.08);padding:16px 18px;margin-bottom:14px;border-top:4px solid #2a5298}
+.rotation-card-title{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px}
+.rotation-card-title strong{display:block;color:#17324d;font-size:1.03rem}
+.rotation-card-title span{display:block;margin-top:2px;color:#64748b;font-size:.86rem}
+.rotation-form{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) auto;gap:12px;align-items:end}
+.rotation-form label span{display:block;font-size:.8rem;font-weight:700;color:#526274;margin-bottom:5px}
+.rotation-form select,.rotation-form input{width:100%;box-sizing:border-box;border:1px solid #b8c4d0;border-radius:8px;padding:9px 10px;background:#fff}
+.rotation-actions{display:flex;gap:8px;flex-wrap:wrap}
+.rotation-note{margin-top:10px;color:#64748b;font-size:.82rem}
+
+.monthly-card{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.08);padding:12px}
+.monthly-hint{text-align:center;color:#64748b;font-size:.85rem;margin-bottom:8px}
+.monthly-table-scroll{overflow:auto;cursor:zoom-in}
+.monthly-table{border-collapse:collapse;table-layout:fixed;background:#fff;min-width:max-content}
+.monthly-table th,.monthly-table td{border:1px solid #aebdcc;text-align:center;vertical-align:middle;padding:4px 3px;height:34px}
+.monthly-table thead th{background:#17324d;color:#fff;font-weight:700}
+.monthly-table .staff-col{position:sticky;left:0;z-index:2;min-width:100px;max-width:100px;background:#17324d;color:#fff}
+.monthly-table tbody .staff-col{background:#f1f5f9;color:#17324d}
+.day-col,.weekday-col,.duty-cell{width:36px;min-width:36px;max-width:36px}
+.weekday-col{font-size:.75rem}
+.duty-cell{font-weight:800;font-size:.95rem}
+.saturday{background:#e8f3ff!important;color:#245b8f!important}
+.holiday{background:#ffe9e9!important;color:#a32828!important}
+.custom-holiday{background:#eee8ff!important;color:#6043a6!important}
+.closed{background:#d9dee5!important;color:#35404b!important}
+.monthly-table thead .saturday,.monthly-table thead .holiday,.monthly-table thead .custom-holiday,.monthly-table thead .closed{font-weight:800}
+.total-col,.total-cell{min-width:58px}
+.total-cell{background:#f8fafc;font-weight:700}
+.empty-row{padding:24px!important;color:#64748b}
+
+.day-settings-button{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:28px;border:0;background:transparent;color:inherit;font:inherit;font-weight:800;padding:0;cursor:pointer}
+.day-settings-button:hover{outline:2px solid rgba(23,50,77,.25);outline-offset:-2px}
+.day-number{line-height:1}
+.no-comp-mark{position:absolute;right:1px;bottom:0;font-size:.52rem;line-height:1;background:#17324d;color:#fff;border-radius:3px;padding:1px 2px}
+.calendar-legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:10px;color:#526274;font-size:.78rem}
+.calendar-legend span{display:inline-flex;align-items:center;gap:5px}
+.legend-chip{width:15px;height:15px;border:1px solid #b7c2cd;border-radius:3px;display:inline-block}
+
+.day-modal{position:fixed;inset:0;z-index:11000;display:none;align-items:center;justify-content:center;background:rgba(8,20,34,.75);padding:18px}
+.day-modal.open{display:flex}
+.day-modal-card{position:relative;width:min(94vw,640px);background:#fff;border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.35);padding:22px}
+.day-modal-close{position:absolute;right:12px;top:12px;width:38px;height:38px;border:0;border-radius:50%;background:#edf2f7;color:#17324d;font-size:24px}
+.day-modal-title small{color:#64748b;font-weight:700;letter-spacing:.05em}
+.day-modal-title h2{margin:2px 0 16px;color:#17324d;font-size:1.35rem}
+.day-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.day-form-grid label>span:first-child{display:block;margin-bottom:5px;color:#526274;font-size:.8rem;font-weight:700}
+.day-form-grid select{width:100%;box-sizing:border-box;padding:10px;border:1px solid #b8c4d0;border-radius:8px;background:#fff}
+.no-comp-toggle{grid-column:1/-1;display:flex!important;align-items:center;gap:10px;border:1px solid #cad5e0;border-radius:10px;padding:11px 12px;background:#f8fafc}
+.no-comp-toggle input{width:18px;height:18px;flex:0 0 auto}
+.no-comp-toggle span{margin:0!important}
+.no-comp-toggle strong{display:block;color:#17324d}
+.no-comp-toggle small{display:block;color:#64748b;margin-top:2px}
+.day-modal-help{margin-top:12px;padding:10px 12px;border-radius:9px;background:#eef4fb;color:#526274;font-size:.82rem}
+.day-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+
+.monthly-modal{position:fixed;inset:0;z-index:10000;display:none;background:rgba(8,20,34,.88);padding:50px 16px 20px;overflow:auto}
+.monthly-modal.open{display:block}
+.monthly-modal-close{position:fixed;top:12px;right:18px;z-index:10001;width:42px;height:42px;border:0;border-radius:50%;font-size:28px;line-height:1;background:#fff;color:#17324d}
+.monthly-modal-content{width:max-content;min-width:100%;display:flex;justify-content:center}
+.monthly-modal-table-wrap{background:#fff;padding:12px;border-radius:10px;overflow:auto;max-width:100%}
+.monthly-modal .monthly-table{transform-origin:top left}
+.monthly-modal .staff-col{position:static}
+
+@media(max-width:980px){
+  .rotation-form{grid-template-columns:1fr 1fr}
+  .rotation-actions{grid-column:1/-1}
+}
+@media(max-width:700px){
+  .monthly-topbar{align-items:flex-start;flex-direction:column;padding:16px}
+  .monthly-page{width:98%}
+  .monthly-card{padding:7px}
+  .monthly-button{padding:8px 10px;font-size:.9rem}
+  .rotation-form{grid-template-columns:1fr}
+  .rotation-actions{grid-column:1}
+  .monthly-table th,.monthly-table td{height:31px;padding:3px 2px}
+  .day-col,.weekday-col,.duty-cell{width:31px;min-width:31px;max-width:31px}
+  .monthly-table .staff-col{min-width:82px;max-width:82px;font-size:.85rem}
+  .day-form-grid{grid-template-columns:1fr}
+}
+@media print{
+  .assignment-sidebar,.monthly-controls,.monthly-hint,.monthly-back,.rotation-card,.calendar-legend,footer,.navbar{display:none!important}
+  .monthly-page,.monthly-card{width:100%;box-shadow:none;margin:0;padding:0}
+  .monthly-table{transform:scale(.72);transform-origin:top left}
+}
+
+/* Ver.3.5.1: 代休手動移動・1段階Undo */
+.day-form-grid input[type="date"]{width:100%;box-sizing:border-box;padding:10px;border:1px solid #b8c4d0;border-radius:8px;background:#fff;color:#17324d}
+.field-note{display:block;margin-top:4px;color:#7b8794;font-size:.72rem;line-height:1.35}
+.monthly-button.undo{background:#fff4e6;color:#8a5410;border-color:#e5c08a}
+.monthly-button.undo:disabled{background:#f3f4f6;color:#a0a7b0;border-color:#d6d9de}
+.day-action-spacer{flex:1 1 auto}
+
+/* Ver.3.8.7: 自動作成ガイド・通常勤務スタッフ・代休由来表示 */
+.auto-guide-card{background:#f7fbff;border:1px solid #cbdceb;border-left:5px solid #2a5298;border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.auto-guide-title{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.auto-guide-title strong{color:#17324d;font-size:1rem}.auto-guide-title span{color:#64748b;font-size:.82rem}
+.auto-guide-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.auto-guide-step{display:flex;align-items:center;gap:8px;min-width:0;padding:9px 10px;border:1px solid #d6e2ee;border-radius:9px;background:#fff;color:#17324d;text-decoration:none}
+.auto-guide-step:hover{background:#eef5fb}.auto-guide-step.active{border-color:#2a5298;background:#eaf2fb}
+.auto-guide-step>b{display:flex;align-items:center;justify-content:center;flex:0 0 25px;width:25px;height:25px;border-radius:50%;background:#2a5298;color:#fff;font-size:.78rem}
+.auto-guide-step span{min-width:0}.auto-guide-step strong,.auto-guide-step small{display:block}.auto-guide-step strong{font-size:.83rem}.auto-guide-step small{margin-top:1px;color:#6b7b8c;font-size:.7rem;white-space:normal}
+.staff-section-row th{position:static!important;text-align:left!important;height:auto!important;padding:7px 10px!important;background:#dbe8f4!important;color:#17324d!important;border-top:3px solid #6f8eaa!important;border-bottom:2px solid #9fb4c7!important;font-size:.78rem;letter-spacing:.04em}
+.normal-staff-row .staff-col{background:#f7f9fc!important;color:#42566a!important}
+.duty-cell.has-comp-tooltip{cursor:help;text-decoration:underline dotted #617a92;text-underline-offset:3px}
+@media(max-width:900px){.auto-guide-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.auto-guide-steps{grid-template-columns:1fr}}
+
+/* Ver.3.8.9: 前後7日表示・日別人員集計・月間合計 */
+.monthly-table .outside-month{background:#eef2f6!important;color:#7b8794!important}
+.monthly-table th.outside-month.holiday,.monthly-table td.outside-month.holiday{background:#f3e9e9!important}
+.monthly-table th.outside-month.saturday,.monthly-table td.outside-month.saturday{background:#e9eef5!important}
+.monthly-table .outside-month .day-settings-button{color:#748291}
+.monthly-table .outside-month .day-number{font-size:.68rem;white-space:nowrap}
+.daily-summary-row th,.daily-summary-row td{border-top:2px solid #8ea7bd!important}
+.daily-summary-row+.daily-summary-row th,.daily-summary-row+.daily-summary-row td{border-top:1px solid #c7d4df!important}
+.summary-label{background:#17324d!important;color:#fff!important;font-weight:800!important}
+.summary-cell{text-align:center;background:#f7fbff!important;color:#17324d;font-weight:800}
+.daytime-summary-row .summary-cell{background:#edf6ff!important}
+.leave-summary-row .summary-cell{background:#fff7e9!important}
+.summary-total-note{min-width:174px;background:#f4f7fa!important;color:#66788a;font-size:.7rem;font-weight:700;text-align:center}
+.duty-cell.has-comp-tooltip{cursor:default;text-decoration:underline dotted #617a92;text-underline-offset:3px}
+
+/* Ver.3.9.0: 年休記号・休日の日勤集計・表示倍率 */
+.monthly-scale-control{display:inline-flex;align-items:center;gap:7px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#526274;font-size:.78rem;font-weight:700}
+.monthly-scale-control select{border:1px solid #b8c4d0;border-radius:7px;padding:6px 8px;background:#fff;color:#17324d;font-weight:700}
+.monthly-scale-control small{min-width:58px;color:#718096;font-size:.7rem;font-weight:700}
+.monthly-table{transform-origin:top left}
+.duty-cell{position:relative}
+.duty-cell.has-annual-leave{padding-top:2px;padding-bottom:2px}
+.duty-mark{display:inline-block;line-height:1}
+.annual-leave-mark{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;margin-left:1px;padding:0 2px;border-radius:5px;background:#fff4cf;border:1px solid #d6aa35;color:#72530c;font-size:.58rem;font-weight:900;line-height:1;vertical-align:middle;box-sizing:border-box}
+.annual-leave-mark.annual-〇{border-radius:50%;padding:0;min-width:16px;background:#fff7dc}
+.duty-cell:not(:has(.duty-mark)) .annual-leave-mark{margin-left:0;font-size:.67rem}
+@media(max-width:700px){.monthly-scale-control{width:100%;justify-content:flex-end}.monthly-scale-control small{min-width:52px}}
+
+/* Ver.3.9.4: 祝日の代休を日付単位で個別追加 */
+.force-comp-toggle{display:flex!important;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid #9fc3df;border-radius:9px;background:#eef7ff}
+.force-comp-toggle input{margin-top:3px}
+.force-comp-toggle strong{color:#17527e}.force-comp-toggle small{display:block;margin-top:2px;color:#62788b;font-size:.72rem;line-height:1.35}
+.force-comp-mark{display:block;margin-top:1px;color:#176b48;font-size:.55rem;font-weight:900;white-space:nowrap}
+
+/* Ver.3.9.5: スタッフ別代休追加・祝日振替候補 */
+.staff-specific-comp { align-items: flex-start; }
+.comp-date-field .comp-holiday-shift { margin-top: 6px; width: 100%; border: 1px solid #f0b35a; background: #fff8e8; }
+.comp-date-field .comp-holiday-shift:not(.d-none) + .field-note { color: #a45b00; font-weight: 600; }
+
+/* Ver.3.9.5.1: 日付設定モーダルを画面内に収め、操作ボタンを常時表示 */
+.day-modal{
+  overflow:hidden;
+}
+.day-modal-card{
+  display:flex;
+  flex-direction:column;
+  width:min(94vw,800px);
+  max-height:calc(100vh - 36px);
+  box-sizing:border-box;
+  overflow:hidden;
+}
+.day-modal-title{
+  flex:0 0 auto;
+  padding-right:46px;
+}
+#daySettingsForm{
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  flex:1 1 auto;
+}
+#daySettingsForm .day-form-grid{
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding-right:8px;
+  margin-right:-8px;
+  scrollbar-gutter:stable;
+}
+#daySettingsForm .day-modal-help{
+  flex:0 0 auto;
+}
+#daySettingsForm .day-modal-actions{
+  position:relative;
+  z-index:2;
+  flex:0 0 auto;
+  margin:14px -22px -22px;
+  padding:12px 22px;
+  border-top:1px solid #d8e1ea;
+  border-radius:0 0 16px 16px;
+  background:#fff;
+  box-shadow:0 -8px 18px rgba(23,50,77,.08);
+}
+@media(max-height:760px){
+  .day-modal{padding:8px}
+  .day-modal-card{max-height:calc(100vh - 16px);padding:16px}
+  .day-modal-title h2{margin-bottom:10px}
+  #daySettingsForm .day-modal-help{margin-top:8px;padding:8px 10px;font-size:.75rem}
+  #daySettingsForm .day-modal-actions{margin:10px -16px -16px;padding:10px 16px}
+}
+@media(max-width:700px){
+  .day-modal{padding:8px}
+  .day-modal-card{width:100%;max-height:calc(100vh - 16px);padding:16px;border-radius:12px}
+  #daySettingsForm .day-modal-actions{margin:10px -16px -16px;padding:10px 16px;flex-wrap:wrap}
+  #daySettingsForm .day-modal-actions .day-action-spacer{display:none}
+  #daySettingsForm .day-modal-actions .monthly-button{flex:1 1 auto}
+}
+
+/* Ver.3.9.6 月別勤務ローテーション構成 */
+.rotation-version-card{background:#fff;border:1px solid #cfdae7;border-radius:14px;margin-bottom:16px;box-shadow:0 4px 14px rgba(31,61,91,.06)}
+.rotation-version-card summary{cursor:pointer;padding:14px 18px;font-weight:800;color:#173b64;background:#f3f7fb;border-radius:14px}
+.rotation-version-card details[open] summary{border-bottom:1px solid #d7e0ea;border-radius:14px 14px 0 0}
+.rotation-version-body{padding:16px 18px}.rotation-version-body p{color:#5f7185;margin:0 0 12px}
+.rotation-version-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}
+.rotation-member-row{display:grid;grid-template-columns:auto 1fr 64px;gap:8px;align-items:center;border:1px solid #d8e2ed;border-radius:9px;padding:8px 10px;background:#fbfdff}
+.rotation-member-row span{font-weight:700;color:#173b64}.rotation-member-row input[type=number]{width:64px;border:1px solid #cbd8e5;border-radius:7px;padding:5px}
+.rotation-version-actions{margin-top:12px}.rotation-version-reset{margin-top:8px}

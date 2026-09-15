@@ -7,7 +7,100 @@
 
 {% block extra_css %}
 <link rel="stylesheet"
-      href="{% static 'daily_assignment/settings.css' %}">
+      href="{% static 'daily_assignment/settings.css' %}?v=20260811_2">
+<style>
+.settings-bulk-savebar{position:sticky;top:8px;z-index:1035;display:flex;align-items:center;gap:12px;margin:0 0 18px;padding:10px 14px;background:rgba(255,255,255,.96);border:1px solid #cbd8e6;border-radius:12px;box-shadow:0 6px 20px rgba(23,50,77,.12);backdrop-filter:blur(6px)}
+.settings-bulk-savebar .bulk-save-btn{min-width:160px;font-weight:800;box-shadow:0 4px 12px rgba(30,60,114,.18)}
+.settings-bulk-status{font-size:.9rem;color:#607284;font-weight:700}.settings-bulk-status.dirty{color:#b45309}
+.bulk-settings-table tbody tr.bulk-dirty>td{background:#fff8e7!important}
+/* Ver.3.9.8: 優先①～④は選択中の配置名が見える幅を確保 */
+.auto-rule-table th:nth-child(5),.auto-rule-table th:nth-child(6),.auto-rule-table th:nth-child(7),.auto-rule-table th:nth-child(8),
+.auto-rule-table td:nth-child(5),.auto-rule-table td:nth-child(6),.auto-rule-table td:nth-child(7),.auto-rule-table td:nth-child(8){min-width:180px}
+.auto-rule-table td:nth-child(5) .form-select,.auto-rule-table td:nth-child(6) .form-select,.auto-rule-table td:nth-child(7) .form-select,.auto-rule-table td:nth-child(8) .form-select{min-width:172px}
+.auto-rule-table th:nth-child(4),.auto-rule-table td:nth-child(4){min-width:170px}
+/* Ver.3.9.8.8: 通常配置ルールは横スクロールしてもスタッフ名を左端に固定 */
+#autoRuleScroll .auto-rule-table th:first-child,
+#autoRuleScroll .auto-rule-table td:first-child{
+  position:sticky;
+  left:0;
+  min-width:140px;
+  width:140px;
+  z-index:5;
+  background:#fff;
+  box-shadow:3px 0 0 rgba(184,198,215,.95);
+}
+#autoRuleScroll .auto-rule-table thead th:first-child{
+  z-index:8;
+  background:#173c65!important;
+  color:#fff!important;
+}
+#autoRuleScroll .auto-rule-table tbody tr:nth-child(even) td:first-child{background:#fff}
+.area-delete-cell{width:84px;min-width:84px;text-align:center}
+.bulk-settings-table{table-layout:auto;width:100%}.bulk-settings-table th{white-space:nowrap;text-align:center;vertical-align:middle}.bulk-settings-table td{vertical-align:middle}.bulk-settings-table .form-control,.bulk-settings-table .form-select{min-width:0;width:100%}.bulk-settings-table .text-switch{text-align:center}.bulk-settings-table tbody tr{height:58px}.settings-bulk-savebar{top:6px}.area-time-table th,.area-time-table td{vertical-align:middle;text-align:center}.area-time-table .sticky-area-name{text-align:left;min-width:150px}.derived-rule-table th,.compact-config-table th{white-space:nowrap}
+
+/* Ver.3.8.2 配置場所設定の画面下追従横スクロール */
+.area-settings-scroll{scrollbar-gutter:stable both-edges}
+.area-settings-xbar,.auto-rule-xbar{position:fixed;left:0;bottom:4px;height:18px;overflow-x:auto;overflow-y:hidden;z-index:1040;background:rgba(245,248,252,.96);border:1px solid #b9c8da;border-radius:8px;box-shadow:0 3px 12px rgba(18,46,76,.18);display:none}
+.area-settings-xbar.is-visible,.auto-rule-xbar.is-visible{display:block}
+.area-settings-xbar-inner,.auto-rule-xbar-inner{height:1px}
+@media(min-width:1350px){.area-settings-scroll .bulk-settings-table{font-size:.86rem}.area-settings-scroll .form-control,.area-settings-scroll .form-select{padding-left:.38rem;padding-right:.38rem;font-size:.86rem}}
+
+@media(max-width:700px){.settings-bulk-savebar{top:4px}.settings-bulk-savebar .bulk-save-btn{min-width:130px}.settings-bulk-status{font-size:.78rem}}
+
+/* Ver.3.7.5: 設定表の追従ヘッダー */
+.settings-follow-header{
+  position:fixed;
+  display:none;
+  z-index:1034;
+  overflow:hidden;
+  background:#fff;
+  border:1px solid #b9c8da;
+  border-radius:0 0 9px 9px;
+  box-shadow:0 7px 18px rgba(18,46,76,.16);
+  pointer-events:none;
+}
+.settings-follow-header.is-visible{display:block}
+.settings-follow-header-title{
+  padding:4px 10px;
+  background:#244a76;
+  color:#fff;
+  font-size:.78rem;
+  font-weight:800;
+  letter-spacing:.02em;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.settings-follow-header-track{position:relative;will-change:left;left:0}
+.settings-follow-header table{margin:0!important;background:#fff}
+.settings-follow-header thead th{
+  background:#173c65!important;
+  color:#fff!important;
+  border-color:#3f6388!important;
+  text-align:center;
+  vertical-align:middle;
+  white-space:nowrap;
+  font-weight:800;
+  padding-top:.55rem;
+  padding-bottom:.55rem;
+}
+/* 配置場所ごとの時間枠は左端の配置場所名も固定 */
+.area-time-scroll .area-time-table th:first-child,
+.area-time-scroll .area-time-table td:first-child{
+  position:sticky;
+  left:0;
+  z-index:4;
+  background:#fff;
+  box-shadow:2px 0 0 #b8c6d7;
+}
+.area-time-scroll .area-time-table thead th:first-child{
+  z-index:6;
+  background:#173c65!important;
+  color:#fff!important;
+}
+.area-time-scroll .area-time-table tbody th:first-child{background:#f6f9fc}
+.auto-cell-toggle{display:flex;align-items:center;justify-content:center;gap:5px;font-size:.72rem;color:#52677b;cursor:pointer;white-space:nowrap}.auto-cell-toggle input:not(:checked)+span{color:#b4232f;font-weight:700}.auto-cell-table td{min-width:72px}.auto-cell-table .form-check-input{margin:0}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -17,7 +110,7 @@
         <div>
             <h1 class="h3 mb-1">スタッフ・配置場所設定</h1>
             <p class="text-muted mb-0">
-                当日配置表で使用するスタッフと配置場所を管理します。
+                スタッフ・勤務・配置場所・時間ルールをこの画面でまとめて管理します。
             </p>
         </div>
 
@@ -27,218 +120,182 @@
         </a>
     </div>
 
-    {% if messages %}
-        <div class="mb-4">
-            {% for message in messages %}
-                <div class="alert
-                    {% if message.tags == 'success' %}
-                        alert-success
-                    {% elif message.tags == 'error' %}
-                        alert-danger
-                    {% elif message.tags == 'warning' %}
-                        alert-warning
-                    {% else %}
-                        alert-info
-                    {% endif %}
-                    alert-dismissible fade show"
-                     role="alert">
 
-                    {{ message }}
+    <form id="bulkSettingsForm" method="post" action="{% url 'daily_assignment:settings_bulk_save' %}">
+        {% csrf_token %}
+    </form>
 
-                    <button type="button"
-                            class="btn-close"
-                            data-bs-dismiss="alert"
-                            aria-label="閉じる">
-                    </button>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
+    <div class="settings-bulk-savebar">
+        <button type="submit" form="bulkSettingsForm" class="btn btn-primary bulk-save-btn" id="bulkSettingsSaveButton">
+            💾 すべて上書き保存
+        </button>
+        <span class="settings-bulk-status" id="bulkSettingsStatus">変更なし</span>
+    </div>
+
+    <div id="settingsFollowHeader" class="settings-follow-header" aria-hidden="true">
+        <div id="settingsFollowHeaderTitle" class="settings-follow-header-title"></div>
+        <div id="settingsFollowHeaderTrack" class="settings-follow-header-track"></div>
+    </div>
 
     <div class="row g-4">
 
         <!-- スタッフ設定 -->
-        <div class="col-12">
+        <div class="col-12 settings-anchor" id="staff-settings">
             <div class="settings-card">
                 <div class="settings-card-header staff">
-                    <h2 class="h5 mb-0">スタッフ設定</h2>
+                    <h2 class="h5 mb-0">スタッフ・勤務ローテーション設定</h2>
                 </div>
-
                 <div class="settings-card-body">
+                    <div class="alert alert-info">
+                        「勤務ローテーション対象」にしたスタッフを、勤務順の小さい順に
+                        平日の夜勤、休日の日勤・夜勤へ循環配置します。
+                    </div>
 
-                    <!-- スタッフ追加 -->
                     <div class="settings-add-panel">
                         <h3 class="h6 mb-3">スタッフを追加</h3>
-
-                        <form method="post"
-                              action="{% url 'daily_assignment:staff_add' %}"
+                        <form method="post" action="{% url 'daily_assignment:staff_add' %}"
                               class="row g-3 align-items-end">
-
                             {% csrf_token %}
-
-                            <div class="col-12 col-md-6">
-                                <label for="staff-name"
-                                       class="form-label">
-                                    スタッフ名
-                                </label>
-
-                                <input type="text"
-                                       id="staff-name"
-                                       name="name"
-                                       class="form-control"
-                                       maxlength="100"
-                                       required>
+                            <div class="col-12 col-lg-3">
+                                <label class="form-label" for="staff-name">スタッフ名</label>
+                                <input type="text" id="staff-name" name="name"
+                                       class="form-control" maxlength="100" required>
                             </div>
-
-                            <div class="col-6 col-md-2">
-                                <label for="staff-order"
-                                       class="form-label">
-                                    表示順
-                                </label>
-
-                                <input type="number"
-                                       id="staff-order"
-                                       name="display_order"
-                                       class="form-control"
-                                       value="0"
-                                       min="0"
-                                       required>
+                            <div class="col-6 col-lg-2">
+                                <label class="form-label" for="staff-order">表示順</label>
+                                <input type="number" id="staff-order" name="display_order"
+                                       class="form-control" value="0" min="0" required>
                             </div>
-
-                            <div class="col-6 col-md-2">
+                            <div class="col-6 col-lg-2">
+                                <label class="form-label" for="work-start-time">勤務開始</label>
+                                <input type="time" id="work-start-time" name="work_start_time" class="form-control">
+                            </div>
+                            <div class="col-6 col-lg-2">
+                                <label class="form-label" for="work-end-time">勤務終了</label>
+                                <input type="time" id="work-end-time" name="work_end_time" class="form-control">
+                            </div>
+                            <div class="col-6 col-lg-2">
+                                <label class="form-label" for="duty-rotation-order">勤務順</label>
+                                <input type="number" id="duty-rotation-order"
+                                       name="duty_rotation_order" class="form-control"
+                                       value="0" min="0" required>
+                            </div>
+                            <div class="col-6 col-lg-2">
                                 <div class="form-check mb-2">
-                                    <input type="checkbox"
-                                           id="staff-active"
-                                           name="is_active"
-                                           class="form-check-input"
-                                           checked>
-
-                                    <label for="staff-active"
-                                           class="form-check-label">
-                                        使用する
-                                    </label>
+                                    <input type="checkbox" id="duty-rotation-enabled"
+                                           name="duty_rotation_enabled" class="form-check-input">
+                                    <label for="duty-rotation-enabled" class="form-check-label">勤務対象</label>
                                 </div>
                             </div>
-
-                            <div class="col-12 col-md-2">
-                                <button type="submit"
-                                        class="btn btn-primary w-100">
-                                    追加
-                                </button>
+                            <div class="col-6 col-lg-1">
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" id="staff-active" name="is_active"
+                                           class="form-check-input" checked>
+                                    <label for="staff-active" class="form-check-label">使用</label>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-2">
+                                <button type="submit" class="btn btn-primary w-100">追加</button>
                             </div>
                         </form>
                     </div>
 
-                    <!-- スタッフ一覧 -->
                     <div class="settings-list-panel">
                         <div class="table-responsive">
-                            <table class="table table-bordered table-hover align-middle">
+                            <table class="table table-bordered table-hover align-middle settings-table bulk-settings-table">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th style="min-width: 220px;">
-                                            スタッフ名
-                                    </th>
-                                    <th style="width: 120px;">
-                                        表示順
-                                    </th>
-                                    <th style="width: 120px;">
-                                        使用状態
-                                    </th>
-                                    <th style="width: 180px;">
-                                        操作
-                                    </th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
+                                        <th style="min-width:180px">スタッフ名</th>
+                                        <th style="width:100px">表示順</th>
+                                        <th style="width:115px">勤務開始</th>
+                                        <th style="width:115px">勤務終了</th>
+                                        <th style="width:110px">勤務順</th>
+                                        <th style="width:110px">勤務対象</th>
+                                        <th style="width:110px">主担当対象</th><th style="width:100px">主担当順</th>
+                                        <th style="width:100px">使用</th>
+                                        <th style="width:84px">削除</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                                 {% for staff in staff_list %}
-                                    <tr>
-                                        <td colspan="4" class="p-0">
-                                            <form method="post"
-                                                  action="{% url 'daily_assignment:staff_update' staff.id %}"
-                                                  class="row g-0 align-items-center">
-
-                                                {% csrf_token %}
-
-                                                <div class="col-12 col-md">
-                                                    <div class="p-2">
-                                                        <input type="text"
-                                                               name="name"
-                                                               class="form-control"
-                                                               value="{{ staff.name }}"
-                                                               maxlength="100"
-                                                               required>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-6 col-md-auto"
-                                                     style="width: 120px;">
-                                                    <div class="p-2">
-                                                        <input type="number"
-                                                               name="display_order"
-                                                               class="form-control"
-                                                               value="{{ staff.display_order }}"
-                                                               min="0"
-                                                               required>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-6 col-md-auto"
-                                                     style="width: 120px;">
-                                                    <div class="p-2 text-center">
-                                                        <div class="form-check form-switch d-inline-block">
-                                                            <input type="checkbox"
-                                                                   name="is_active"
-                                                                   class="form-check-input"
-                                                                   {% if staff.is_active %}checked{% endif %}>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-12 col-md-auto"
-                                                     style="width: 180px;">
-                                                    <div class="p-2 d-flex gap-2">
-                                                        <button type="submit"
-                                                                class="btn btn-sm btn-success flex-fill">
-                                                            更新
-                                                        </button>
-
-                                                        <button type="submit"
-                                                                formaction="{% url 'daily_assignment:staff_delete' staff.id %}"
-                                                                class="btn btn-sm btn-danger flex-fill"
-                                                                onclick="return confirm('スタッフ「{{ staff.name|escapejs }}」を削除しますか？');">
-                                                            削除
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </td>
+                                    <tr data-bulk-row>
+                                        <td><input form="bulkSettingsForm" type="text" name="staff_{{ staff.id }}_name" class="form-control bulk-setting-input" value="{{ staff.name }}" maxlength="100" required></td>
+                                        <td><input form="bulkSettingsForm" type="number" name="staff_{{ staff.id }}_display_order" class="form-control bulk-setting-input" value="{{ staff.display_order }}" min="0" required></td>
+                                        <td><input form="bulkSettingsForm" type="time" name="staff_{{ staff.id }}_work_start_time" class="form-control bulk-setting-input" value="{% if staff.work_start_time %}{{ staff.work_start_time|time:'H:i' }}{% endif %}"></td>
+                                        <td><input form="bulkSettingsForm" type="time" name="staff_{{ staff.id }}_work_end_time" class="form-control bulk-setting-input" value="{% if staff.work_end_time %}{{ staff.work_end_time|time:'H:i' }}{% endif %}"></td>
+                                        <td><input form="bulkSettingsForm" type="number" name="staff_{{ staff.id }}_duty_rotation_order" class="form-control bulk-setting-input" value="{{ staff.duty_rotation_order }}" min="0" required></td>
+                                        <td class="text-switch"><div class="form-check form-switch d-inline-block mb-0"><input form="bulkSettingsForm" type="checkbox" name="staff_{{ staff.id }}_duty_rotation_enabled" class="form-check-input bulk-setting-input" {% if staff.duty_rotation_enabled %}checked{% endif %}></div></td>
+                                        <td class="text-switch"><div class="form-check form-switch d-inline-block mb-0"><input form="bulkSettingsForm" type="checkbox" name="staff_{{ staff.id }}_main_rotation_enabled" class="form-check-input bulk-setting-input" {% if staff.main_rotation_enabled %}checked{% endif %}></div></td>
+                                        <td><input form="bulkSettingsForm" type="number" name="staff_{{ staff.id }}_main_rotation_order" class="form-control bulk-setting-input" value="{{ staff.main_rotation_order }}" min="0"></td>
+                                        <td class="text-switch"><div class="form-check form-switch d-inline-block mb-0"><input form="bulkSettingsForm" type="checkbox" name="staff_{{ staff.id }}_is_active" class="form-check-input bulk-setting-input" {% if staff.is_active %}checked{% endif %}></div></td>
+                                        <td class="area-delete-cell"><form method="post" action="{% url 'daily_assignment:staff_delete' staff.id %}">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('スタッフ「{{ staff.name|escapejs }}」を削除しますか？');">削除</button></form></td>
                                     </tr>
-                                {% empty %}
-                                    <tr>
-                                        <td colspan="4"
-                                            class="text-center text-muted py-4">
-                                            スタッフはまだ登録されていません。
-                                        </td>
-                                    </tr>
-                                {% endfor %}
+                                {% empty %}<tr><td colspan="10" class="text-center text-muted py-4">スタッフはまだ登録されていません。</td></tr>{% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 通常配置の自動作成ルール -->
+        <div class="col-12 settings-anchor" id="auto-assignment-settings">
+            <div class="settings-card">
+                <div class="settings-card-header auto-assignment"><h2 class="h5 mb-0">通常配置の自動作成ルール</h2></div>
+                <div class="settings-card-body">
+                    <div class="alert alert-info mb-3">
+                        「専任」を指定したスタッフは、自動配置ではその配置場所にしか入りません。優先配置は①→④の順です。「配置しない」は複数選択できます。週回数は配置場所ごとに個別の目標回数を設定できます。
+                    </div>
+                    <div class="table-responsive" id="autoRuleScroll">
+                        <table class="table table-bordered align-middle auto-rule-table bulk-settings-table">
+                            <thead><tr>
+                                <th>スタッフ</th><th>自動対象</th><th style="min-width:115px">配置優先度</th><th style="min-width:150px">専任</th><th>優先①</th><th>優先②</th><th>優先③</th><th>優先④</th>
+                                <th style="min-width:220px">配置しない（複数）</th><th style="min-width:260px">週回数設定（場所ごと）</th>
+                            </tr></thead>
+                            <tbody>
+                            {% for staff in staff_list %}
+                                <tr data-bulk-row>
+                                    <td class="fw-bold text-nowrap">{{ staff.name }}{% if staff.last_free_date %}<div class="last-free-note">前回Free {{ staff.last_free_date|date:"n/j" }}</div>{% endif %}</td>
+                                    <td class="text-center"><div class="form-check form-switch d-inline-block"><input type="checkbox" name="staff_{{ staff.id }}_auto_assignment_enabled" form="bulkSettingsForm" class="form-check-input bulk-setting-input" {% if staff.auto_assignment_enabled %}checked{% endif %}></div></td>
+                                    <td><select name="staff_{{ staff.id }}_assignment_staff_priority" form="bulkSettingsForm" class="form-select form-select-sm bulk-setting-input"><option value="1" {% if staff.assignment_staff_priority == 1 %}selected{% endif %}>最優先</option><option value="2" {% if staff.assignment_staff_priority == 2 %}selected{% endif %}>優先</option><option value="3" {% if staff.assignment_staff_priority == 3 %}selected{% endif %}>通常</option><option value="4" {% if staff.assignment_staff_priority == 4 %}selected{% endif %}>Free優先</option></select></td>
+                                    <td><select name="staff_{{ staff.id }}_dedicated_area" form="bulkSettingsForm" class="form-select form-select-sm bulk-setting-input"><option value="">指定なし</option>{% for area in active_area_list %}<option value="{{ area.id }}" {% if staff.dedicated_area_id == area.id %}selected{% endif %}>{{ area.category }} / {{ area.name }}</option>{% endfor %}</select></td>
+                                    <td><select name="staff_{{ staff.id }}_preferred_area_1" form="bulkSettingsForm" class="form-select form-select-sm bulk-setting-input"><option value="">指定なし</option>{% for area in active_area_list %}<option value="{{ area.id }}" {% if staff.preferred_area_1_id == area.id %}selected{% endif %}>{{ area.category }} / {{ area.name }}</option>{% endfor %}</select></td>
+                                    <td><select name="staff_{{ staff.id }}_preferred_area_2" form="bulkSettingsForm" class="form-select form-select-sm bulk-setting-input"><option value="">指定なし</option>{% for area in active_area_list %}<option value="{{ area.id }}" {% if staff.preferred_area_2_id == area.id %}selected{% endif %}>{{ area.category }} / {{ area.name }}</option>{% endfor %}</select></td>
+                                    <td><select name="staff_{{ staff.id }}_preferred_area_3" form="bulkSettingsForm" class="form-select form-select-sm bulk-setting-input"><option value="">指定なし</option>{% for area in active_area_list %}<option value="{{ area.id }}" {% if staff.preferred_area_3_id == area.id %}selected{% endif %}>{{ area.category }} / {{ area.name }}</option>{% endfor %}</select></td>
+                                    <td><select name="staff_{{ staff.id }}_preferred_area_4" form="bulkSettingsForm" class="form-select form-select-sm bulk-setting-input"><option value="">指定なし</option>{% for area in active_area_list %}<option value="{{ area.id }}" {% if staff.preferred_area_4_id == area.id %}selected{% endif %}>{{ area.category }} / {{ area.name }}</option>{% endfor %}</select></td>
+                                    <td>
+                                      <details class="multi-rule-details">
+                                        <summary title="配置しない：&#10;{% for opt in staff.auto_area_options %}{% if opt.avoid %}{{ opt.area.category }} / {{ opt.area.name }}&#10;{% endif %}{% endfor %}">選択する</summary>
+                                        <div class="multi-rule-menu">
+                                      {% for opt in staff.auto_area_options %}<label class="multi-check-row"><input form="bulkSettingsForm" class="bulk-setting-input" type="checkbox" name="staff_{{ staff.id }}_avoid_{{ opt.area.id }}" {% if opt.avoid %}checked{% endif %}> <span>{{ opt.area.category }} / {{ opt.area.name }}</span></label>{% endfor %}
+                                      </div></details>
+                                    </td>
+                                    <td>
+                                      <details class="multi-rule-details">
+                                        <summary title="週回数設定：&#10;{% for opt in staff.auto_area_options %}{% if opt.weekly_count %}{{ opt.area.category }} / {{ opt.area.name }}：{{ opt.weekly_count }}回&#10;{% endif %}{% endfor %}">回数を設定</summary>
+                                        <div class="multi-rule-menu weekly-target-menu">
+                                      {% for opt in staff.auto_area_options %}<label class="weekly-target-row"><span>{{ opt.area.category }} / {{ opt.area.name }}</span><input form="bulkSettingsForm" class="form-control form-control-sm bulk-setting-input" type="number" min="0" max="7" name="staff_{{ staff.id }}_weekly_{{ opt.area.id }}_count" value="{{ opt.weekly_count }}"><span>回</span></label>{% endfor %}
+                                      </div></details>
+                                    </td>
+                                </tr>
+                            {% empty %}<tr><td colspan="10" class="text-center text-muted py-4">スタッフはまだ登録されていません。</td></tr>{% endfor %}
                             </tbody>
                         </table>
                     </div>
-
+                    <div class="auto-rule-xbar" id="autoRuleXbar" aria-hidden="true"><div class="auto-rule-xbar-inner" id="autoRuleXbarInner"></div></div>
                 </div>
             </div>
         </div>
 
         <!-- 配置場所設定 -->
-        <div class="col-12">
+        <div class="col-12 settings-anchor" id="area-settings">
             <div class="settings-card">
-                <div class="settings-card-header area">
+                <div class="settings-card-header area d-flex align-items-center justify-content-between gap-2">
                     <h2 class="h5 mb-0">配置場所設定</h2>
+                    <a href="{% url 'daily_assignment:area_staff_matrix' %}" class="btn btn-sm btn-light fw-bold">配置可能スタッフ一覧</a>
                 </div>
-
                 <div class="settings-card-body">
-
                     <!-- 配置場所追加 -->
                     <div class="settings-add-panel">
                         <h3 class="h6 mb-3">配置場所を追加</h3>
@@ -294,6 +351,59 @@
                                        required>
                             </div>
 
+                            <div class="col-6 col-md-2">
+                                <label for="area-auto-count" class="form-label">
+                                    自動配置人数
+                                </label>
+                                <input type="number"
+                                       id="area-auto-count"
+                                       name="auto_assignment_count"
+                                       class="form-control"
+                                       value="1"
+                                       min="0"
+                                       max="10"
+                                       required>
+                            </div>
+
+                            <div class="col-6 col-md-2">
+                                <label for="area-min-count" class="form-label">最低必要人数</label>
+                                <input type="number" id="area-min-count" name="minimum_assignment_count"
+                                       class="form-control" value="0" min="0" max="10" required>
+                            </div>
+
+                            <div class="col-6 col-md-2">
+                                <label for="area-priority" class="form-label">配置優先度</label>
+                                <select id="area-priority" name="assignment_priority" class="form-select">
+                                    <option value="1">1 最優先</option>
+                                    <option value="2">2 高</option>
+                                    <option value="3" selected>3 通常</option>
+                                    <option value="4">4 低</option>
+                                    <option value="5">5 最低</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-2">
+                                <label for="area-overlap-mode" class="form-label">重複配置</label>
+                                <select id="area-overlap-mode" name="overlap_assignment_mode" class="form-select">
+                                    <option value="never" selected>不可</option>
+                                    <option value="am_only">AMのみ可</option>
+                                    <option value="pm_only">PMのみ可</option>
+                                    <option value="shortage">人員不足時のみ可</option>
+                                    <option value="always">常に可</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-2">
+                                <label for="area-auto-mode" class="form-label">
+                                    自動配置方式
+                                </label>
+                                <select id="area-auto-mode" name="auto_assignment_mode" class="form-select">
+                                    <option value="daily">毎日</option>
+                                    <option value="scheduled">予定時のみ</option>
+                                    <option value="manual">手動のみ</option>
+                                </select>
+                            </div>
+
                             <div class="col-6 col-md-1">
                                 <label for="area-order"
                                        class="form-label">
@@ -335,139 +445,693 @@
 
                     <!-- 配置場所一覧 -->
                     <div class="settings-list-panel">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover align-middle settings-table">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th style="min-width: 160px;">
-                                            部門・分類
-                                    </th>
-                                    <th style="min-width: 220px;">
-                                        配置場所名
-                                    </th>
-                                    <th style="width: 120px;">
-                                        入力列数
-                                    </th>
-                                    <th style="width: 120px;">
-                                        表示順
-                                    </th>
-                                    <th style="width: 120px;">
-                                        使用状態
-                                    </th>
-                                    <th style="width: 180px;">
-                                        操作
-                                    </th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
+                        <div class="table-responsive area-settings-scroll" id="areaSettingsScroll">
+                            <table class="table table-bordered table-hover align-middle settings-table bulk-settings-table">
+                                <thead class="table-dark"><tr>
+                                    <th style="min-width:150px">部門・分類</th><th style="min-width:180px">配置場所名</th><th style="width:105px">可能スタッフ</th>
+                                    <th style="width:105px">入力列数</th><th style="width:120px">自動配置人数</th><th style="width:120px">最低必要人数</th>
+                                    <th style="width:125px">配置優先度</th><th style="width:165px">重複配置</th><th style="width:145px">自動配置方式</th><th style="width:95px">表示順</th><th style="width:105px">主担当対象</th><th style="width:95px">主担当順</th><th style="width:90px">使用状態</th><th class="area-delete-cell">削除</th>
+                                </tr></thead>
+                                <tbody>
                                 {% for area in area_list %}
-                                    <tr>
-                                        <td colspan="6" class="p-0">
-                                            <form method="post"
-                                                  action="{% url 'daily_assignment:area_update' area.id %}"
-                                                  class="row g-0 align-items-center">
-
-                                                {% csrf_token %}
-
-                                                <div class="col-12 col-md">
-                                                    <div class="p-2">
-                                                        <input type="text"
-                                                               name="category"
-                                                               class="form-control"
-                                                               value="{{ area.category }}"
-                                                               maxlength="100">
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-12 col-md">
-                                                    <div class="p-2">
-                                                        <input type="text"
-                                                               name="name"
-                                                               class="form-control"
-                                                               value="{{ area.name }}"
-                                                               maxlength="100"
-                                                               required>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-6 col-md-auto"
-                                                     style="width: 120px;">
-                                                    <div class="p-2">
-                                                        <input type="number"
-                                                               name="slot_count"
-                                                               class="form-control"
-                                                               value="{{ area.slot_count }}"
-                                                               min="1"
-                                                               max="10"
-                                                               required>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-6 col-md-auto"
-                                                     style="width: 120px;">
-                                                    <div class="p-2">
-                                                        <input type="number"
-                                                               name="display_order"
-                                                               class="form-control"
-                                                               value="{{ area.display_order }}"
-                                                               min="0"
-                                                               required>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-6 col-md-auto"
-                                                     style="width: 120px;">
-                                                    <div class="p-2 text-center">
-                                                        <div class="form-check form-switch d-inline-block">
-                                                            <input type="checkbox"
-                                                                   name="is_active"
-                                                                   class="form-check-input"
-                                                                   {% if area.is_active %}checked{% endif %}>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-12 col-md-auto"
-                                                     style="width: 180px;">
-                                                    <div class="p-2 d-flex gap-2">
-                                                        <button type="submit"
-                                                                class="btn btn-sm btn-success flex-fill">
-                                                            更新
-                                                        </button>
-
-                                                        <button type="submit"
-                                                                formaction="{% url 'daily_assignment:area_delete' area.id %}"
-                                                                class="btn btn-sm btn-danger flex-fill"
-                                                                onclick="return confirm('配置場所「{{ area.name|escapejs }}」を削除しますか？');">
-                                                            削除
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </td>
+                                    <tr data-bulk-row>
+                                        <td><input form="bulkSettingsForm" type="text" name="area_{{ area.id }}_category" class="form-control bulk-setting-input" value="{{ area.category }}" maxlength="100"></td>
+                                        <td><input form="bulkSettingsForm" type="text" name="area_{{ area.id }}_name" class="form-control bulk-setting-input" value="{{ area.name }}" maxlength="100" required></td>
+                                        <td class="text-center">{% if area.is_active %}<a href="{% url 'daily_assignment:area_staff_matrix' %}?area={{ area.id }}" class="btn btn-sm btn-outline-primary text-nowrap">一覧</a>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                                        <td><input form="bulkSettingsForm" type="number" name="area_{{ area.id }}_slot_count" class="form-control bulk-setting-input" value="{{ area.slot_count }}" min="1" max="10" required></td>
+                                        <td><input form="bulkSettingsForm" type="number" name="area_{{ area.id }}_auto_assignment_count" class="form-control bulk-setting-input" value="{{ area.auto_assignment_count }}" min="0" max="10" required></td>
+                                        <td><input form="bulkSettingsForm" type="number" name="area_{{ area.id }}_minimum_assignment_count" class="form-control bulk-setting-input" value="{{ area.minimum_assignment_count }}" min="0" max="10" required></td>
+                                        <td><select form="bulkSettingsForm" name="area_{{ area.id }}_assignment_priority" class="form-select bulk-setting-input">
+                                            <option value="1" {% if area.assignment_priority == 1 %}selected{% endif %}>1 最優先</option><option value="2" {% if area.assignment_priority == 2 %}selected{% endif %}>2 高</option><option value="3" {% if area.assignment_priority == 3 %}selected{% endif %}>3 通常</option><option value="4" {% if area.assignment_priority == 4 %}selected{% endif %}>4 低</option><option value="5" {% if area.assignment_priority == 5 %}selected{% endif %}>5 最低</option>
+                                        </select></td>
+                                        <td><select form="bulkSettingsForm" name="area_{{ area.id }}_overlap_assignment_mode" class="form-select bulk-setting-input">
+                                            <option value="never" {% if area.overlap_assignment_mode == 'never' %}selected{% endif %}>不可</option>
+                                            <option value="am_only" {% if area.overlap_assignment_mode == 'am_only' %}selected{% endif %}>AMのみ可</option>
+                                            <option value="pm_only" {% if area.overlap_assignment_mode == 'pm_only' %}selected{% endif %}>PMのみ可</option>
+                                            <option value="shortage" {% if area.overlap_assignment_mode == 'shortage' %}selected{% endif %}>人員不足時のみ可</option>
+                                            <option value="always" {% if area.overlap_assignment_mode == 'always' %}selected{% endif %}>常に可</option>
+                                        </select></td>
+                                        <td><select form="bulkSettingsForm" name="area_{{ area.id }}_auto_assignment_mode" class="form-select bulk-setting-input"><option value="daily" {% if area.auto_assignment_mode == 'daily' %}selected{% endif %}>毎日</option><option value="scheduled" {% if area.auto_assignment_mode == 'scheduled' %}selected{% endif %}>予定時のみ</option><option value="manual" {% if area.auto_assignment_mode == 'manual' %}selected{% endif %}>手動のみ</option></select></td>
+                                        <td><input form="bulkSettingsForm" type="number" name="area_{{ area.id }}_display_order" class="form-control bulk-setting-input" value="{{ area.display_order }}" min="0" required></td>
+                                        <td class="text-center"><div class="form-check form-switch d-inline-block mb-0"><input form="bulkSettingsForm" type="checkbox" name="area_{{ area.id }}_main_rotation_enabled" class="form-check-input bulk-setting-input" {% if area.main_rotation_enabled %}checked{% endif %}></div></td>
+                                        <td><input form="bulkSettingsForm" type="number" name="area_{{ area.id }}_main_rotation_order" class="form-control bulk-setting-input" value="{{ area.main_rotation_order }}" min="0"></td>
+                                        <td class="text-center"><div class="form-check form-switch d-inline-block mb-0"><input form="bulkSettingsForm" type="checkbox" name="area_{{ area.id }}_is_active" class="form-check-input bulk-setting-input" {% if area.is_active %}checked{% endif %}></div></td>
+                                        <td class="area-delete-cell"><form method="post" action="{% url 'daily_assignment:area_delete' area.id %}">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('配置場所「{{ area.name|escapejs }}」を削除しますか？');">削除</button></form></td>
                                     </tr>
-                                {% empty %}
-                                    <tr>
-                                        <td colspan="6"
-                                            class="text-center text-muted py-4">
-                                            配置場所はまだ登録されていません。
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                {% empty %}<tr><td colspan="14" class="text-center text-muted py-4">配置場所はまだ登録されていません。</td></tr>{% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-
+                    <div class="area-settings-xbar" id="areaSettingsXbar" aria-hidden="true"><div class="area-settings-xbar-inner" id="areaSettingsXbarInner"></div></div>
                     <div class="alert alert-info mt-3 mb-0">
-                        過去の配置表で使用済みの配置場所は、削除しても完全には消えず、
-                        自動的に「使用停止」へ切り替わります。
+                        <strong>入力列数</strong>は画面に出す枠数、<strong>自動配置人数</strong>は通常時に自動作成で埋める人数です。
+                        <strong>最低必要人数</strong>は人員不足時でも先に確保する人数、<strong>配置優先度</strong>は1が最優先・5が最低です。
+                        <strong>重複配置</strong>は欠員再配置で同時間帯の兼任を許可するかを指定します。「AMのみ可」「PMのみ可」は指定した半日のみ兼任を許可します。「人員不足時のみ可」「常に可」を含め、重複なしの再配置案を先に出します。時間連動ルールの兼任はこの設定とは別に許可されます。変更後は左上の「設定を一括保存」でまとめて保存します。
                     </div>
-
                 </div>
             </div>
         </div>
 
+        <!-- 専任代理設定 -->
+        <div class="col-12 settings-anchor" id="dedicated-backup-settings">
+          <div class="settings-card">
+            <div class="settings-card-header auto-assignment"><h2 class="h5 mb-0">専任者の代理設定</h2></div>
+            <div class="settings-card-body">
+              <div class="alert alert-info">専任者が年休・出張・会議などで不在のとき、代理①→②→③…の順に自動配置候補を強く優先します。</div>
+              <form method="post" action="{% url 'daily_assignment:dedicated_backup_add' %}" class="row g-2 align-items-end mb-3">{% csrf_token %}
+                <div class="col-md-4"><label class="form-label">配置場所</label><select name="area_id" class="form-select">{% for area in active_area_list %}<option value="{{ area.id }}">{{ area.category }} / {{ area.name }}</option>{% endfor %}</select></div>
+                <div class="col-md-4"><label class="form-label">代理スタッフ</label><select name="staff_id" class="form-select">{% for staff in staff_list %}{% if staff.is_active %}<option value="{{ staff.id }}">{{ staff.name }}</option>{% endif %}{% endfor %}</select></div>
+                <div class="col-md-2"><label class="form-label">代理順</label><input name="priority" type="number" min="1" value="1" class="form-control"></div>
+                <div class="col-md-2"><button class="btn btn-primary w-100">追加</button></div>
+              </form>
+              <div class="table-responsive"><table class="table table-bordered compact-config-table"><thead><tr><th>配置場所</th><th>専任</th><th>代理（順番）</th></tr></thead><tbody>
+              {% for area in area_list %}{% if area.dedicated_staff.all or area.backup_entries %}<tr><td>{{ area.category }} / {{ area.name }}</td><td>{% for st in area.dedicated_staff.all %}{{ st.name }}{% if not forloop.last %}、{% endif %}{% empty %}—{% endfor %}</td><td>{% for b in area.backup_entries %}<span class="badge bg-light text-dark border me-1">{{ b.priority }}. {{ b.staff.name }} <button type="button" class="btn-close ms-1" style="font-size:.55rem" onclick="document.getElementById('delBackup{{ b.id }}').submit()"></button></span><form id="delBackup{{ b.id }}" method="post" action="{% url 'daily_assignment:dedicated_backup_delete' b.id %}" class="d-none">{% csrf_token %}</form>{% empty %}—{% endfor %}</td></tr>{% endif %}{% endfor %}
+              </tbody></table></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 代休ルール設定 -->
+        <div class="col-12 settings-anchor" id="duty-settings">
+            <div class="settings-card">
+                <div class="settings-card-header comp-rule">
+                    <h2 class="h5 mb-0">土日・祝日の代休ルール</h2>
+                </div>
+                <div class="settings-card-body">
+                    <div class="alert alert-info">
+                        土日・祝日の休日日勤と夜勤だけが代休対象です。
+                        「指定週の曜日」では、例として1週後・火曜日を指定すると翌週火曜日に入ります。
+                    </div>
+
+                    <div class="settings-add-panel">
+                        <h3 class="h6 mb-3">代休ルールを追加</h3>
+                        <form method="post" action="{% url 'daily_assignment:comp_rule_add' %}"
+                              class="row g-3 align-items-end comp-rule-form">
+                            {% csrf_token %}
+                            <div class="col-6 col-lg-2">
+                                <label class="form-label">勤務日</label>
+                                <select name="day_type" class="form-select">
+                                    {% for value, label in day_type_choices %}<option value="{{ value }}" {% if value == 'number' %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6 col-lg-2">
+                                <label class="form-label">勤務種類</label>
+                                <select name="duty_type" class="form-select">
+                                    {% for value, label in duty_type_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12 col-lg-2">
+                                <label class="form-label">決め方</label>
+                                <select name="offset_mode" class="form-select">
+                                    <option value="weekday">指定週の曜日</option>
+                                    <option value="days">何日後</option>
+                                </select>
+                            </div>
+                            <div class="col-4 col-lg-1">
+                                <label class="form-label">何週後</label>
+                                <input type="number" name="weeks_after" class="form-control" value="1" min="0">
+                            </div>
+                            <div class="col-8 col-lg-2">
+                                <label class="form-label">代休曜日</label>
+                                <select name="target_weekday" class="form-select">
+                                    {% for value, label in weekday_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6 col-lg-1">
+                                <label class="form-label">何日後</label>
+                                <input type="number" name="days_after" class="form-control" value="1" min="1">
+                            </div>
+                            <div class="col-6 col-lg-1">
+                                <div class="form-check mb-2"><input type="checkbox" name="is_active" class="form-check-input" checked><label class="form-check-label">使用</label></div>
+                            </div>
+                            <div class="col-12 col-lg-1"><button type="submit" class="btn btn-primary w-100">追加</button></div>
+                        </form>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle settings-table bulk-settings-table">
+                            <thead class="table-dark"><tr>
+                                <th>勤務日</th><th>勤務種類</th><th>決め方</th><th>何週後</th><th>代休曜日</th><th>何日後</th><th>使用</th><th style="width:84px">削除</th>
+                            </tr></thead>
+                            <tbody>
+                            {% for rule in comp_rules %}
+                                <tr data-bulk-row>
+                                    <td><select form="bulkSettingsForm" name="comp_{{ rule.id }}_day_type" class="form-select bulk-setting-input">{% for value,label in day_type_choices %}<option value="{{ value }}" {% if rule.day_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></td>
+                                    <td><select form="bulkSettingsForm" name="comp_{{ rule.id }}_duty_type" class="form-select bulk-setting-input">{% for value,label in duty_type_choices %}<option value="{{ value }}" {% if rule.duty_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></td>
+                                    <td><select form="bulkSettingsForm" name="comp_{{ rule.id }}_offset_mode" class="form-select bulk-setting-input"><option value="weekday" {% if rule.offset_mode == 'weekday' %}selected{% endif %}>指定週の曜日</option><option value="days" {% if rule.offset_mode == 'days' %}selected{% endif %}>勤務日の何日後</option></select></td>
+                                    <td><input form="bulkSettingsForm" type="number" name="comp_{{ rule.id }}_weeks_after" class="form-control bulk-setting-input" value="{{ rule.weeks_after }}" min="0"></td>
+                                    <td><select form="bulkSettingsForm" name="comp_{{ rule.id }}_target_weekday" class="form-select bulk-setting-input">{% for value,label in weekday_choices %}<option value="{{ value }}" {% if rule.target_weekday == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></td>
+                                    <td><input form="bulkSettingsForm" type="number" name="comp_{{ rule.id }}_days_after" class="form-control bulk-setting-input" value="{{ rule.days_after }}" min="1"></td>
+                                    <td class="text-switch"><div class="form-check form-switch d-inline-block mb-0"><input form="bulkSettingsForm" type="checkbox" name="comp_{{ rule.id }}_is_active" class="form-check-input bulk-setting-input" {% if rule.is_active %}checked{% endif %}></div></td>
+                                    <td class="area-delete-cell"><form method="post" action="{% url 'daily_assignment:comp_rule_delete' rule.id %}">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('この代休ルールを削除しますか？');">削除</button></form></td>
+                                </tr>
+                            {% empty %}<tr><td colspan="8" class="text-center text-muted py-4">代休ルールはまだありません。</td></tr>{% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+
+<div class="row g-4 mt-1">
+  <!-- 時間枠設定 -->
+  <div class="col-12 settings-anchor" id="time-slot-settings">
+    <div class="settings-card">
+      <div class="settings-card-header time-slot"><h2 class="h5 mb-0">時間枠設定</h2></div>
+      <div class="settings-card-body">
+        <p class="text-muted mb-3">配置表の時間行をここで管理します。「昼休憩色」をONにした時間は配置表の行全体を黄色で表示します。</p>
+        <div class="settings-add-panel">
+          <h3 class="h6 mb-3">時間枠を追加</h3>
+          <form method="post" action="{% url 'daily_assignment:time_slot_add' %}" class="row g-3 align-items-end">
+            {% csrf_token %}
+            <div class="col-6 col-md-2"><label class="form-label">内部キー</label><input name="key" class="form-control" placeholder="例 1230" required></div>
+            <div class="col-6 col-md-2"><label class="form-label">表示名</label><input name="label" class="form-control" placeholder="例 12:30" required></div>
+            <div class="col-6 col-md-2"><label class="form-label">種類</label><select name="kind" class="form-select">{% for value,label in time_kind_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div>
+            <div class="col-6 col-md-1"><label class="form-label">順番</label><input type="number" name="display_order" class="form-control" value="0" min="0"></div>
+            <div class="col-6 col-md-2"><div class="form-check mb-2"><input type="checkbox" name="is_active" class="form-check-input" checked><label class="form-check-label">使用</label></div></div>
+            <div class="col-6 col-md-2"><div class="form-check mb-2"><input type="checkbox" name="is_lunch_highlight" class="form-check-input"><label class="form-check-label">昼休憩色</label></div></div>
+            <div class="col-12 col-md-1"><button class="btn btn-primary w-100">追加</button></div>
+          </form>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle settings-table compact-config-table bulk-settings-table">
+            <thead class="table-dark"><tr><th>内部キー</th><th>表示名</th><th>種類</th><th>順番</th><th>使用</th><th>昼休憩色</th><th style="width:84px">削除</th></tr></thead>
+            <tbody>
+              {% for slot in time_slots %}
+              <tr data-bulk-row>
+                <td><input class="form-control" value="{{ slot.key }}" disabled></td>
+                <td><input form="bulkSettingsForm" name="slot_{{ slot.id }}_label" class="form-control bulk-setting-input" value="{{ slot.label }}" required></td>
+                <td><select form="bulkSettingsForm" name="slot_{{ slot.id }}_kind" class="form-select bulk-setting-input">{% for value,label in time_kind_choices %}<option value="{{ value }}" {% if slot.kind == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></td>
+                <td><input form="bulkSettingsForm" type="number" name="slot_{{ slot.id }}_display_order" class="form-control bulk-setting-input" value="{{ slot.display_order }}" min="0"></td>
+                <td class="text-switch"><div class="form-check form-switch d-inline-block mb-0"><input form="bulkSettingsForm" type="checkbox" name="slot_{{ slot.id }}_is_active" class="form-check-input bulk-setting-input" {% if slot.is_active %}checked{% endif %}></div></td>
+                <td class="text-switch"><div class="form-check form-switch d-inline-block mb-0"><input form="bulkSettingsForm" type="checkbox" name="slot_{{ slot.id }}_is_lunch_highlight" class="form-check-input bulk-setting-input" {% if slot.is_lunch_highlight %}checked{% endif %}></div></td>
+                <td class="area-delete-cell"><form method="post" action="{% url 'daily_assignment:time_slot_delete' slot.id %}">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('この時間枠を削除しますか？使用済みの場合は使用停止になります。');">削除</button></form></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 配置場所ごとの時間枠 -->
+  <div class="col-12 settings-anchor" id="area-time-settings">
+    <div class="settings-card">
+      <div class="settings-card-header area-time"><h2 class="h5 mb-0">配置場所ごとの時間枠</h2></div>
+      <div class="settings-card-body">
+        <p class="text-muted mb-3">「枠なし」はその時間を無効化。「連結開始」＋直後の「連結中」で縦に1つの担当枠へまとめます。例：8:30=連結開始、9:00/10:00/11:00=連結中。</p>
+        <div class="table-responsive area-time-scroll">
+          <table class="table table-bordered align-middle area-time-table bulk-settings-table">
+            <thead class="table-dark"><tr><th class="sticky-area-name">配置場所</th>{% for slot in active_time_slots %}<th>{{ slot.label }}</th>{% endfor %}</tr></thead>
+            <tbody>
+              {% for row in area_time_rows %}
+              <tr data-bulk-row>
+                <th class="sticky-area-name">{% if row.area.category %}<small>{{ row.area.category }}</small><br>{% endif %}{{ row.area.name }}</th>
+                {% for item in row.slots %}
+                <td><select form="bulkSettingsForm" name="area_time_{{ row.area.id }}_{{ item.time_slot.id }}" class="form-select form-select-sm area-time-select bulk-setting-input">
+                  {% for value,label in area_time_mode_choices %}<option value="{{ value }}" {% if item.mode == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select></td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 時間ごとの自動配置ON/OFF -->
+  <div class="col-12 settings-anchor" id="area-auto-time-settings">
+    <div class="settings-card">
+      <div class="settings-card-header area-time"><h2 class="h5 mb-0">時間ごとの自動配置 ON / OFF</h2></div>
+      <div class="settings-card-body">
+        <p class="text-muted mb-3">チェックを外したセルは表示・手入力はそのままで、通常配置の自動作成だけ行いません。昼休憩や早出など、手動で入れたい時間に使えます。</p>
+        <div class="table-responsive area-time-scroll">
+          <table class="table table-bordered align-middle area-time-table bulk-settings-table auto-cell-table">
+            <thead class="table-dark"><tr><th class="sticky-area-name">配置場所</th>{% for slot in active_time_slots %}<th>{{ slot.label }}</th>{% endfor %}</tr></thead>
+            <tbody>
+              {% for row in area_time_rows %}
+              <tr data-bulk-row>
+                <th class="sticky-area-name">{% if row.area.category %}<small>{{ row.area.category }}</small><br>{% endif %}{{ row.area.name }}</th>
+                {% for item in row.slots %}
+                <td class="text-center">
+                  <label class="auto-cell-toggle" title="{{ row.area.name }} / {{ item.time_slot.label }} の自動配置">
+                    <input form="bulkSettingsForm" type="checkbox" name="area_auto_{{ row.area.id }}_{{ item.time_slot.id }}" class="form-check-input bulk-setting-input" {% if item.auto_enabled %}checked{% endif %}>
+                    <span>{% if item.auto_enabled %}ON{% else %}OFF{% endif %}</span>
+                  </label>
+                </td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 受付担当設定 -->
+  <div class="col-12 settings-anchor" id="reception-staff-settings">
+    <div class="settings-card">
+      <div class="settings-card-header derived-rule"><h2 class="h5 mb-0">受付担当設定</h2></div>
+      <div class="settings-card-body">
+        <p class="text-muted mb-3">受付専用の担当者を登録します。ここに登録した名前は通常スタッフ・自動配置・Free・主担当・夜勤ローテーションには入りません。</p>
+        <div class="settings-add-panel">
+          <form method="post" action="{% url 'daily_assignment:reception_staff_add' %}" class="row g-3 align-items-end">{% csrf_token %}
+            <div class="col-md-7"><label class="form-label">受付担当者名</label><input name="name" class="form-control" placeholder="例：受付A" required></div>
+            <div class="col-md-2"><label class="form-label">表示順</label><input name="display_order" type="number" min="0" value="0" class="form-control"></div>
+            <div class="col-md-3"><button class="btn btn-primary w-100">登録</button></div>
+          </form>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          {% for person in reception_staff_list %}
+          <form method="post" action="{% url 'daily_assignment:reception_staff_delete' person.id %}" class="d-inline">{% csrf_token %}
+            <button class="btn btn-sm btn-outline-secondary" onclick="return confirm('「{{ person.name }}」を受付担当から削除しますか？')">{{ person.name }} ×</button>
+          </form>
+          {% empty %}<span class="text-muted">まだ受付担当は登録されていません。</span>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 会議等クイック入力プリセット -->
+  <div class="col-12 settings-anchor" id="meeting-preset-settings">
+    <div class="settings-card">
+      <div class="settings-card-header derived-rule"><h2 class="h5 mb-0">会議等の登録内容</h2></div>
+      <div class="settings-card-body">
+        <p class="text-muted mb-3">当日配置表の「会議等」クイック入力で選べる内容を登録します。</p>
+        <div class="settings-add-panel">
+          <form method="post" action="{% url 'daily_assignment:meeting_preset_add' %}" class="row g-3 align-items-end">{% csrf_token %}
+            <div class="col-md-7"><label class="form-label">内容</label><input name="name" class="form-control" placeholder="例：カンファレンス、委員会、研修" required></div>
+            <div class="col-md-2"><label class="form-label">表示順</label><input name="display_order" type="number" min="0" value="0" class="form-control"></div>
+            <div class="col-md-3"><button class="btn btn-primary w-100">登録</button></div>
+          </form>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          {% for preset in meeting_presets %}
+          <form method="post" action="{% url 'daily_assignment:meeting_preset_delete' preset.id %}" class="d-inline">{% csrf_token %}
+            <button class="btn btn-sm btn-outline-secondary" onclick="return confirm('「{{ preset.name }}」を削除しますか？')">{{ preset.name }} ×</button>
+          </form>
+          {% empty %}<span class="text-muted">まだ登録されていません。</span>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 当日コメントテンプレート -->
+  <div class="col-12 settings-anchor" id="comment-template-settings">
+    <div class="settings-card">
+      <div class="settings-card-header derived-rule"><h2 class="h5 mb-0">当日配置表・定型コメント</h2></div>
+      <div class="settings-card-body">
+        <p class="text-muted mb-3">毎日の当日配置表に常時表示するコメントを登録します。数字・文字の入力欄を付けた項目は、当日の値だけ日付ごとに保存されます。<br><strong>件数を入力したい項目（例：アンギオ ○件）は「数字」を選択してください。</strong>「固定表示」は入力欄を表示しません。</p>
+        <div class="settings-add-panel">
+          <form method="post" action="{% url 'daily_assignment:comment_template_add' %}" class="row g-3 align-items-end">{% csrf_token %}
+            <div class="col-lg-4"><label class="form-label">表示文</label><input name="label" class="form-control" placeholder="例：アンギオ" required></div>
+            <div class="col-lg-2"><label class="form-label">入力タイプ</label><select name="input_type" class="form-select">{% for value,label in comment_template_input_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div>
+            <div class="col-lg-2"><label class="form-label">単位</label><input name="unit" class="form-control" placeholder="例：件"></div>
+            <div class="col-lg-2"><label class="form-label">文字サイズ</label><select name="font_size" class="form-select">{% for value,label in comment_template_font_choices %}<option value="{{ value }}" {% if value == 14 %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+            <div class="col-lg-1"><label class="form-label">表示順</label><input name="display_order" type="number" min="0" value="0" class="form-control"></div>
+            <div class="col-lg-1"><button class="btn btn-primary w-100">追加</button></div>
+          </form>
+        </div>
+        <div class="table-responsive mt-3">
+          <table class="table table-bordered align-middle settings-table compact-config-table">
+            <thead class="table-dark"><tr><th>表示文</th><th>入力タイプ</th><th>単位</th><th>文字サイズ</th><th>表示順</th><th>使用</th><th>削除</th></tr></thead>
+            <tbody>
+              {% for item in comment_templates %}
+              <tr data-bulk-row>
+                <td><input form="bulkSettingsForm" name="comment_{{ item.id }}_label" value="{{ item.label }}" class="form-control bulk-setting-input" required></td>
+                <td><select form="bulkSettingsForm" name="comment_{{ item.id }}_input_type" class="form-select bulk-setting-input">{% for value,label in comment_template_input_choices %}<option value="{{ value }}" {% if item.input_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></td>
+                <td><input form="bulkSettingsForm" name="comment_{{ item.id }}_unit" value="{{ item.unit }}" class="form-control bulk-setting-input"></td>
+                <td><select form="bulkSettingsForm" name="comment_{{ item.id }}_font_size" class="form-select bulk-setting-input">{% for value,label in comment_template_font_choices %}<option value="{{ value }}" {% if item.font_size == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></td>
+                <td><input form="bulkSettingsForm" name="comment_{{ item.id }}_display_order" type="number" min="0" value="{{ item.display_order }}" class="form-control bulk-setting-input" style="min-width:80px"></td>
+                <td class="text-center"><input form="bulkSettingsForm" type="checkbox" name="comment_{{ item.id }}_is_active" class="form-check-input bulk-setting-input" {% if item.is_active %}checked{% endif %}></td>
+                <td><form method="post" action="{% url 'daily_assignment:comment_template_delete' item.id %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger w-100" onclick="return confirm('「{{ item.label }}」を削除しますか？')">削除</button></form></td>
+              </tr>
+              {% empty %}<tr><td colspan="7" class="text-center text-muted">定型コメントはまだ登録されていません。</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 横結合ルール -->
+  <div class="col-12 settings-anchor" id="horizontal-merge-settings"><div class="settings-card">
+    <div class="settings-card-header derived-rule"><h2 class="h5 mb-0">時間帯の横結合ルール</h2></div><div class="settings-card-body">
+    <p class="text-muted mb-3">開始配置～終了配置を1セルにします。時間連動ルールでは「代表配置」を移動・兼任先に指定してください。</p>
+    <div class="settings-add-panel"><form method="post" action="{% url 'daily_assignment:horizontal_merge_rule_add' %}" class="row g-3 align-items-end">{% csrf_token %}
+    <div class="col-lg-2"><label class="form-label">表示名</label><input name="name" class="form-control" value="昼休憩"></div>
+    <div class="col-lg-2"><label class="form-label">時間</label><select name="time_slot" class="form-select">{% for slot in active_time_slots %}{% if slot.kind == 'time' %}<option value="{{ slot.id }}">{{ slot.label }}</option>{% endif %}{% endfor %}</select></div>
+    <div class="col-lg-2"><label class="form-label">開始配置</label><select name="start_area" class="form-select">{% for area in active_area_list %}<option value="{{ area.id }}">{{ area.category }} {{ area.name }}</option>{% endfor %}</select></div>
+    <div class="col-lg-2"><label class="form-label">終了配置</label><select name="end_area" class="form-select">{% for area in active_area_list %}<option value="{{ area.id }}">{{ area.category }} {{ area.name }}</option>{% endfor %}</select></div>
+    <div class="col-lg-2"><label class="form-label">代表配置</label><select name="representative_area" class="form-select">{% for area in active_area_list %}<option value="{{ area.id }}">{{ area.category }} {{ area.name }}</option>{% endfor %}</select></div>
+    <div class="col-lg-1"><label class="form-check"><input type="checkbox" name="exclude_from_auto_assignment" class="form-check-input" checked>自動除外</label></div><div class="col-lg-1"><button class="btn btn-primary w-100">追加</button></div>
+    </form></div>
+    <div class="table-responsive"><table class="table table-bordered align-middle settings-table bulk-settings-table"><thead class="table-dark"><tr><th>表示名</th><th>時間</th><th>開始配置</th><th>終了配置</th><th>代表配置</th><th>自動除外</th><th>使用</th><th>削除</th></tr></thead><tbody>
+    {% for rule in horizontal_merge_rules %}<tr data-bulk-row><td><input form="bulkSettingsForm" name="hmerge_{{ rule.id }}_name" value="{{ rule.name }}" class="form-control bulk-setting-input"></td>
+    <td><select form="bulkSettingsForm" name="hmerge_{{ rule.id }}_time_slot" class="form-select bulk-setting-input">{% for slot in active_time_slots %}{% if slot.kind == 'time' %}<option value="{{ slot.id }}" {% if rule.time_slot_id == slot.id %}selected{% endif %}>{{ slot.label }}</option>{% endif %}{% endfor %}</select></td>
+    <td><select form="bulkSettingsForm" name="hmerge_{{ rule.id }}_start_area" class="form-select bulk-setting-input">{% for area in active_area_list %}<option value="{{ area.id }}" {% if rule.start_area_id == area.id %}selected{% endif %}>{{ area.category }} {{ area.name }}</option>{% endfor %}</select></td>
+    <td><select form="bulkSettingsForm" name="hmerge_{{ rule.id }}_end_area" class="form-select bulk-setting-input">{% for area in active_area_list %}<option value="{{ area.id }}" {% if rule.end_area_id == area.id %}selected{% endif %}>{{ area.category }} {{ area.name }}</option>{% endfor %}</select></td>
+    <td><select form="bulkSettingsForm" name="hmerge_{{ rule.id }}_representative_area" class="form-select bulk-setting-input">{% for area in active_area_list %}<option value="{{ area.id }}" {% if rule.representative_area_id == area.id %}selected{% endif %}>{{ area.category }} {{ area.name }}</option>{% endfor %}</select></td>
+    <td class="text-switch"><input form="bulkSettingsForm" type="checkbox" name="hmerge_{{ rule.id }}_exclude" class="form-check-input bulk-setting-input" {% if rule.exclude_from_auto_assignment %}checked{% endif %}></td><td class="text-switch"><input form="bulkSettingsForm" type="checkbox" name="hmerge_{{ rule.id }}_is_active" class="form-check-input bulk-setting-input" {% if rule.is_active %}checked{% endif %}></td>
+    <td><form method="post" action="{% url 'daily_assignment:horizontal_merge_rule_delete' rule.id %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" onclick="return confirm('横結合ルールを削除しますか？')">削除</button></form></td></tr>{% empty %}<tr><td colspan="8" class="text-center text-muted">横結合ルールはまだありません。</td></tr>{% endfor %}</tbody></table></div>
+    </div></div></div>
+
+  <!-- 時間連動ルール -->
+  <div class="col-12 settings-anchor" id="derived-rule-settings">
+    <div class="settings-card">
+      <div class="settings-card-header derived-rule"><h2 class="h5 mb-0">時間連動ルール（兼任・移動・昼休憩）</h2></div>
+      <div class="settings-card-body">
+        <p class="text-muted mb-3">例：Poの12:00を「兼任」で1番へ、Poの13:00を「昼休憩」にすると、自動配置後に自動反映されます。</p>
+        <div class="settings-add-panel">
+          <h3 class="h6 mb-3">ルールを追加</h3>
+          <form method="post" action="{% url 'daily_assignment:derived_rule_add' %}" class="row g-3 align-items-end">
+            {% csrf_token %}
+            <div class="col-12 col-lg-2"><label class="form-label">ルール名</label><input name="name" class="form-control" placeholder="例 Po昼当番"></div>
+            <div class="col-6 col-lg-2"><label class="form-label">元配置</label><select name="source_area" class="form-select" required>{% for area in active_area_list %}<option value="{{ area.id }}">{{ area.category }} {{ area.name }}</option>{% endfor %}</select></div>
+            <div class="col-6 col-lg-2"><label class="form-label">時間</label><select name="time_slot" class="form-select" required>{% for slot in active_time_slots %}{% if slot.kind == 'time' %}<option value="{{ slot.id }}">{{ slot.label }}</option>{% endif %}{% endfor %}</select></div>
+            <div class="col-6 col-lg-2"><label class="form-label">動作</label><select name="action" class="form-select">{% for value,label in derived_action_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div>
+            <div class="col-6 col-lg-2"><label class="form-label">兼任・移動先</label><select name="target_area" class="form-select"><option value="">-- なし --</option>{% for area in active_area_list %}<option value="{{ area.id }}">{{ area.category }} {{ area.name }}</option>{% endfor %}</select></div>
+            <div class="col-6 col-lg-1"><div class="form-check mb-2"><input type="checkbox" name="is_active" class="form-check-input" checked><label class="form-check-label">使用</label></div></div>
+            <div class="col-6 col-lg-1"><button class="btn btn-primary w-100">追加</button></div>
+          </form>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle settings-table derived-rule-table bulk-settings-table">
+            <thead class="table-dark"><tr><th style="min-width:150px">ルール名</th><th style="min-width:150px">元配置</th><th style="width:120px">時間</th><th style="min-width:170px">動作</th><th style="min-width:160px">兼任・移動先</th><th style="width:80px">使用</th><th style="width:84px">削除</th></tr></thead>
+            <tbody>
+              {% for rule in derived_rules %}
+              <tr data-bulk-row>
+                <td><input form="bulkSettingsForm" name="derived_{{ rule.id }}_name" class="form-control bulk-setting-input" value="{{ rule.name }}"></td>
+                <td><select form="bulkSettingsForm" name="derived_{{ rule.id }}_source_area" class="form-select bulk-setting-input">{% for area in active_area_list %}<option value="{{ area.id }}" {% if rule.source_area_id == area.id %}selected{% endif %}>{{ area.category }} {{ area.name }}</option>{% endfor %}</select></td>
+                <td><select form="bulkSettingsForm" name="derived_{{ rule.id }}_time_slot" class="form-select bulk-setting-input">{% for slot in active_time_slots %}{% if slot.kind == 'time' %}<option value="{{ slot.id }}" {% if rule.time_slot_id == slot.id %}selected{% endif %}>{{ slot.label }}</option>{% endif %}{% endfor %}</select></td>
+                <td><select form="bulkSettingsForm" name="derived_{{ rule.id }}_action" class="form-select bulk-setting-input">{% for value,label in derived_action_choices %}<option value="{{ value }}" {% if rule.action == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></td>
+                <td><select form="bulkSettingsForm" name="derived_{{ rule.id }}_target_area" class="form-select bulk-setting-input"><option value="">-- なし --</option>{% for area in active_area_list %}<option value="{{ area.id }}" {% if rule.target_area_id == area.id %}selected{% endif %}>{{ area.category }} {{ area.name }}</option>{% endfor %}</select></td>
+                <td class="text-switch"><div class="form-check form-switch d-inline-block mb-0"><input form="bulkSettingsForm" type="checkbox" name="derived_{{ rule.id }}_is_active" class="form-check-input bulk-setting-input" {% if rule.is_active %}checked{% endif %}></div></td>
+                <td class="area-delete-cell"><form method="post" action="{% url 'daily_assignment:derived_rule_delete' rule.id %}">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('この時間連動ルールを削除しますか？');">削除</button></form></td>
+              </tr>
+              {% empty %}<tr><td colspan="7" class="text-center text-muted py-4">時間連動ルールはまだありません。</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+</div>
+
+<style>
+.multi-rule-details{position:relative}.multi-rule-details summary{cursor:pointer;padding:.35rem .55rem;border:1px solid #ced8e5;border-radius:6px;background:#fff;white-space:nowrap}.multi-rule-menu{margin-top:6px;max-height:280px;overflow:auto;border:1px solid #d7e0eb;border-radius:8px;padding:8px;background:#f8fbff;min-width:210px}.multi-check-row{display:flex;gap:7px;align-items:center;padding:4px 2px;font-size:.88rem}.weekly-target-row{display:grid;grid-template-columns:minmax(120px,1fr) 58px 20px;gap:6px;align-items:center;padding:3px 2px;font-size:.84rem}.weekly-target-row input{text-align:center}
+</style>
+
+<script>
+(function(){
+  const form = document.getElementById('bulkSettingsForm');
+  const button = document.getElementById('bulkSettingsSaveButton');
+  const status = document.getElementById('bulkSettingsStatus');
+  if (!form || !button || !status) return;
+  const inputs = document.querySelectorAll('.bulk-setting-input');
+  function markDirty(el){
+    status.textContent = '未保存の変更があります';
+    status.classList.add('dirty');
+    const row = el.closest('[data-bulk-row]');
+    if (row) row.classList.add('bulk-dirty');
+  }
+  inputs.forEach(el => { el.addEventListener('input', () => markDirty(el)); el.addEventListener('change', () => markDirty(el)); });
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    button.disabled = true;
+    button.textContent = '保存中…';
+    status.textContent = '保存しています';
+
+    const formData = new FormData(form);
+    const payload = {};
+    for (const [key, value] of formData.entries()) { payload[key] = value; }
+
+    try {
+      const csrf = formData.get('csrfmiddlewaretoken') || '';
+      const response = await fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrf,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || '保存できませんでした。');
+      status.textContent = '保存済み';
+      status.classList.remove('dirty');
+      document.querySelectorAll('.bulk-dirty').forEach(row => row.classList.remove('bulk-dirty'));
+    } catch (error) {
+      status.textContent = error.message || '保存できませんでした';
+      status.classList.add('dirty');
+      alert(error.message || '保存できませんでした。');
+    } finally {
+      button.disabled = false;
+      button.textContent = '💾 すべて上書き保存';
+    }
+  });
+  window.addEventListener('beforeunload', function(e){ if (status.classList.contains('dirty')) { e.preventDefault(); e.returnValue=''; } });
+})();
+
+/* Ver.3.7.5: セクションごとに表ヘッダーを画面上部へ追従 */
+(function(){
+  const floating = document.getElementById('settingsFollowHeader');
+  const floatingTitle = document.getElementById('settingsFollowHeaderTitle');
+  const track = document.getElementById('settingsFollowHeaderTrack');
+  const savebar = document.querySelector('.settings-bulk-savebar');
+  if (!floating || !floatingTitle || !track || !savebar) return;
+
+  const tables = [...document.querySelectorAll('.settings-card .table-responsive table')].filter(table => table.tHead && table.tHead.rows.length);
+  let activeTable = null;
+  let activeContainer = null;
+  let rafPending = false;
+
+  function sectionTitle(table){
+    const card = table.closest('.settings-card');
+    const heading = card ? card.querySelector('.settings-card-header h2, .settings-card-header h3') : null;
+    return heading ? heading.textContent.trim() : '設定';
+  }
+
+  function topOffset(){
+    const rect = savebar.getBoundingClientRect();
+    return Math.max(4, rect.bottom + 4);
+  }
+
+  function syncCloneWidths(table){
+    const clone = track.querySelector('.follow-header-table');
+    if (!clone || !table || !table.tHead) return;
+    const width = Math.max(table.scrollWidth, table.getBoundingClientRect().width);
+    clone.style.width = width + 'px';
+    track.style.width = width + 'px';
+    const sourceCells = [...table.tHead.rows[0].cells];
+    const cloneCells = [...clone.tHead.rows[0].cells];
+    sourceCells.forEach((cell, index) => {
+      if (!cloneCells[index]) return;
+      const cellWidth = cell.getBoundingClientRect().width;
+      cloneCells[index].style.width = cellWidth + 'px';
+      cloneCells[index].style.minWidth = cellWidth + 'px';
+      cloneCells[index].style.maxWidth = cellWidth + 'px';
+    });
+  }
+
+  function buildClone(table){
+    track.innerHTML = '';
+    const clone = document.createElement('table');
+    clone.className = table.className;
+    clone.classList.add('follow-header-table');
+    clone.style.tableLayout = 'fixed';
+
+    const thead = table.tHead.cloneNode(true);
+    clone.appendChild(thead);
+    track.appendChild(clone);
+    syncCloneWidths(table);
+    floatingTitle.textContent = sectionTitle(table);
+  }
+
+  function findActive(offset){
+    let current = null;
+    for (const table of tables) {
+      const rect = table.getBoundingClientRect();
+      // 表本体が上部固定位置を通過しており、まだ表の末尾を超えていない時だけ表示
+      if (rect.top <= offset && rect.bottom > offset + 18) current = table;
+    }
+    return current;
+  }
+
+  function update(){
+    rafPending = false;
+    const offset = topOffset();
+    const table = findActive(offset);
+
+    if (!table) {
+      floating.classList.remove('is-visible');
+      activeTable = null;
+      activeContainer = null;
+      return;
+    }
+
+    const container = table.closest('.table-responsive');
+    if (!container) return;
+
+    if (table !== activeTable) {
+      activeTable = table;
+      activeContainer = container;
+      buildClone(table);
+    }
+
+    const cRect = container.getBoundingClientRect();
+    const viewportLeft = Math.max(cRect.left, 0);
+    const viewportRight = Math.min(cRect.right, window.innerWidth);
+    const visibleWidth = Math.max(0, viewportRight - viewportLeft);
+    if (visibleWidth < 40) {
+      floating.classList.remove('is-visible');
+      return;
+    }
+
+    floating.style.top = offset + 'px';
+    floating.style.left = viewportLeft + 'px';
+    floating.style.width = visibleWidth + 'px';
+    // 横スクロール後も列幅・全体幅を再同期する。
+    // CSSやブラウザのレイアウト確定後に表幅が変わっても、追従ヘッダーが優先④付近で止まらないようにする。
+    syncCloneWidths(table);
+    // Ver.3.9.8.3: sticky化した後も横スクロールを確実に追従させる。
+    // transform ではブラウザ側の再レイアウト時に位置が戻ることがあったため、
+    // 固定ヘッダー内のトラック自体を left で直接ずらす。
+    const currentScrollX = container.scrollLeft || 0;
+    track.style.left = (-currentScrollX) + 'px';
+    const firstCloneCell = track.querySelector('.follow-header-table thead th:first-child');
+    if (firstCloneCell) {
+      const isAutoRule = container.id === 'autoRuleScroll';
+      firstCloneCell.style.position = isAutoRule ? 'relative' : '';
+      firstCloneCell.style.zIndex = isAutoRule ? '12' : '';
+      firstCloneCell.style.transform = isAutoRule ? `translateX(${currentScrollX}px)` : '';
+      firstCloneCell.style.boxShadow = isAutoRule ? '3px 0 0 rgba(184,198,215,.95)' : '';
+    }
+    floating.classList.add('is-visible');
+  }
+
+  function requestUpdate(){
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(update);
+  }
+
+  // Ver.3.9.8.3: 横スクロール時は rAF を待たず、sticky ヘッダーの横位置を直接同期する。
+  // 縦スクロールで追従状態へ切り替わった後でも、同じ scrollLeft を使い続ける。
+  function syncHorizontalNow(container){
+    if (!container || !activeContainer || container !== activeContainer) return;
+    if (!floating.classList.contains('is-visible')) return;
+    const scrollX = container.scrollLeft || 0;
+    track.style.left = (-scrollX) + 'px';
+
+    // Ver.3.9.8.8: 通常配置ルールでは、追従ヘッダーの「スタッフ」列も左端に固定。
+    // トラック全体は -scrollLeft で動くので、先頭セルだけ同量を右へ戻す。
+    const firstCloneCell = track.querySelector('.follow-header-table thead th:first-child');
+    if (firstCloneCell) {
+      const isAutoRule = container.id === 'autoRuleScroll';
+      firstCloneCell.style.position = isAutoRule ? 'relative' : '';
+      firstCloneCell.style.zIndex = isAutoRule ? '12' : '';
+      firstCloneCell.style.transform = isAutoRule ? `translateX(${scrollX}px)` : '';
+      firstCloneCell.style.boxShadow = isAutoRule ? '3px 0 0 rgba(184,198,215,.95)' : '';
+    }
+  }
+  window.requestSettingsFollowHeaderUpdate = requestUpdate;
+  window.syncSettingsFollowHeaderHorizontal = syncHorizontalNow;
+
+  window.addEventListener('scroll', requestUpdate, {passive:true});
+  window.addEventListener('resize', () => { activeTable = null; requestUpdate(); });
+  document.querySelectorAll('.settings-card .table-responsive').forEach(container => {
+    container.addEventListener('scroll', () => {
+      syncHorizontalNow(container);
+      requestUpdate();
+    }, {passive:true});
+  });
+  requestUpdate();
+})();
+
+
+/* Ver.3.9.8.1: 横長設定表の横スクロールバーを画面下に追従 */
+(function(){
+  function setupFollowXbar(sourceId, proxyId, innerId){
+    const source = document.getElementById(sourceId);
+    const proxy = document.getElementById(proxyId);
+    const inner = document.getElementById(innerId);
+    if (!source || !proxy || !inner) return;
+    let syncing = false;
+
+    function refresh(){
+      const rect = source.getBoundingClientRect();
+      const needsScroll = source.scrollWidth > source.clientWidth + 2;
+      // 元の横スクロールバーが画面下に見えている時は二重表示しない。
+      const nativeBarVisible = rect.bottom <= window.innerHeight - 2 && rect.bottom >= 0;
+      const intersects = rect.top < window.innerHeight - 20 && rect.bottom > 40;
+      if (!needsScroll || !intersects || nativeBarVisible){
+        proxy.classList.remove('is-visible');
+        return;
+      }
+      const left = Math.max(8, rect.left);
+      const right = Math.min(window.innerWidth - 8, rect.right);
+      proxy.style.left = left + 'px';
+      proxy.style.width = Math.max(80, right-left) + 'px';
+      inner.style.width = source.scrollWidth + 'px';
+      proxy.classList.add('is-visible');
+      if (!syncing) proxy.scrollLeft = source.scrollLeft;
+    }
+
+    function updateFloatingHeader(){
+      // 追従中はまず現在の横位置を即時反映。
+      if (typeof window.syncSettingsFollowHeaderHorizontal === 'function') {
+        window.syncSettingsFollowHeaderHorizontal(source);
+      }
+      // 幅変更や追従開始/終了の判定は通常更新でも再確認する。
+      if (typeof window.requestSettingsFollowHeaderUpdate === 'function') {
+        window.requestSettingsFollowHeaderUpdate();
+      }
+    }
+
+    source.addEventListener('scroll',()=>{
+      if(syncing){
+        updateFloatingHeader();
+        return;
+      }
+      syncing=true;
+      proxy.scrollLeft=source.scrollLeft;
+      syncing=false;
+      updateFloatingHeader();
+    },{passive:true});
+    proxy.addEventListener('scroll',()=>{
+      if(syncing)return;
+      syncing=true;
+      source.scrollLeft=proxy.scrollLeft;
+      syncing=false;
+      // proxy側をドラッグした時は source の scroll イベント任せにせず、
+      // 同じフレームで上部ヘッダーも更新する。
+      updateFloatingHeader();
+    },{passive:true});
+    window.addEventListener('scroll',refresh,{passive:true});
+    window.addEventListener('resize',refresh);
+    if (window.ResizeObserver) new ResizeObserver(refresh).observe(source);
+    refresh();
+  }
+
+  setupFollowXbar('autoRuleScroll','autoRuleXbar','autoRuleXbarInner');
+  setupFollowXbar('areaSettingsScroll','areaSettingsXbar','areaSettingsXbarInner');
+})();
+</script>
 {% endblock %}
+<style>
+/* Ver.3.7.6 前回Freeは補助情報として控えめに表示 */
+.last-free-note { margin-top:2px; font-size:.68rem; line-height:1.1; font-weight:400; color:#9aa4b2; white-space:nowrap; }
+</style>

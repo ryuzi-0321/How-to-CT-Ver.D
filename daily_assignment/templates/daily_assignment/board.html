@@ -6,14 +6,115 @@
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'daily_assignment/board.css' %}?v=20260806_3">
+<link rel="stylesheet" href="{% static 'daily_assignment/board.css' %}?v=20260822_1">
+<style>
+  /* v3.10.6.11: 上部操作欄をデスクトップでは1列にまとめる */
+  #auto-assignment {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  #auto-assignment .date-navigation,
+  #auto-assignment .day-jump-row,
+  #auto-assignment .date-form,
+  #auto-assignment .main-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  #auto-assignment .date-navigation {
+    flex: 0 0 auto;
+  }
+  #auto-assignment .main-actions {
+    flex: 0 0 auto;
+  }
+  #auto-assignment .date-form {
+    margin: 0;
+  }
+  #auto-assignment .date-form input[type="date"] {
+    width: 142px;
+    min-width: 142px;
+  }
+  /* v3.10.6.13: 自動倍率でも、狭い画面では横スクロールを許可する */
+  .board-wrap.auto-fit {
+    overflow-x: scroll !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 狭い画面では主要操作を1文字化して縦折り返しを防ぐ */
+  @media (max-width: 700px) {
+    #auto-assignment .mobile-compact-action {
+      width: 42px;
+      min-width: 42px;
+      height: 42px;
+      padding: 0;
+      font-size: 0;
+      white-space: nowrap;
+      writing-mode: horizontal-tb;
+    }
+    #auto-assignment .mobile-compact-action::after {
+      content: attr(data-mobile-label);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    #auto-assignment .board-zoom-control > span {
+      font-size: 0;
+    }
+    #auto-assignment .board-zoom-control > span::after {
+      content: '倍';
+      font-size: 14px;
+      font-weight: 700;
+    }
+  }
+
+  #auto-assignment .compact-icon-button {
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .board-weekday {
+    margin-left: 0.18em;
+    white-space: nowrap;
+  }
+  .date-weekday {
+    flex: 0 0 auto;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  /* v3.10.6.18: 横結合（昼当番）も通常セルと同じスタッフ入力にする */
+  .lunch-wide-cell .lunch-wide-label {
+    margin-right: .45rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .lunch-wide-cell .lunch-merge-input {
+    width: min(180px, 42%);
+    min-width: 100px;
+    text-align: center;
+  }
+  .lunch-wide-cell .lunch-wide-break {
+    margin-left: .45rem;
+    white-space: nowrap;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
 <header class="assignment-topbar">
   <div class="assignment-title-area">
     <div class="assignment-brand">当日配置表</div>
-    <h1>{{ board_date|date:"Y年m月d日" }}</h1>
+    <h1>{{ board_date|date:"Y年m月d日" }}<span class="board-weekday" data-board-weekday></span></h1>
     <p>今日の配置・担当を編集します</p>
   </div>
 
@@ -32,12 +133,12 @@
       {% endfor %}
     </div>
   {% endif %}
-  <section class="control-card">
+  <section class="control-card" id="auto-assignment">
     <div class="date-navigation">
       <div class="day-jump-row">
         <a class="control-button secondary"
            href="?date={{ previous_date|date:'Y-m-d' }}">
-          ← 前日
+          ←
         </a>
 
         <a class="control-button today"
@@ -47,7 +148,7 @@
 
         <a class="control-button secondary"
            href="?date={{ next_date|date:'Y-m-d' }}">
-          翌日 →
+          →
         </a>
       </div>
 
@@ -76,123 +177,286 @@
       </label>
 
       <button
+        id="autoAssignmentButton"
+        class="control-button auto-assignment mobile-compact-action"
+        type="button" data-mobile-label="配" title="配置自動作成">
+        配置自動作成
+      </button>
+
+      <button id="openBoardReallocationBtn" class="control-button secondary mobile-compact-action" type="button" data-mobile-label="欠" title="急な休み・欠勤時に欠員スタッフを選び、なるべく少ない移動で再配置します">欠員再配置</button>
+
+      <button id="fillVacanciesBtn" class="control-button secondary mobile-compact-action" type="button" data-mobile-label="空" title="手動移動または欠員再配置で空いた、自動配置ONの配置をFreeまたは低優先配置から補充">空き補充</button>
+
+      <button id="undoLastAutoBtn" class="control-button secondary mobile-compact-action" type="button" data-mobile-label="戻" title="配置自動作成・欠員再配置・空き補充を最大10回まで戻す">↶ 戻る</button>
+      <button id="redoLastAutoBtn" class="control-button secondary mobile-compact-action" type="button" data-mobile-label="進" title="戻した操作をやり直す">↷ 進む</button>
+
+      <button
         id="saveButton"
-        class="control-button primary"
-        type="button">
+        class="control-button primary mobile-compact-action"
+        type="button" data-mobile-label="保" title="保存">
         保存
       </button>
 
+      <button
+        id="downloadBoardImageButton"
+        class="control-button secondary compact-icon-button"
+        type="button"
+        title="画像として保存"
+        aria-label="画像として保存">
+        <span aria-hidden="true">📷</span>
+      </button>
+
       <a
-        class="control-button success"
-        href="{% url 'daily_assignment:excel' %}?date={{ board_date|date:'Y-m-d' }}">
-        Excelダウンロード
+        class="control-button success excel-download-icon compact-icon-button"
+        href="{% url 'daily_assignment:excel' %}?date={{ board_date|date:'Y-m-d' }}"
+        title="Excelダウンロード"
+        aria-label="Excelダウンロード"
+>
+        <span aria-hidden="true">⇩</span>
       </a>
     </div>
   </section>
+
+{% if scheduled_area_settings %}
+<section class="today-plan-card">
+  <div class="today-plan-title">
+    <span>本日の予定</span>
+    <small>「予定時のみ」の場所は、ONのときだけ配置自動作成の対象になります。</small>
+  </div>
+  <div class="today-plan-switches">
+    {% for item in scheduled_area_settings %}
+      <label class="today-plan-switch">
+        <input
+          type="checkbox"
+          class="scheduled-area-toggle"
+          data-area-id="{{ item.area.id }}"
+          {% if item.enabled %}checked{% endif %}
+        >
+        <span class="today-plan-name">{{ item.area.name }}</span>
+        <span class="today-plan-count">自動 {{ item.area.auto_assignment_count }}人</span>
+      </label>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
 <div class="board-wrap">
   <table class="assignment-table">
     <thead>
-      <tr>
-        <th class="time-head">時間</th>
-
-        {% for group in area_groups %}
-          {% for item in group.areas %}
-            <th colspan="{{ item.area.slot_count }}">
-              <span class="category">{{ item.area.category }}</span>
-              {{ item.area.name }}
-            </th>
+      <tr class="category-header-row">
+        <th class="time-head" rowspan="2">時間</th>
+        {% for group in category_groups %}
+          <th class="category-head category-group-head{% if not forloop.first %} category-group-gap{% endif %}" colspan="{{ group.colspan }}">{{ group.category }}</th>
+        {% endfor %}
+      </tr>
+      <tr class="area-header-row">
+        {% for group in category_groups %}
+          {% for area in group.areas %}
+            <th class="area-head{% if forloop.first %} category-boundary-start{% endif %}{% if forloop.last %} category-boundary-end{% endif %}" colspan="{{ area.slot_count }}" data-area-id="{{ area.id }}" data-area-name="{{ area.name|escape }}">{{ area.name }}</th>
           {% endfor %}
         {% endfor %}
       </tr>
     </thead>
 
     <tbody>
-      {% for row_key, row_label in row_definitions %}
-        <tr>
-          <th class="time-column">{{ row_label }}</th>
+      {% for row in render_rows %}
+        <tr class="{% if row.time_slot.is_lunch_highlight %}lunch-highlight{% endif %} {% if row.time_slot.kind != 'time' %}special-row{% endif %} {% if row.time_slot.kind == 'main' %}main-assignment-row{% endif %}">
+          <th class="time-column">{{ row.time_slot.label }}</th>
 
-          {% for group in area_groups %}
-            {% for item in group.areas %}
-              {% for row in item.rows %}
-                {% if row.key == row_key %}
-                  {% for slot in row.slots %}
-                    <td>
-                      <input
-                        class="cell-input"
-                        data-area-id="{{ item.area.id }}"
-                        data-row-key="{{ row_key }}"
-                        data-slot-index="{{ slot.index }}"
-                        value="{{ slot.value }}"
-                        list="staffList"
-                        autocomplete="off"
-                      >
-                    </td>
-                  {% endfor %}
+          {% for cell in row.cells %}
+            {% if not cell.lunch_merge_skip %}
+              {% if cell.lunch_merge_start %}
+                <td colspan="{{ cell.lunch_merge_span }}" class="lunch-wide-cell{% if cell.merge_category_start %} category-boundary-start{% endif %}{% if cell.merge_category_end %} category-boundary-end{% endif %}">
+                  <span class="lunch-wide-label">{{ cell.lunch_merge_label|default:"横結合" }}</span>
+                  <input
+                    class="cell-input lunch-merge-input"
+                    data-area-id="{{ cell.lunch_merge_area_id }}"
+                    data-row-key="{{ cell.lunch_merge_row_key }}"
+                    data-slot-index="{{ cell.lunch_merge_slot_index }}"
+                    data-time-label="{{ row.time_slot.label }}"
+                    value="{{ cell.lunch_merge_edit_value }}"
+                    autocomplete="off"
+                    aria-label="{{ cell.lunch_merge_label|default:'横結合' }}"
+                  >
+                  {% if row.lunch_value %}<span class="lunch-wide-break">休憩：{{ row.lunch_value }}</span>{% endif %}
+                </td>
+              {% elif cell.show %}
+                {% if cell.hidden %}
+                  <td class="disabled-time-cell{% if cell.category_start %} category-boundary-start{% endif %}{% if cell.category_end %} category-boundary-end{% endif %}"></td>
+                {% else %}
+                  <td{% if cell.rowspan > 1 %} rowspan="{{ cell.rowspan }}"{% endif %} class="{% if cell.rowspan > 1 %}merged-time-cell {% endif %}{% if cell.category_start %}category-boundary-start {% endif %}{% if cell.category_end %}category-boundary-end{% endif %}">
+                    <input
+                      class="cell-input{% if cell.is_concurrent %} concurrent-assignment{% endif %}{% if cell.is_dedicated_main %} dedicated-main-cell{% endif %}"
+                      {% if cell.is_dedicated_main %}readonly title="専任固定"{% endif %}
+                      data-area-id="{{ cell.area_id }}"
+                      data-row-key="{{ cell.owner_key }}"
+                      data-slot-index="{{ cell.slot_index }}"
+                      data-time-label="{{ row.time_slot.label }}"
+                      value="{{ cell.value }}"
+                      autocomplete="off"
+                    >
+                  </td>
                 {% endif %}
-              {% endfor %}
-            {% endfor %}
+              {% endif %}
+            {% endif %}
           {% endfor %}
         </tr>
       {% endfor %}
     </tbody>
+    <tfoot>
+      <tr class="copy-row">
+        <th class="time-column copy-label">Copy</th>
+        {% for group in category_groups %}
+          {% for area in group.areas %}
+            <td colspan="{{ area.slot_count }}" class="copy-cell{% if forloop.first %} category-boundary-start{% endif %}{% if forloop.last %} category-boundary-end{% endif %}" data-area-id="{{ area.id }}" data-area-name="{{ area.name|escape }}" data-slot-count="{{ area.slot_count }}">
+              <div class="copy-slot-buttons" style="--copy-slot-count: {{ area.slot_count }};"></div>
+            </td>
+          {% endfor %}
+        {% endfor %}
+      </tr>
+    </tfoot>
   </table>
 </div>
 
-  <datalist id="staffList"></datalist>
+  {# 昼休憩の派生データは表示列を廃止しても保存できるようhiddenで保持 #}
+  <div style="display:none">
+    {% for row in render_rows %}{% if row.time_slot.kind == 'time' %}<input type="hidden" class="lunch-input" data-row-key="{{ row.time_slot.key }}" value="{{ row.lunch_value }}">{% endif %}{% endfor %}
+  </div>
+
+  <div id="staffPicker" class="staff-picker" popover="manual" role="listbox" aria-label="スタッフ候補"></div>
+  <style>
+    .staff-picker{position:fixed;inset:auto;margin:0;z-index:2000;max-height:280px;overflow-y:auto;overscroll-behavior:contain;background:#fff;border:1px solid #b8c7d9;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:4px;min-width:180px;}
+    .staff-picker button{display:block;width:100%;border:0;background:transparent;text-align:left;padding:9px 12px;border-radius:6px;font-size:14px;line-height:1.25;cursor:pointer;white-space:nowrap;}
+    .staff-picker button:hover,.staff-picker button.active{background:#edf4ff;}
+    .staff-picker-empty{padding:9px 12px;color:#6c757d;font-size:13px;}
+  </style>
+{{ staff_work_hours|json_script:"staffWorkHoursData" }}
+
   <section class="meta-grid">
 
-    <div class="meta-field">
+    <div class="shift-meta-group">
+      <div class="shift-meta-title">2交代勤務</div>
+      <div class="shift-meta-grid">
+        <div class="meta-field shift-field">
+          <label for="{{ form.night_shift.id_for_label }}">夜勤</label>
+          {{ form.night_shift }}
+        </div>
+        <div class="meta-field shift-field">
+          <label for="{{ form.night_shift_after.id_for_label }}">明け</label>
+          {{ form.night_shift_after }}
+        </div>
+        <div class="meta-field shift-field">
+          <label for="{{ form.holiday_day_shift.id_for_label }}">休日日勤</label>
+          {{ form.holiday_day_shift }}
+        </div>
+        <div class="meta-field shift-field">
+          <label for="{{ form.compensatory_leave_1.id_for_label }}">代休①</label>
+          {{ form.compensatory_leave_1 }}
+        </div>
+        <div class="meta-field shift-field">
+          <label for="{{ form.compensatory_leave_2.id_for_label }}">代休②</label>
+          {{ form.compensatory_leave_2 }}
+        </div>
+        <div class="meta-field shift-field">
+          <label for="{{ form.compensatory_leave_3.id_for_label }}">代休③</label>
+          {{ form.compensatory_leave_3 }}
+        </div>
+      </div>
+    </div>
+
+    <div class="meta-field meta-conference">
       <label for="{{ form.conference.id_for_label }}">会議等</label>
       {{ form.conference }}
     </div>
 
-    <div class="meta-field">
-      <label for="{{ form.two_shift.id_for_label }}">2交代勤務</label>
-      {{ form.two_shift }}
-    </div>
-
-    <div class="meta-field">
-      <label for="{{ form.annual_leave_1.id_for_label }}">年休①</label>
+    <div class="meta-field meta-annual-leave">
+      <label for="{{ form.annual_leave_1.id_for_label }}">年休</label>
       {{ form.annual_leave_1 }}
     </div>
 
-    <div class="meta-field">
-      <label for="{{ form.annual_leave_2.id_for_label }}">年休②</label>
-      {{ form.annual_leave_2 }}
-    </div>
-
-    <div class="meta-field">
-      <label for="{{ form.staffing_am.id_for_label }}">人数状況・午前</label>
-      {{ form.staffing_am }}
-    </div>
-
-    <div class="meta-field">
-      <label for="{{ form.staffing_pm.id_for_label }}">人数状況・午後</label>
-      {{ form.staffing_pm }}
-    </div>
-
-    <div class="meta-field">
-      <label for="{{ form.free_text.id_for_label }}">Free</label>
-      {{ form.free_text }}
-    </div>
-
-    <div class="meta-field wide">
-      <label for="{{ form.comment.id_for_label }}">コメント</label>
-      {{ form.comment }}
-    </div>
-
-    <div class="meta-field">
-      <label for="{{ form.unassigned.id_for_label }}">配置未定</label>
-      {{ form.unassigned }}
-    </div>
-
-    <div class="meta-field">
+    <div class="meta-field meta-reception-leave">
       <label for="{{ form.reception_leave.id_for_label }}">受付（年休）</label>
       {{ form.reception_leave }}
     </div>
 
+    {% comment %}
+    Ver.3.2: 一旦非表示。DBフィールドは残しているので必要時に復帰できます。
+    <div class="meta-field">
+      <label for="{{ form.annual_leave_2.id_for_label }}">年休②</label>
+      {{ form.annual_leave_2 }}
+    </div>
+    <div class="meta-field">
+      <label for="{{ form.staffing_am.id_for_label }}">人数状況・午前</label>
+      {{ form.staffing_am }}
+    </div>
+    <div class="meta-field">
+      <label for="{{ form.staffing_pm.id_for_label }}">人数状況・午後</label>
+      {{ form.staffing_pm }}
+    </div>
+    {% endcomment %}
+
+    <div class="meta-field meta-free">
+      <label for="{{ form.free_text.id_for_label }}">Free</label>
+      {{ form.free_text }}
+    </div>
+
+    <div class="meta-field meta-unassigned">
+      <label for="{{ form.unassigned.id_for_label }}">配置未定</label>
+      {{ form.unassigned }}
+    </div>
+
+    <div class="meta-field meta-comment">
+      <label for="{{ form.comment.id_for_label }}">コメント</label>
+      {{ form.comment }}
+    </div>
+
+    {% if comment_template_items %}
+    <div class="meta-field meta-comment-templates">
+      <label>定型コメント</label>
+      <div class="comment-template-list">
+        {% for item in comment_template_items %}
+        <div class="comment-template-item" style="font-size:{{ item.template.font_size }}px">
+          <span class="comment-template-label">{{ item.template.label }}</span>
+          {% if item.template.input_type == 'number' %}
+            <input type="number" step="any" inputmode="decimal" class="comment-template-input" data-comment-template-id="{{ item.template.id }}" value="{{ item.value }}" aria-label="{{ item.template.label }}">
+          {% elif item.template.input_type == 'text' %}
+            <input type="text" class="comment-template-input comment-template-text" data-comment-template-id="{{ item.template.id }}" value="{{ item.value }}" aria-label="{{ item.template.label }}">
+          {% endif %}
+          {% if item.template.unit %}<span class="comment-template-unit">{{ item.template.unit }}</span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
   </section>
 
+
+  <section class="quick-meta-entry">
+    <div class="quick-meta-title">予定・休暇をクイック追加</div>
+    <div class="quick-meta-grid">
+      <div class="quick-meta-row">
+        <strong>年休</strong>
+        <select id="quickAnnualStaff" class="quick-staff-select"><option value="">スタッフ</option>{% for staff in quick_staff_options %}<option value="{{ staff.name }}">{{ staff.name }}</option>{% endfor %}</select>
+        <select id="quickAnnualPeriod" class="quick-time-select"><option value="1日">1日</option><option value="AM休">AM休</option><option value="PM休">PM休</option>{% for slot in quick_time_slots %}<option value="{{ slot.label }}">{{ slot.label }}</option>{% endfor %}</select>
+        <button type="button" class="quick-add-btn" data-quick="annual">追加</button>
+      </div>
+      <div class="quick-meta-row">
+        <strong>受付</strong>
+        <select id="quickReceptionStaff" class="quick-staff-select"><option value="">受付担当</option>{% for person in quick_reception_options %}<option value="{{ person.name }}">{{ person.name }}</option>{% endfor %}</select>
+        <select id="quickReceptionPeriod" class="quick-time-select"><option value="1日">1日</option><option value="AM休">AM休</option><option value="PM休">PM休</option>{% for slot in quick_time_slots %}<option value="{{ slot.label }}">{{ slot.label }}</option>{% endfor %}</select>
+        <button type="button" class="quick-add-btn" data-quick="reception">追加</button>
+      </div>
+      <div class="quick-meta-row quick-meeting-row">
+        <strong>会議等</strong>
+        <select id="quickMeetingStaff" class="quick-staff-select"><option value="">スタッフ</option>{% for staff in quick_staff_options %}<option value="{{ staff.name }}">{{ staff.name }}</option>{% endfor %}</select>
+        <select id="quickMeetingPreset"><option value="">内容を選択</option>{% for preset in meeting_presets %}<option value="{{ preset.name }}">{{ preset.name }}</option>{% endfor %}</select>
+        <input id="quickMeetingCustom" type="text" placeholder="または内容を入力">
+        <select id="quickMeetingPeriod" class="quick-time-select"><option value="1日">1日</option><option value="AM">AM</option><option value="PM">PM</option>{% for slot in quick_time_slots %}<option value="{{ slot.label }}">{{ slot.label }}</option>{% endfor %}<option value="17:00">17:00</option></select>
+        <button type="button" class="quick-add-btn" data-quick="meeting">追加</button>
+      </div>
+    </div>
+  </section>
   <section class="copy-card copy-card-bottom">
     <div class="copy-card-title">
       配置データ操作
@@ -265,29 +529,545 @@
   </section>
 
 </main>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<div class="modal fade" id="boardReallocationModal" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">当日の欠員再配置</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <p class="text-muted">急な休みが出た人を選ぶと、現在の配置をなるべく動かさない再配置案を最大3案作ります。</p>
+      <label class="form-label">欠員スタッフ</label>
+      <select id="boardReallocationStaff" class="form-select"><option value="">選択</option>{% for st in quick_staff_options %}<option value="{{ st.id }}" data-name="{{ st.name }}">{{ st.name }}</option>{% endfor %}</select>
+      <label class="form-label mt-3">欠員理由</label>
+      <select id="boardReallocationReason" class="form-select">
+        <option value="annual">年休</option>
+        <option value="business">出張</option>
+        <option value="meeting">会議</option>
+        <option value="absence">その他（欠勤）</option>
+      </select>
+      <label class="form-label mt-3">休み時間</label>
+      <select id="boardReallocationPeriod" class="form-select">
+        <option value="full">1日</option>
+        <option value="am">AM休</option>
+        <option value="pm">PM休</option>
+        {% for slot in quick_time_slots %}<option value="time:{{ slot.key }}">{{ slot.label }}から</option>{% endfor %}
+      </select>
+      <div class="form-text">欠員再配置だけで休暇登録まで行います。時刻指定はクイック年休と同じく、その時刻から勤務終了までを休みとして扱います。</div>
+    </div>
+    <div class="modal-footer"><button type="button" id="createBoardReallocationBtn" class="btn btn-primary">再配置案を作る</button></div>
+  </div></div>
+</div>
+<div class="modal fade" id="boardProposalModal" tabindex="-1">
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">欠員時の最小再配置案</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body"><div id="boardProposalList"></div></div>
+  </div></div>
+</div>
 <script>
 const staffNames = {{ staff_names_json|safe }};
-const datalist = document.getElementById('staffList');
-staffNames.forEach(name => { const option = document.createElement('option'); option.value = name; datalist.appendChild(option); });
+
+// Ver.3.10.6.5: 手動配置用スタッフ候補はクリック位置(clientX/clientY)を基準に表示する。
+// CSS zoom の自動倍率時は getBoundingClientRect() が表示位置とずれるブラウザがあるため、
+// ポインター座標を優先し、倍率の影響を受けない位置決めにする。
+const staffPicker = document.getElementById('staffPicker');
+let staffPickerTarget = null;
+let staffPickerActiveIndex = -1;
+let staffPickerPointer = null;
+
+function staffPickerIsOpen(){
+  return !!(staffPicker && staffPicker.matches(':popover-open'));
+}
+function openStaffPicker(){
+  if(!staffPicker) return;
+  if(typeof staffPicker.showPopover === 'function'){
+    if(!staffPickerIsOpen()) staffPicker.showPopover();
+  }else{
+    staffPicker.hidden=false;
+  }
+}
+function closeStaffPicker(){
+  if(!staffPicker) return;
+  if(typeof staffPicker.hidePopover === 'function'){
+    if(staffPickerIsOpen()) staffPicker.hidePopover();
+  }else{
+    staffPicker.hidden=true;
+  }
+}
+function positionStaffPicker(){
+  if(!staffPickerTarget || (!staffPickerIsOpen() && staffPicker.hidden)) return;
+  const width=Math.max(180,Math.min(260,window.innerWidth-8));
+  staffPicker.style.width=width+'px';
+  const pickerHeight=Math.min(280,Math.max(120,staffPicker.scrollHeight));
+
+  // マウス／タッチで開いた場合は、CSS zoom に左右されない画面座標を使う。
+  if(staffPickerPointer){
+    const px=staffPickerPointer.x;
+    const py=staffPickerPointer.y;
+    const left=Math.max(4,Math.min(px+8,window.innerWidth-width-4));
+    staffPicker.style.left=left+'px';
+    const below=window.innerHeight-py;
+    staffPicker.style.top=(below>=Math.min(180,pickerHeight))
+      ? Math.min(window.innerHeight-pickerHeight-4,py+12)+'px'
+      : Math.max(4,py-pickerHeight-12)+'px';
+    return;
+  }
+
+  // Tabキー等でフォーカスした場合のフォールバック。
+  const r=staffPickerTarget.getBoundingClientRect();
+  staffPicker.style.left=Math.max(4,Math.min(r.left,window.innerWidth-width-4))+'px';
+  const below=window.innerHeight-r.bottom;
+  staffPicker.style.top=(below>=Math.min(180,pickerHeight))
+    ? (r.bottom+2)+'px'
+    : Math.max(4,r.top-pickerHeight-2)+'px';
+}
+function renderStaffPicker(input){
+  staffPickerTarget=input;
+  staffPickerActiveIndex=-1;
+  const q=(input.value||'').trim().toLowerCase();
+  const names=staffNames.filter(name=>!q || String(name).toLowerCase().includes(q));
+  staffPicker.innerHTML='';
+  if(!names.length){
+    const empty=document.createElement('div'); empty.className='staff-picker-empty'; empty.textContent='該当するスタッフがいません'; staffPicker.appendChild(empty);
+  }else{
+    names.forEach(name=>{
+      const btn=document.createElement('button'); btn.type='button'; btn.setAttribute('role','option'); btn.textContent=name;
+      btn.addEventListener('mousedown',e=>e.preventDefault());
+      btn.addEventListener('click',()=>{
+        input.value=name; input.dispatchEvent(new Event('input',{bubbles:true})); input.dispatchEvent(new Event('change',{bubbles:true}));
+        closeStaffPicker(); input.focus();
+      });
+      staffPicker.appendChild(btn);
+    });
+  }
+  openStaffPicker();
+  positionStaffPicker();
+}
+function moveStaffPickerSelection(step){
+  const buttons=[...staffPicker.querySelectorAll('button')]; if(!buttons.length)return;
+  staffPickerActiveIndex=(staffPickerActiveIndex+step+buttons.length)%buttons.length;
+  buttons.forEach((b,i)=>b.classList.toggle('active',i===staffPickerActiveIndex));
+  buttons[staffPickerActiveIndex].scrollIntoView({block:'nearest'});
+}
+document.querySelectorAll('.cell-input:not([readonly])').forEach(input=>{
+  input.addEventListener('pointerdown',e=>{staffPickerPointer={x:e.clientX,y:e.clientY};});
+  input.addEventListener('focus',()=>renderStaffPicker(input));
+  input.addEventListener('input',()=>renderStaffPicker(input));
+  input.addEventListener('keydown',e=>{
+    if(e.key==='ArrowDown'){e.preventDefault();if(!staffPickerIsOpen() && staffPicker.hidden)renderStaffPicker(input);else moveStaffPickerSelection(1);}
+    else if(e.key==='ArrowUp'){e.preventDefault();if(!staffPickerIsOpen() && staffPicker.hidden)renderStaffPicker(input);else moveStaffPickerSelection(-1);}
+    else if(e.key==='Enter' && (staffPickerIsOpen() || !staffPicker.hidden) && staffPickerActiveIndex>=0){e.preventDefault();const btn=staffPicker.querySelectorAll('button')[staffPickerActiveIndex];if(btn)btn.click();}
+    else if(e.key==='Escape'){closeStaffPicker();}
+  });
+});
+document.addEventListener('keydown',e=>{if(e.key==='Tab')staffPickerPointer=null;},true);
+document.addEventListener('mousedown',e=>{if((staffPickerIsOpen() || !staffPicker.hidden) && e.target!==staffPickerTarget && !staffPicker.contains(e.target))closeStaffPicker();});
+window.addEventListener('resize',positionStaffPicker);
+document.addEventListener('scroll',positionStaffPicker,true);
 const saveUrl = "{% url 'daily_assignment:save' %}";
+const autoAssignmentUrl = "{% url 'daily_assignment:auto_assignment' %}";
+const areaActivationUrl = "{% url 'daily_assignment:area_activation' %}";
 const boardDate = "{{ board_date|date:'Y-m-d' }}";
+const boardWeekdays = ['日','月','火','水','木','金','土'];
+const boardDateParts = boardDate.split('-').map(Number);
+const boardWeekdayText = boardDateParts.length === 3
+  ? `（${boardWeekdays[new Date(boardDateParts[0], boardDateParts[1] - 1, boardDateParts[2]).getDay()]}）`
+  : '';
+document.querySelectorAll('.board-weekday[data-board-weekday]').forEach(el => { el.textContent = boardWeekdayText; });
 let updatedAt = "{{ board.updated_at|date:'c' }}";
 let dirty = false;
 const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 document.querySelectorAll('input, textarea').forEach(el => { if (el.type !== 'hidden' && el.type !== 'date') el.addEventListener('input', () => { dirty = true; document.getElementById('saveStatus').textContent = '未保存の変更があります'; }); });
+function appendMetaLine(targetId, line){
+  const el=document.getElementById(targetId); if(!el || !line) return;
+  const current=(el.value||'').trim(); el.value=current ? current+'\n'+line : line;
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+}
+const removedAssignmentSpecs = {};
+function parseMinutes(label){const m=String(label||'').match(/(\d{1,2}):(\d{2})/);return m?Number(m[1])*60+Number(m[2]):null;}
+function quickPeriodCoversCell(el, period){
+  if(period==='1日') return true;
+  const mins=parseMinutes(el.dataset.timeLabel); if(mins===null) return false;
+  if(period==='AM休') return mins<=12*60;
+  if(period==='PM休') return mins>12*60;
+  const target=parseMinutes(period); return target!==null ? mins>=target : false;
+}
+function copyAfternoonForArea(areaId, areaName, slotIndex){
+  const areaCells=[...document.querySelectorAll(`.cell-input[data-area-id="${areaId}"]`)];
+  const source=areaCells.find(el=>
+    parseMinutes(el.dataset.timeLabel)===13*60 && String(el.dataset.slotIndex)===String(slotIndex)
+  );
+  if(!source || !source.value.trim()){
+    alert(`${areaName} の13時枠（${slotIndex}列目）にスタッフが入力されていません。`);
+    return;
+  }
+
+  const changes=[];
+  areaCells.forEach(target=>{
+    const mins=parseMinutes(target.dataset.timeLabel);
+    if(String(target.dataset.slotIndex)===String(slotIndex) && mins!==null && mins>13*60 && mins<=16*60 && !target.readOnly){
+      if(target.value!==source.value){
+        changes.push({target,value:source.value,hadValue:!!target.value.trim()});
+      }
+    }
+  });
+  if(!changes.length){
+    alert(`${areaName} の${slotIndex}列目は14時〜16時までコピー済みです。`);
+    return;
+  }
+  if(changes.some(c=>c.hadValue) && !confirm(`${areaName} の${slotIndex}列目・14時〜16時に既存の配置があります。13時の「${source.value}」で上書きしますか？`)) return;
+  changes.forEach(({target,value})=>{
+    target.value=value;
+    target.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+}
+
+document.querySelectorAll('.copy-cell').forEach(cell=>{
+  const areaId=cell.dataset.areaId;
+  const areaName=cell.dataset.areaName;
+  const slotCount=Math.max(1, Number(cell.dataset.slotCount||1));
+  const holder=cell.querySelector('.copy-slot-buttons');
+  if(!holder) return;
+  for(let slot=1; slot<=slotCount; slot+=1){
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.className='area-copy-btn';
+    btn.dataset.areaId=areaId;
+    btn.dataset.areaName=areaName;
+    btn.dataset.slotIndex=String(slot);
+    btn.textContent='Copy';
+    btn.title=`13時の${slot}列目を14時〜16時へコピー`;
+    btn.addEventListener('click',()=>copyAfternoonForArea(areaId,areaName,slot));
+    holder.appendChild(btn);
+  }
+});
+
+function clearQuickAnnualAssignments(staffName, period){
+  const specs=[];
+  document.querySelectorAll('.cell-input').forEach(el=>{
+    if(el.value.trim()===staffName && quickPeriodCoversCell(el,period)){
+      specs.push({area_id:el.dataset.areaId,row_key:el.dataset.rowKey,slot_index:el.dataset.slotIndex});
+      el.value=''; el.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+  });
+  if(specs.length){removedAssignmentSpecs[staffName]=(removedAssignmentSpecs[staffName]||[]).concat(specs);}
+}
+document.querySelectorAll('.quick-add-btn').forEach(btn=>btn.addEventListener('click',()=>{
+  const type=btn.dataset.quick;
+  if(type==='annual'){const st=document.getElementById('quickAnnualStaff').value, per=document.getElementById('quickAnnualPeriod').value;if(!st){alert('スタッフを選択してください。');return}clearQuickAnnualAssignments(st,per);appendMetaLine('id_annual_leave_1',`${st} ${per}`);}
+  if(type==='reception'){const st=document.getElementById('quickReceptionStaff').value, per=document.getElementById('quickReceptionPeriod').value;if(!st){alert('受付担当を選択してください。');return}appendMetaLine('id_reception_leave',`${st} ${per}`);}
+  if(type==='meeting'){const st=document.getElementById('quickMeetingStaff').value, preset=document.getElementById('quickMeetingPreset').value, custom=document.getElementById('quickMeetingCustom').value.trim(), per=document.getElementById('quickMeetingPeriod').value;const content=custom||preset;if(!st||!content){alert('スタッフと会議等の内容を選択・入力してください。');return}appendMetaLine('id_conference',`${content}：${st} ${per}`);document.getElementById('quickMeetingCustom').value='';}
+}));
 function metaValue(id) { const el = document.getElementById(id); return el ? el.value : ''; }
 async function saveBoard() {
   const button = document.getElementById('saveButton'); button.disabled = true; button.textContent = '保存中…';
   const cells = [...document.querySelectorAll('.cell-input')].map(el => ({ area_id: el.dataset.areaId, row_key: el.dataset.rowKey, slot_index: el.dataset.slotIndex, value: el.value }));
-  const meta = { conference: metaValue('id_conference'), two_shift: metaValue('id_two_shift'), annual_leave_1: metaValue('id_annual_leave_1'), annual_leave_2: metaValue('id_annual_leave_2'), staffing_am: metaValue('id_staffing_am'), staffing_pm: metaValue('id_staffing_pm'), free_text: metaValue('id_free_text'), comment: metaValue('id_comment'), unassigned: metaValue('id_unassigned'), reception_leave: metaValue('id_reception_leave') };
+  const commentTemplateValues = [...document.querySelectorAll('.comment-template-input')].map(el => ({ template_id: el.dataset.commentTemplateId, value: el.value }));
+  const lunchEntries = [...document.querySelectorAll('.lunch-input')].map(el => ({ row_key: el.dataset.rowKey, value: el.value }));
+  const meta = { conference: metaValue('id_conference'), night_shift: metaValue('id_night_shift'), night_shift_after: metaValue('id_night_shift_after'), holiday_day_shift: metaValue('id_holiday_day_shift'), compensatory_leave_1: metaValue('id_compensatory_leave_1'), compensatory_leave_2: metaValue('id_compensatory_leave_2'), compensatory_leave_3: metaValue('id_compensatory_leave_3'), annual_leave_1: metaValue('id_annual_leave_1'), free_text: metaValue('id_free_text'), comment: metaValue('id_comment'), unassigned: metaValue('id_unassigned'), reception_leave: metaValue('id_reception_leave') };
   try {
-    const response = await fetch(saveUrl, { method: 'POST', headers: {'Content-Type':'application/json','X-CSRFToken':csrfToken}, body: JSON.stringify({date:boardDate, updated_at:updatedAt, cells, meta}) });
+    const response = await fetch(saveUrl, { method: 'POST', headers: {'Content-Type':'application/json','X-CSRFToken':csrfToken}, body: JSON.stringify({date:boardDate, updated_at:updatedAt, cells, lunch_entries:lunchEntries, meta, comment_template_values:commentTemplateValues}) });
     const data = await response.json();
-    if (!response.ok) { alert(data.error || '保存できませんでした。'); if (data.conflict) location.reload(); return; }
+    if (!response.ok) { alert(data.error || '保存できませんでした。'); if (data.conflict) location.reload(); return false; }
     updatedAt = data.updated_at; dirty = false; document.getElementById('saveStatus').textContent = '保存済み：' + new Date(updatedAt).toLocaleString('ja-JP');
-  } catch (e) { alert('通信エラーで保存できませんでした。'); }
+  } catch (e) { alert('通信エラーで保存できませんでした。'); return false; }
   finally { button.disabled = false; button.textContent = '保存'; }
+  return true;
 }
+
+
+// Ver.3.9.9.7: 手動移動で空いたセルを記録し、後から「空き補充」で埋める。
+const manuallyVacatedCells = new Map();
+document.querySelectorAll('.cell-input').forEach((el) => {
+  el.dataset.initialValue = (el.value || '').trim();
+  const key = `${el.dataset.areaId}:${el.dataset.rowKey}:${el.dataset.slotIndex}`;
+  el.addEventListener('input', () => {
+    const initial = (el.dataset.initialValue || '').trim();
+    const current = (el.value || '').trim();
+    if (initial && !current) {
+      manuallyVacatedCells.set(key, {
+        area_id: Number(el.dataset.areaId),
+        row_key: el.dataset.rowKey,
+        slot_index: Number(el.dataset.slotIndex),
+        // v3.10.6.20: 空き補充で、ユーザーが意図的に外した本人を
+        // 同じセルへ即座に戻さないため元の担当者も送る。
+        original_value: initial,
+      });
+    } else if (current) {
+      manuallyVacatedCells.delete(key);
+    }
+  });
+});
+
+async function fillManualVacancies() {
+  const btn = document.getElementById('fillVacanciesBtn');
+  if (!btn) return;
+  // v3.10.6.23:
+  // 手動で空けたセルがある場合は従来どおりそれを優先して送る。
+  // ない場合もサーバー側で「本日、自動配置ON」の空欄を自動検出するため、そのまま実行する。
+  const specs = [...manuallyVacatedCells.values()];
+  if (dirty) {
+    const saved = await saveBoard();
+    if (!saved) return;
+  }
+  btn.disabled = true;
+  const oldText = btn.textContent;
+  btn.textContent = '補充中…';
+  try {
+    const response = await fetch('{% url "daily_assignment:fill_manual_vacancies" %}', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRFToken':csrfToken},
+      body: JSON.stringify({date: boardDate, vacancies: specs}),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '空き配置を補充できませんでした。');
+    alert(data.message || '空き配置を補充しました。');
+    location.reload();
+  } catch (e) {
+    alert(e.message || '空き配置を補充できませんでした。');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
+}
+const fillVacanciesBtn = document.getElementById('fillVacanciesBtn');
+if (fillVacanciesBtn) fillVacanciesBtn.addEventListener('click', fillManualVacancies);
+
+async function runBoardHistoryAction(direction){
+  const isUndo = direction === 'undo';
+  const btn = document.getElementById(isUndo ? 'undoLastAutoBtn' : 'redoLastAutoBtn');
+  if(!btn) return;
+  if(dirty){
+    alert('未保存の変更があるため戻る/進むは実行できません。先に保存してください。');
+    return;
+  }
+  const oldText=btn.textContent;
+  btn.disabled=true;
+  btn.textContent=isUndo ? '戻し中…' : '進行中…';
+  try{
+    const fd=new FormData();
+    fd.append('date',boardDate);
+    fd.append('csrfmiddlewaretoken',csrfToken);
+    const endpoint = isUndo
+      ? '{% url "daily_assignment:undo_last_auto_action" %}'
+      : '{% url "daily_assignment:redo_last_auto_action" %}';
+    const response=await fetch(endpoint,{
+      method:'POST',
+      headers:{'X-CSRFToken':csrfToken},
+      body:fd
+    });
+    const data=await response.json();
+    if(!response.ok) throw new Error(data.error || (isUndo ? '戻せませんでした。' : '進められませんでした。'));
+    alert(data.message || (isUndo ? '1つ戻しました。' : '1つ進めました。'));
+    location.reload();
+  }catch(e){
+    alert(e.message || (isUndo ? '戻せませんでした。' : '進められませんでした。'));
+    btn.disabled=false;
+    btn.textContent=oldText;
+  }
+}
+const undoLastAutoBtn=document.getElementById('undoLastAutoBtn');
+if(undoLastAutoBtn) undoLastAutoBtn.addEventListener('click',()=>runBoardHistoryAction('undo'));
+const redoLastAutoBtn=document.getElementById('redoLastAutoBtn');
+if(redoLastAutoBtn) redoLastAutoBtn.addEventListener('click',()=>runBoardHistoryAction('redo'));
+
+
+let boardReallocationModal = null;
+let boardProposalModal = null;
+
+// base.html の Bootstrap JS はこのテンプレート内の script より後で読み込まれるため、
+// DOMContentLoaded 後にモーダルを初期化する。ここで早期に bootstrap を参照すると
+// 以降の「保存・自動配置・表示倍率・画像保存」のイベント登録まで停止してしまう。
+document.addEventListener('DOMContentLoaded', () => {
+  const reallocationEl = document.getElementById('boardReallocationModal');
+  const proposalEl = document.getElementById('boardProposalModal');
+  if (window.bootstrap && reallocationEl && proposalEl) {
+    boardReallocationModal = bootstrap.Modal.getOrCreateInstance(reallocationEl);
+    boardProposalModal = bootstrap.Modal.getOrCreateInstance(proposalEl);
+  }
+
+  const openBtn = document.getElementById('openBoardReallocationBtn');
+  if (openBtn) {
+    openBtn.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (dirty) {
+        const saved = await saveBoard();
+        if (!saved) return;
+      }
+      if (!boardReallocationModal) {
+        if (window.bootstrap && reallocationEl) {
+          boardReallocationModal = bootstrap.Modal.getOrCreateInstance(reallocationEl);
+        } else {
+          alert('欠員再配置画面を開けませんでした。ページを再読み込みしてください。');
+          return;
+        }
+      }
+      boardReallocationModal.show();
+    });
+  }
+});
+async function showBoardReallocationProposals(staffId,staffName,absenceReason,absencePeriod){
+  if (dirty) {
+    const saved=await saveBoard();
+    if(!saved)return;
+  }
+  const fd=new FormData(); fd.append('date',boardDate); fd.append('staff_id',staffId); fd.append('absence_reason',absenceReason||'annual'); fd.append('absence_period',absencePeriod||'full'); fd.append('csrfmiddlewaretoken',csrfToken);
+  const specs=removedAssignmentSpecs[staffName]||[]; if(specs.length)fd.append('affected_specs',JSON.stringify(specs));
+  const r=await fetch('{% url "daily_assignment:weekly_reallocation_proposals" %}',{method:'POST',body:fd,headers:{'X-CSRFToken':csrfToken}});
+  const j=await r.json(); if(!r.ok)throw new Error(j.error||'再配置案を作成できませんでした。');
+  const box=document.getElementById('boardProposalList'); box.innerHTML='';
+  j.proposals.forEach((p,i)=>{
+    const div=document.createElement('div'); div.className='proposal-card';
+    const warningHtml=(p.warnings||[]).length?`<div class="alert alert-warning py-2 px-3 mb-2"><strong>⚠ 重複配置あり</strong><br>${p.warnings.map(w=>`<div>${w}</div>`).join('')}</div>`:'';
+    div.innerHTML=`<div class="proposal-head"><strong>案${i+1}：${p.title}</strong><span>変更 ${p.change_count}セル</span></div>${p.detail?`<p class="proposal-detail">${p.detail}</p>`:''}${warningHtml}<div class="proposal-body">${p.changes.map(c=>`<div><span>${c.area} ${c.row_key}</span><b>${c.before||'空欄'} → ${c.after||'空欄'}</b></div>`).join('')}</div><button class="btn btn-primary btn-sm">この案を反映</button>`;
+    div.querySelector('button').onclick=async()=>{const rr=await fetch('{% url "daily_assignment:weekly_reallocation_apply" %}',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrfToken},body:JSON.stringify({date:j.date,changes:p.changes,absent_staff_id:staffId,absence_reason:absenceReason||'annual',absence_period:absencePeriod||'full'})});const x=await rr.json();if(!rr.ok){alert(x.error||'失敗しました');return}location.reload();};
+    box.appendChild(div);
+  });
+  if (boardReallocationModal) boardReallocationModal.hide();
+  if (!boardProposalModal && window.bootstrap) {
+    const proposalEl = document.getElementById('boardProposalModal');
+    if (proposalEl) boardProposalModal = bootstrap.Modal.getOrCreateInstance(proposalEl);
+  }
+  if (boardProposalModal) boardProposalModal.show();
+}
+document.getElementById('createBoardReallocationBtn').onclick=async()=>{
+  const sel=document.getElementById('boardReallocationStaff'); const staffId=sel.value; const staffName=sel.options[sel.selectedIndex]?.dataset.name||'';
+  const reason=document.getElementById('boardReallocationReason')?.value||'annual';
+  const period=document.getElementById('boardReallocationPeriod')?.value||'full';
+  if(!staffId){alert('欠員スタッフを選択してください。');return;}
+  try{await showBoardReallocationProposals(staffId,staffName,reason,period)}catch(e){alert(e.message)}
+};
+
+
+document.querySelectorAll('.scheduled-area-toggle').forEach(toggle => {
+  toggle.addEventListener('change', async function () {
+    const previous = !this.checked;
+    this.disabled = true;
+
+    const formData = new FormData();
+    formData.set('date', boardDate);
+    formData.set('area_id', this.dataset.areaId);
+    formData.set('enabled', this.checked ? '1' : '0');
+
+    try {
+      const response = await fetch(areaActivationUrl, {
+        method: 'POST',
+        headers: {'X-CSRFToken': csrfToken},
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        this.checked = previous;
+        alert(data.error || '本日の予定を保存できませんでした。');
+      }
+    } catch (error) {
+      this.checked = previous;
+      alert('通信エラーのため本日の予定を保存できませんでした。');
+    } finally {
+      this.disabled = false;
+    }
+  });
+});
+
+async function autoAssignment() {
+  const button = document.getElementById('autoAssignmentButton');
+  if (!button) return;
+
+  if (dirty) {
+    alert('未保存の変更があります。先に「保存」を押してから配置自動作成を実行してください。\n\n※ 配置自動作成時に、月間勤務表の夜勤・明け・休日日勤・代休も自動で同期します。');
+    return;
+  }
+
+  const hasNormalAssignment = [...document.querySelectorAll('.cell-input')]
+    .some(el => !['main', 'sub'].includes(el.dataset.rowKey) && el.value.trim());
+
+  let rebuild = '0';
+  if (hasNormalAssignment) {
+    const confirmed = confirm(
+      '配置自動作成では、月間勤務表の勤務情報を同期してから通常配置を作成します。\n\n通常配置に入力済みの内容があります。\n\n' +
+      '「OK」：時間帯の通常配置を作り直す\n' +
+      '「キャンセル」：空いている配置枠だけ自動作成する\n\n' +
+      '※ 主担当・Subはどちらを選んでも変更しません。'
+    );
+    rebuild = confirmed ? '1' : '0';
+  }
+
+  button.disabled = true;
+  button.textContent = '作成中…';
+
+  const formData = new FormData();
+  formData.set('date', boardDate);
+  formData.set('rebuild', rebuild);
+
+  try {
+    const response = await fetch(autoAssignmentUrl, {
+      method: 'POST',
+      headers: {'X-CSRFToken': csrfToken},
+      body: formData,
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.error || '通常配置を自動作成できませんでした。');
+      return;
+    }
+
+    const inputMap = new Map();
+    document.querySelectorAll('.cell-input').forEach(el => {
+      const key = `${el.dataset.areaId}|${el.dataset.rowKey}|${el.dataset.slotIndex}`;
+      inputMap.set(key, el);
+    });
+
+    if (rebuild === '1') {
+      document.querySelectorAll('.cell-input').forEach(el => {
+        if (!['main', 'sub'].includes(el.dataset.rowKey)) {
+          el.value = '';
+          fitNameText(el);
+        }
+      });
+    }
+
+    (data.cells || []).forEach(cell => {
+      const key = `${cell.area_id}|${cell.row_key}|${cell.slot_index}`;
+      const input = inputMap.get(key);
+      if (input) {
+        input.value = cell.value || '';
+        fitNameText(input);
+      }
+    });
+    checkDuplicateStaffAssignments();
+
+    const lunchMap = new Map();
+    document.querySelectorAll('.lunch-input').forEach(el => lunchMap.set(el.dataset.rowKey, el));
+    document.querySelectorAll('.lunch-input').forEach(el => { el.value = ''; fitNameText(el); });
+    (data.lunch_entries || []).forEach(item => {
+      const input = lunchMap.get(item.row_key);
+      if (input) { input.value = item.value || ''; fitNameText(input); }
+    });
+    const unassignedInput = document.getElementById('id_unassigned');
+    if (unassignedInput) unassignedInput.value = data.unassigned || '';
+
+    updatedAt = data.updated_at;
+    dirty = false;
+    document.getElementById('saveStatus').textContent = data.message || '勤務情報を同期して配置を自動作成しました';
+
+    if (data.warnings && data.warnings.length) {
+      alert('配置を作成しました。\n\n' + data.warnings.join('\n'));
+    }
+
+    // 横結合セル・兼任の赤字・rowspan/colspan はサーバー側で再構築されるため、
+    // 自動配置後に再読み込みして最新の表示状態へ揃える。
+    window.location.reload();
+  } catch (error) {
+    alert('通信エラーのため通常配置を自動作成できませんでした。');
+  } finally {
+    button.disabled = false;
+    button.textContent = '配置自動作成';
+  }
+}
+
+document.getElementById('autoAssignmentButton')?.addEventListener('click', autoAssignment);
+
 document.getElementById('saveButton').addEventListener('click', saveBoard);
 window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
 document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); saveBoard(); } });
@@ -413,20 +1193,234 @@ function fitNameText(input) {
     input.classList.add('name-medium');
   }
 
-  input.title = input.value;
+  input.dataset.nameTitle = input.value.trim();
+  updateCellWarningTitle(input);
+}
+
+function updateCellWarningTitle(input) {
+  const reasons = [];
+  if (input.classList.contains('dedicated-main-cell')) reasons.push('専任固定');
+  if (input.classList.contains('concurrent-assignment')) reasons.push('時間連動ルールによる兼任・重複配置です。');
+  if (input.dataset.duplicateReason) reasons.push(input.dataset.duplicateReason);
+  if (input.dataset.workHourReason) reasons.push(input.dataset.workHourReason);
+  input.title = reasons.length ? reasons.join('\n') : (input.dataset.nameTitle || input.value || '');
+}
+
+const areaNameMap = (() => {
+  const map = new Map();
+  document.querySelectorAll('.area-head[data-area-id]').forEach(function (head) {
+    map.set(String(head.dataset.areaId), head.dataset.areaName || head.textContent.trim());
+  });
+  return map;
+})();
+
+function checkDuplicateStaffAssignments() {
+  const groups = new Map();
+  document.querySelectorAll('.cell-input').forEach(function (input) {
+    input.classList.remove('staff-duplicate');
+    delete input.dataset.duplicateReason;
+    const name = (input.value || '').trim();
+    const timeLabel = (input.dataset.timeLabel || '').trim();
+    if (!name || !timeLabel) {
+      updateCellWarningTitle(input);
+      return;
+    }
+    const key = `${timeLabel}|||${name}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(input);
+  });
+
+  groups.forEach(function (inputs) {
+    if (inputs.length < 2) return;
+    const locations = [...new Set(inputs.map(function (input) {
+      const area = areaNameMap.get(String(input.dataset.areaId)) || `配置ID ${input.dataset.areaId}`;
+      const slot = Number(input.dataset.slotIndex || 1);
+      return slot > 1 ? `${area}（${slot}列目）` : area;
+    }))];
+    inputs.forEach(function (input) {
+      input.classList.add('staff-duplicate');
+      input.dataset.duplicateReason = `重複配置：${input.dataset.timeLabel} に「${input.value.trim()}」さんが ${locations.join(' / ')} に入っています。`;
+      updateCellWarningTitle(input);
+    });
+  });
+
+  document.querySelectorAll('.cell-input:not(.staff-duplicate)').forEach(updateCellWarningTitle);
+}
+
+const staffWorkHours = (() => {
+  const el = document.getElementById('staffWorkHoursData');
+  try { return el ? JSON.parse(el.textContent) : {}; } catch (e) { return {}; }
+})();
+
+function rowKeyToMinute(rowKey) {
+  if (!/^\d{4}$/.test(rowKey || '')) return null;
+  return parseInt(rowKey.slice(0,2),10) * 60 + parseInt(rowKey.slice(2),10);
+}
+function timeTextToMinute(text) {
+  if (!text) return null;
+  const p = text.split(':').map(Number);
+  return p[0] * 60 + p[1];
+}
+function checkStaffWorkHour(input, showAlert) {
+  const info = staffWorkHours[(input.value || '').trim()];
+  const minute = rowKeyToMinute(input.dataset.rowKey);
+  input.classList.remove('staff-out-of-hours');
+  delete input.dataset.workHourReason;
+  if (!info || minute === null) { updateCellWarningTitle(input); return true; }
+  const start = timeTextToMinute(info.start), end = timeTextToMinute(info.end);
+  const outside = (start !== null && minute < start) || (end !== null && minute > end);
+  if (outside) {
+    input.classList.add('staff-out-of-hours');
+    const range = `${info.start || '制限なし'} ～ ${info.end || '制限なし'}`;
+    input.dataset.workHourReason = `勤務可能時間外：通常勤務可能時間は ${range} です。`;
+    updateCellWarningTitle(input);
+    if (showAlert) {
+      alert(`${input.value}さんの通常勤務可能時間は ${range} です。\n必要な場合はこのまま手動入力できます。`);
+    }
+    return false;
+  }
+  updateCellWarningTitle(input);
+  return true;
 }
 
 function initializeNameFitting() {
   document.querySelectorAll('.cell-input').forEach(function (input) {
     fitNameText(input);
+    checkStaffWorkHour(input, false);
     input.addEventListener('input', function () {
       fitNameText(this);
+      checkStaffWorkHour(this, false);
+      checkDuplicateStaffAssignments();
+    });
+    input.addEventListener('change', function () {
+      checkStaffWorkHour(this, true);
+      checkDuplicateStaffAssignments();
     });
   });
+  checkDuplicateStaffAssignments();
 }
 
 window.addEventListener('load', initializeNameFitting);
 
+
+
+const downloadBoardImageButton = document.getElementById('downloadBoardImageButton');
+if (downloadBoardImageButton) {
+  downloadBoardImageButton.addEventListener('click', async () => {
+    const table = document.querySelector('.assignment-table');
+    const metaGrid = document.querySelector('.meta-grid');
+    if (!table || typeof html2canvas === 'undefined') {
+      alert('画像作成機能を読み込めませんでした。通信状態を確認してください。');
+      return;
+    }
+    const originalZoom = table.style.zoom;
+    table.style.zoom = '1';
+    downloadBoardImageButton.disabled = true;
+    downloadBoardImageButton.textContent = '…';
+    try {
+      // 配置表本体と、その下の勤務・休暇・コメント欄を別々に描画して1枚に結合する。
+      // クイック追加や操作ボタンは画像には含めない。
+      const captureOptions = { scale: 2, backgroundColor: '#ffffff', useCORS: true };
+      const tableCanvas = await html2canvas(table, captureOptions);
+
+      // v3.10.6.12: 画像保存時だけ補足欄を配置表と同じ横幅に再レイアウトする。
+      // 実画面のレイアウトには触れず、撮影専用クローンだけを整形する。
+      let metaCanvas = null;
+      let captureMeta = null;
+      if (metaGrid) {
+        captureMeta = metaGrid.cloneNode(true);
+        captureMeta.classList.add('image-capture-meta');
+        const tableWidth = Math.max(table.scrollWidth, table.getBoundingClientRect().width);
+        Object.assign(captureMeta.style, {
+          position: 'fixed', left: '-100000px', top: '0',
+          width: `${tableWidth}px`, maxWidth: 'none', margin: '0',
+          display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+          gap: '10px', padding: '10px', boxSizing: 'border-box',
+          background: '#ffffff', zIndex: '-1'
+        });
+        const shift = captureMeta.querySelector('.shift-meta-group');
+        if (shift) shift.style.gridColumn = '1 / -1';
+        const shiftGrid = captureMeta.querySelector('.shift-meta-grid');
+        if (shiftGrid) {
+          shiftGrid.style.display = 'grid';
+          shiftGrid.style.gridTemplateColumns = 'repeat(6, minmax(0, 1fr))';
+          shiftGrid.style.gap = '8px';
+        }
+        const comment = captureMeta.querySelector('.meta-comment');
+        if (comment) comment.style.gridColumn = '1 / -1';
+        const templates = captureMeta.querySelector('.meta-comment-templates');
+        if (templates) templates.style.gridColumn = '1 / -1';
+        captureMeta.querySelectorAll('.meta-field textarea, .meta-field input, .meta-field select').forEach(el => {
+          el.style.width = '100%';
+          el.style.boxSizing = 'border-box';
+        });
+        document.body.appendChild(captureMeta);
+        metaCanvas = await html2canvas(captureMeta, captureOptions);
+      }
+      // v3.10.6.25: 保存画像の先頭に「配置表の日付」と「画像保存日時」を追加する。
+      // 画像ファイルだけを後から見ても、対象日と出力時刻が分かるようにする。
+      const exportedAt = new Date();
+      const pad2 = value => String(value).padStart(2, '0');
+      const savedDateLabel = `${exportedAt.getFullYear()}/${pad2(exportedAt.getMonth() + 1)}/${pad2(exportedAt.getDate())}`;
+      const savedTimeLabel = `${pad2(exportedAt.getHours())}:${pad2(exportedAt.getMinutes())}`;
+      const savedTimeCompact = `${pad2(exportedAt.getHours())}${pad2(exportedAt.getMinutes())}`;
+
+      const boardDateParts = String(boardDate || '').split('-').map(Number);
+      let boardDateLabel = String(boardDate || '');
+      if (boardDateParts.length === 3 && boardDateParts.every(Number.isFinite)) {
+        const [year, month, day] = boardDateParts;
+        const weekdayNames = ['日', '月', '火', '水', '木', '金', '土'];
+        const weekday = weekdayNames[new Date(year, month - 1, day).getDay()];
+        boardDateLabel = `${year}年${month}月${day}日（${weekday}） 配置表`;
+      } else {
+        boardDateLabel = `${boardDateLabel} 配置表`;
+      }
+
+      const gap = metaCanvas ? 16 : 0;
+      const headerHeight = 112;
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(tableCanvas.width, metaCanvas ? metaCanvas.width : 0);
+      canvas.height = headerHeight + tableCanvas.height + gap + (metaCanvas ? metaCanvas.height : 0);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 1行目：対象日。2行目：保存日時。
+      ctx.fillStyle = '#111111';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = '700 34px sans-serif';
+      ctx.fillText(boardDateLabel, canvas.width / 2, 38);
+      ctx.textAlign = 'right';
+      ctx.font = '22px sans-serif';
+      ctx.fillText(`保存日時：${savedDateLabel} ${savedTimeLabel}`, canvas.width - 20, 78);
+      ctx.strokeStyle = '#b8b8b8';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(16, headerHeight - 8);
+      ctx.lineTo(canvas.width - 16, headerHeight - 8);
+      ctx.stroke();
+
+      ctx.drawImage(tableCanvas, 0, headerHeight);
+      if (metaCanvas) ctx.drawImage(metaCanvas, 0, headerHeight + tableCanvas.height + gap);
+
+      const link = document.createElement('a');
+      link.download = `勤務配置表_${boardDate}_${savedTimeCompact}.png`;
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      alert('画像を作成できませんでした。');
+    } finally {
+      if (typeof captureMeta !== 'undefined' && captureMeta && captureMeta.parentNode) captureMeta.remove();
+      table.style.zoom = originalZoom;
+      downloadBoardImageButton.disabled = false;
+      downloadBoardImageButton.innerHTML = '<span aria-hidden="true">📷</span>';
+      if (boardZoomSelect) applyBoardZoom(boardZoomSelect.value, false);
+    }
+  });
+}
 </script>
 
 {% endblock %}

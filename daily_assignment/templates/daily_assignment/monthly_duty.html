@@ -1,0 +1,602 @@
+{% extends "ct_app/base.html" %}
+{% load static %}
+
+{% block title %}月間勤務カレンダー - How to CT{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'daily_assignment/monthly_duty.css' %}?v=20260821_3">
+{% endblock %}
+
+{% block content %}
+<header class="monthly-topbar">
+  <div>
+    <div class="monthly-brand">勤務カレンダー</div>
+    <h1>{{ first_day|date:"Y年m月" }} 夜勤・休日勤務</h1>
+    <p>▼ 夜勤入り　△ 明け　日 休日日勤　休 代休　／ 前後7日も表示　／ 日付クリックで休日・代休例外を設定</p>
+  </div>
+  <a class="monthly-back" href="{% url 'daily_assignment:board' %}">当日配置表へ</a>
+</header>
+
+<main class="monthly-page">
+
+  <section class="monthly-controls">
+    <a class="monthly-button" href="?month={{ previous_month|date:'Y-m' }}">← 前月</a>
+    <form method="get" class="month-form">
+      <input type="month" name="month" value="{{ first_day|date:'Y-m' }}">
+      <button class="monthly-button" type="submit">表示</button>
+    </form>
+    <a class="monthly-button" href="?month={{ next_month|date:'Y-m' }}">翌月 →</a>
+    <button id="downloadMonthlyImage" class="monthly-button accent" type="button">画像として保存</button>
+    <label class="monthly-scale-control">
+      <span>表示倍率</span>
+      <select id="monthlyScaleSelect">
+        <option value="auto" selected>自動</option>
+        <option value="1">100%</option>
+        <option value="0.95">95%</option>
+        <option value="0.90">90%</option>
+        <option value="0.85">85%</option>
+        <option value="0.80">80%</option>
+        <option value="0.75">75%</option>
+        <option value="0.70">70%</option>
+        <option value="0.65">65%</option>
+        <option value="0.60">60%</option>
+      </select>
+      <small id="monthlyScaleStatus">自動</small>
+    </label>
+  </section>
+
+
+  <section class="auto-guide-card">
+    <div class="auto-guide-title">
+      <strong>普段の自動作成はこの順番</strong>
+      <span>優先度・専任・主担当などの設定が済んでいれば、基本はこの4ステップだけです。</span>
+    </div>
+    <div class="auto-guide-steps">
+      <div class="auto-guide-step active"><b>1</b><span><strong>月間勤務</strong><small>夜勤・休日日勤・代休を確定</small></span></div>
+      <a class="auto-guide-step" href="{% url 'daily_assignment:weekly_planner' %}"><b>2</b><span><strong>週間予定</strong><small>年休・出張・会議を登録</small></span></a>
+      <a class="auto-guide-step" href="{% url 'daily_assignment:weekly_planner' %}"><b>3</b><span><strong>週間自動作成</strong><small>月～金をまとめて作成</small></span></a>
+      <a class="auto-guide-step" href="{% url 'daily_assignment:board' %}"><b>4</b><span><strong>当日確認</strong><small>予定時のみ・手直しを確認</small></span></a>
+    </div>
+  </section>
+
+  <section class="rotation-card">
+    <div class="rotation-card-title">
+      <div>
+        <strong>夜勤ローテーション作成</strong>
+        <span>勤務順に従ってカレンダーへ先に勤務を確定します。</span>
+      </div>
+    </div>
+
+    <form method="post" action="{% url 'daily_assignment:duty_calendar_generate' %}" class="rotation-form">
+      {% csrf_token %}
+      <input type="hidden" name="month" value="{{ first_day|date:'Y-m' }}">
+
+      <label>
+        <span>この人から始める</span>
+        <select name="start_staff_id" required {% if not rotation_staff %}disabled{% endif %}>
+          {% for staff in rotation_staff %}
+            <option value="{{ staff.id }}">{{ staff.name }}</option>
+          {% empty %}
+            <option value="">対象スタッフなし</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        <span>作り直し開始日</span>
+        <input type="date" name="start_date"
+               min="{{ first_day|date:'Y-m-d' }}"
+               max="{{ last_day|date:'Y-m-d' }}"
+               value="{{ first_day|date:'Y-m-d' }}">
+      </label>
+
+      <div class="rotation-actions">
+        <button class="monthly-button primary" type="submit" name="generate_mode" value="month"
+                {% if not rotation_staff %}disabled{% endif %}>
+          この月を自動作成
+        </button>
+        <button class="monthly-button secondary" type="submit" name="generate_mode" value="from_date"
+                {% if not rotation_staff %}disabled{% endif %}>
+          開始日以降を作り直す
+        </button>
+      </div>
+    </form>
+
+    <div class="rotation-note">
+      「この月を自動作成」は1日から作成。「開始日以降を作り直す」は前半を残したまま途中から勤務順を組み直します。
+    </div>
+  </section>
+
+  <section class="rotation-version-card">
+    <details>
+      <summary>この月から勤務メンバー・順番を変更</summary>
+      <div class="rotation-version-body">
+        <p>ここで保存した構成は <strong>{{ first_day|date:"Y年m月" }}から</strong> 適用されます。過去月の勤務順は変わりません。{% if rotation_version_month %}<br><small>現在は {{ rotation_version_month|date:"Y年m月" }} からの構成を参照中です。</small>{% endif %}</p>
+        <form method="post" action="{% url 'daily_assignment:duty_rotation_version_save' %}">
+          {% csrf_token %}<input type="hidden" name="month" value="{{ first_day|date:'Y-m' }}">
+          <div class="rotation-version-grid">
+            {% for item in rotation_editor_rows %}
+              <label class="rotation-member-row">
+                <input type="checkbox" name="rotation_staff_{{ item.staff.id }}" {% if item.enabled %}checked{% endif %}>
+                <span>{{ item.staff.name }}</span>
+                <input type="number" min="1" name="rotation_order_{{ item.staff.id }}" value="{{ item.order }}" aria-label="{{ item.staff.name }}の勤務順">
+              </label>
+            {% endfor %}
+          </div>
+          <div class="rotation-version-actions">
+            <button class="monthly-button primary" type="submit">この月からの構成を保存</button>
+          </div>
+        </form>
+        {% if rotation_version_month and rotation_version_month == first_day %}
+          <form method="post" action="{% url 'daily_assignment:duty_rotation_version_delete' %}" class="rotation-version-reset">
+            {% csrf_token %}<input type="hidden" name="month" value="{{ first_day|date:'Y-m' }}">
+            <button type="submit" class="monthly-button secondary" onclick="return confirm('この月からの勤務メンバー変更を解除しますか？');">この月からの変更を解除</button>
+          </form>
+        {% endif %}
+      </div>
+    </details>
+  </section>
+
+  <section class="monthly-card">
+    <div class="monthly-hint">
+      日付をクリック：休日設定・担当修正　／　表の空白部分をクリック：拡大表示
+    </div>
+    <div class="monthly-table-scroll" id="monthlyPreviewTrigger" role="button" tabindex="0">
+      <table class="monthly-table" id="monthlyDutyTable">
+        <thead>
+          <tr>
+            <th class="staff-col" rowspan="2">氏名</th>
+            {% for day in days %}
+              <th class="day-col{% if not day.is_target_month %} outside-month{% endif %}
+                         {% if day.is_closed %}closed
+                         {% elif day.is_custom_holiday %}custom-holiday
+                         {% elif day.is_sunday_or_holiday %}holiday
+                         {% elif day.is_saturday %}saturday{% endif %}">
+                <button type="button"
+                        class="day-settings-button"
+                        data-date="{{ day.date|date:'Y-m-d' }}"
+                        data-label="{{ day.date|date:'Y年m月d日' }}（{{ day.weekday }}）"
+                        data-day-mode="{{ day.day_mode }}"
+                        data-night-staff-id="{{ day.night_staff_id }}"
+                        data-holiday-staff-id="{{ day.holiday_staff_id }}"
+                        data-no-comp="{% if day.no_compensatory_leave %}1{% else %}0{% endif %}"
+                        data-force-holiday-comp="{% if day.force_holiday_day_compensatory_leave %}1{% else %}0{% endif %}"
+                        data-force-night-comp="{% if day.force_night_compensatory_leave %}1{% else %}0{% endif %}"
+                        data-force-night-after-comp="{% if day.force_night_after_compensatory_leave %}1{% else %}0{% endif %}"
+                        data-holiday-staff-name="{{ day.holiday_staff_name }}"
+                        data-night-staff-name="{{ day.night_staff_name }}"
+                        data-holiday-comp-date="{{ day.holiday_comp_date }}"
+                        data-holiday-comp-is-holiday="{% if day.holiday_comp_is_holiday %}1{% else %}0{% endif %}"
+                        data-holiday-comp-prev="{{ day.holiday_comp_prev }}"
+                        data-holiday-comp-next="{{ day.holiday_comp_next }}"
+                        data-night-comp-date="{{ day.night_comp_date }}"
+                        data-night-comp-is-holiday="{% if day.night_comp_is_holiday %}1{% else %}0{% endif %}"
+                        data-night-comp-prev="{{ day.night_comp_prev }}"
+                        data-night-comp-next="{{ day.night_comp_next }}"
+                        data-night-after-comp-date="{{ day.night_after_comp_date }}"
+                        data-night-after-comp-is-holiday="{% if day.night_after_comp_is_holiday %}1{% else %}0{% endif %}"
+                        data-night-after-comp-prev="{{ day.night_after_comp_prev }}"
+                        data-night-after-comp-next="{{ day.night_after_comp_next }}"
+                        data-can-undo="{% if day.can_undo %}1{% else %}0{% endif %}">
+                  <span class="day-number">{{ day.display_day }}</span>
+                  {% if day.no_compensatory_leave %}<span class="no-comp-mark">×休</span>{% endif %}
+                  {% if day.force_holiday_day_compensatory_leave or day.force_night_compensatory_leave or day.force_night_after_compensatory_leave %}<span class="force-comp-mark">＋休</span>{% endif %}
+                </button>
+              </th>
+            {% endfor %}
+            <th class="total-col" rowspan="2">夜勤</th>
+            <th class="total-col" rowspan="2">代休</th>
+            <th class="total-col" rowspan="2">休日日勤</th>
+          </tr>
+          <tr>
+            {% for day in days %}
+              <th class="weekday-col{% if not day.is_target_month %} outside-month{% endif %}
+                         {% if day.is_closed %}closed
+                         {% elif day.is_custom_holiday %}custom-holiday
+                         {% elif day.is_sunday_or_holiday %}holiday
+                         {% elif day.is_saturday %}saturday{% endif %}">
+                {{ day.weekday }}
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            {% if row.section_start %}
+              <tr class="staff-section-row">
+                <th colspan="{{ table_colspan }}">通常勤務スタッフ</th>
+              </tr>
+            {% endif %}
+            <tr class="{% if not row.is_rotation %}normal-staff-row{% endif %}">
+              <th class="staff-col">{{ row.staff.name }}</th>
+              {% for cell in row.cells %}
+                <td class="duty-cell{% if not cell.is_target_month %} outside-month{% endif %}
+                           {% if cell.comp_tooltip %} has-comp-tooltip{% endif %}
+                           {% if cell.annual_marker %} has-annual-leave{% endif %}
+                           {% if cell.is_closed %}closed
+                           {% elif cell.is_custom_holiday %}custom-holiday
+                           {% elif cell.is_sunday_or_holiday %}holiday
+                           {% elif cell.is_saturday %}saturday{% endif %}"
+                    {% if cell.comp_tooltip or cell.annual_tooltip %}title="{% if cell.comp_tooltip %}{{ cell.comp_tooltip }}{% endif %}{% if cell.comp_tooltip and cell.annual_tooltip %} / {% endif %}{% if cell.annual_tooltip %}{{ cell.annual_tooltip }}{% endif %}"{% endif %}>
+                  {% if cell.symbol %}<span class="duty-mark">{{ cell.symbol }}</span>{% endif %}
+                  {% if cell.annual_marker %}<span class="annual-leave-mark annual-{{ cell.annual_marker }}">{{ cell.annual_marker }}</span>{% endif %}
+                </td>
+              {% endfor %}
+              <td class="total-cell">{{ row.totals.night }}</td>
+              <td class="total-cell">{{ row.totals.comp }}</td>
+              <td class="total-cell">{{ row.totals.holiday_day }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="{{ table_colspan }}" class="empty-row">登録スタッフがいません。</td></tr>
+          {% endfor %}
+
+          {% if rows %}
+            <tr class="daily-summary-row daytime-summary-row">
+              <th class="staff-col summary-label">日勤人数</th>
+              {% for summary in daily_summaries %}
+                <td class="summary-cell{% if not summary.is_target_month %} outside-month{% endif %}" title="{{ summary.daytime_tooltip }}">{{ summary.daytime_count }}</td>
+              {% endfor %}
+              <td class="summary-total-note" colspan="3">日別集計</td>
+            </tr>
+            <tr class="daily-summary-row leave-summary-row">
+              <th class="staff-col summary-label">休み合計</th>
+              {% for summary in daily_summaries %}
+                <td class="summary-cell{% if not summary.is_target_month %} outside-month{% endif %}"{% if summary.leave_tooltip %} title="{{ summary.leave_tooltip }}"{% endif %}>{{ summary.leave_total }}</td>
+              {% endfor %}
+              <td class="summary-total-note" colspan="3">代休＋年休</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="calendar-legend">
+      <span><i class="legend-chip saturday"></i>土曜</span>
+      <span><i class="legend-chip holiday"></i>日曜・祝日</span>
+      <span><i class="legend-chip custom-holiday"></i>手動の休日扱い</span>
+      <span><i class="legend-chip closed"></i>臨時休業</span>
+      <span><b>×休</b> 代休なし</span>
+      <span><b>休</b> にマウスを合わせると、元になった夜勤・明け・休日日勤を表示</span>
+      <span><b>〇</b> 1日年休</span>
+      <span><b>AM / PM</b> 半日年休</span>
+      <span><b>時</b> 時間休（マウスを合わせると時間を表示）</span>
+    </div>
+  </section>
+</main>
+
+<!-- 日ごとの設定 -->
+<div class="day-modal" id="daySettingsModal" aria-hidden="true">
+  <div class="day-modal-card">
+    <button type="button" class="day-modal-close" id="daySettingsClose">×</button>
+    <div class="day-modal-title">
+      <small>勤務カレンダー設定</small>
+      <h2 id="daySettingsTitle">日付設定</h2>
+    </div>
+
+    <form method="post" action="{% url 'daily_assignment:duty_calendar_day_update' %}" id="daySettingsForm">
+      {% csrf_token %}
+      <input type="hidden" name="duty_date" id="dayDutyDate">
+
+      <div class="day-form-grid">
+        <label>
+          <span>勤務区分</span>
+          <select name="day_mode" id="dayMode">
+            <option value="auto">自動判定（土日祝）</option>
+            <option value="normal">通常日</option>
+            <option value="holiday">休日扱い</option>
+            <option value="closed">臨時休業</option>
+          </select>
+        </label>
+
+        <label>
+          <span>夜勤</span>
+          <select name="night_staff_id" id="dayNightStaff">
+            <option value="">未設定</option>
+            {% for staff in staff_options %}
+              <option value="{{ staff.id }}">{{ staff.name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label>
+          <span>休日日勤</span>
+          <select name="holiday_staff_id" id="dayHolidayStaff">
+            <option value="">未設定</option>
+            {% for staff in staff_options %}
+              <option value="{{ staff.id }}">{{ staff.name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label class="comp-date-field">
+          <span>休日日勤の代休日</span>
+          <input type="date" name="holiday_comp_date" id="dayHolidayCompDate">
+          <select id="dayHolidayCompShift" class="comp-holiday-shift d-none" aria-label="休日日勤の代休振替先"></select>
+          <small class="field-note">代休日が祝日の場合は、前後の通常勤務日へずらす候補を選べます。</small>
+        </label>
+
+        <label class="comp-date-field">
+          <span>夜勤の代休日</span>
+          <input type="date" name="night_comp_date" id="dayNightCompDate">
+          <select id="dayNightCompShift" class="comp-holiday-shift d-none" aria-label="夜勤の代休振替先"></select>
+          <small class="field-note">夜勤入り側の代休です。祝日に当たれば振替候補を表示します。</small>
+        </label>
+
+        <label class="comp-date-field">
+          <span>明けの代休日</span>
+          <input type="date" name="night_after_comp_date" id="dayNightAfterCompDate">
+          <select id="dayNightAfterCompShift" class="comp-holiday-shift d-none" aria-label="明けの代休振替先"></select>
+          <small class="field-note">夜勤が休日へまたがる場合の明け分。祝日に当たれば振替候補を表示します。</small>
+        </label>
+
+        <label class="force-comp-toggle staff-specific-comp">
+          <input type="checkbox" name="force_holiday_day_compensatory_leave" value="1" id="dayForceHolidayComp">
+          <span>
+            <strong id="forceHolidayCompLabel">休日日勤担当だけ代休を追加</strong>
+            <small>祝日の代休ルールがOFFでも、この担当者だけ代休を作成します。</small>
+          </span>
+        </label>
+
+        <label class="force-comp-toggle staff-specific-comp">
+          <input type="checkbox" name="force_night_compensatory_leave" value="1" id="dayForceNightComp">
+          <span>
+            <strong id="forceNightCompLabel">夜勤担当だけ代休を追加</strong>
+            <small>祝日の代休ルールがOFFでも、この担当者だけ代休を作成します。</small>
+          </span>
+        </label>
+
+        <label class="force-comp-toggle staff-specific-comp">
+          <input type="checkbox" name="force_night_after_compensatory_leave" value="1" id="dayForceNightAfterComp">
+          <span>
+            <strong id="forceNightAfterCompLabel">明け担当だけ代休を追加</strong>
+            <small>この日の夜勤担当者に、明け分の代休だけ追加します。</small>
+          </span>
+        </label>
+
+        <label class="no-comp-toggle">
+          <input type="checkbox" name="no_compensatory_leave" value="1" id="dayNoComp">
+          <span>
+            <strong>代休を発生させない</strong>
+            <small>この日だけ例外的に代休を無しにします。</small>
+          </span>
+        </label>
+      </div>
+
+      <div class="day-modal-help">
+        「休日扱い」「臨時休業」、または土日祝の「自動判定」は休日日勤＋夜勤の日として扱います。
+        休日へ切り替えた時に休日日勤が空欄なら、勤務順から自動で1名補完します。
+        代休日はここで個別に移動できます。
+      </div>
+
+      <div class="day-modal-actions">
+        <button type="button" class="monthly-button undo" id="dayUndoButton">↶ ひとつ戻す</button>
+        <span class="day-action-spacer"></span>
+        <button type="button" class="monthly-button" id="daySettingsCancel">キャンセル</button>
+        <button type="submit" class="monthly-button primary">この日を保存</button>
+      </div>
+    </form>
+    <form method="post" action="{% url 'daily_assignment:duty_calendar_day_undo' %}" id="dayUndoForm" class="d-none">
+      {% csrf_token %}
+      <input type="hidden" name="duty_date" id="undoDutyDate">
+    </form>
+  </div>
+</div>
+
+<!-- 表の拡大 -->
+<div class="monthly-modal" id="monthlyModal" aria-hidden="true">
+  <button type="button" class="monthly-modal-close" id="monthlyModalClose">×</button>
+  <div class="monthly-modal-content" id="monthlyModalContent"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+const table = document.getElementById('monthlyDutyTable');
+const trigger = document.getElementById('monthlyPreviewTrigger');
+const modal = document.getElementById('monthlyModal');
+const modalContent = document.getElementById('monthlyModalContent');
+const closeButton = document.getElementById('monthlyModalClose');
+const scaleSelect = document.getElementById('monthlyScaleSelect');
+const scaleStatus = document.getElementById('monthlyScaleStatus');
+let scaleMode = 'auto';
+
+function applyMonthlyScale() {
+  if (!table || !trigger) return;
+  table.style.zoom = '1';
+  let factor = 1;
+  if (scaleMode === 'auto') {
+    const available = Math.max(320, trigger.clientWidth - 4);
+    const natural = table.scrollWidth || 1;
+    factor = Math.min(1, available / natural);
+    // 読める範囲を保ちながら5%刻みに丸める。
+    factor = Math.max(0.55, Math.floor(factor * 20) / 20);
+  } else {
+    factor = Number(scaleMode) || 1;
+  }
+  table.style.zoom = String(factor);
+  if (scaleStatus) scaleStatus.textContent = scaleMode === 'auto' ? `自動 ${Math.round(factor * 100)}%` : `${Math.round(factor * 100)}%`;
+}
+
+scaleSelect?.addEventListener('change', () => {
+  scaleMode = scaleSelect.value;
+  applyMonthlyScale();
+});
+window.addEventListener('resize', () => { if (scaleMode === 'auto') applyMonthlyScale(); });
+window.addEventListener('load', applyMonthlyScale);
+requestAnimationFrame(applyMonthlyScale);
+
+function openMonthlyModal() {
+  if (!table) return;
+  modalContent.innerHTML = '';
+  const cloneWrap = document.createElement('div');
+  cloneWrap.className = 'monthly-modal-table-wrap';
+  const clonedTable = table.cloneNode(true);
+  clonedTable.style.zoom = '1';
+  cloneWrap.appendChild(clonedTable);
+  modalContent.appendChild(cloneWrap);
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+function closeMonthlyModal() {
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+trigger?.addEventListener('click', (event) => {
+  if (event.target.closest('.day-settings-button')) return;
+  openMonthlyModal();
+});
+trigger?.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('.day-settings-button')) {
+    e.preventDefault();
+    openMonthlyModal();
+  }
+});
+closeButton?.addEventListener('click', closeMonthlyModal);
+modal?.addEventListener('click', e => { if (e.target === modal) closeMonthlyModal(); });
+
+const dayModal = document.getElementById('daySettingsModal');
+const dayClose = document.getElementById('daySettingsClose');
+const dayCancel = document.getElementById('daySettingsCancel');
+const dayTitle = document.getElementById('daySettingsTitle');
+const dutyDate = document.getElementById('dayDutyDate');
+const dayMode = document.getElementById('dayMode');
+const nightStaff = document.getElementById('dayNightStaff');
+const holidayStaff = document.getElementById('dayHolidayStaff');
+const dayNoComp = document.getElementById('dayNoComp');
+const dayForceHolidayComp = document.getElementById('dayForceHolidayComp');
+const dayForceNightComp = document.getElementById('dayForceNightComp');
+const dayForceNightAfterComp = document.getElementById('dayForceNightAfterComp');
+const forceHolidayCompLabel = document.getElementById('forceHolidayCompLabel');
+const forceNightCompLabel = document.getElementById('forceNightCompLabel');
+const forceNightAfterCompLabel = document.getElementById('forceNightAfterCompLabel');
+const holidayCompDate = document.getElementById('dayHolidayCompDate');
+const nightCompDate = document.getElementById('dayNightCompDate');
+const nightAfterCompDate = document.getElementById('dayNightAfterCompDate');
+const holidayCompShift = document.getElementById('dayHolidayCompShift');
+const nightCompShift = document.getElementById('dayNightCompShift');
+const nightAfterCompShift = document.getElementById('dayNightAfterCompShift');
+const dayUndoButton = document.getElementById('dayUndoButton');
+const dayUndoForm = document.getElementById('dayUndoForm');
+const undoDutyDate = document.getElementById('undoDutyDate');
+
+function openDaySettings(button) {
+  dutyDate.value = button.dataset.date || '';
+  dayTitle.textContent = button.dataset.label || '日付設定';
+  dayMode.value = button.dataset.dayMode || 'auto';
+  nightStaff.value = button.dataset.nightStaffId || '';
+  holidayStaff.value = button.dataset.holidayStaffId || '';
+  dayNoComp.checked = button.dataset.noComp === '1';
+  dayForceHolidayComp.checked = button.dataset.forceHolidayComp === '1';
+  dayForceNightComp.checked = button.dataset.forceNightComp === '1';
+  dayForceNightAfterComp.checked = button.dataset.forceNightAfterComp === '1';
+  const holidayName = button.dataset.holidayStaffName || '休日日勤担当';
+  const nightName = button.dataset.nightStaffName || '夜勤担当';
+  forceHolidayCompLabel.textContent = `${holidayName} に代休を個別追加`;
+  forceNightCompLabel.textContent = `${nightName} に夜勤分の代休を個別追加`;
+  forceNightAfterCompLabel.textContent = `${nightName} に明け分の代休を個別追加`;
+  refreshSpecificCompLabels();
+  holidayCompDate.value = button.dataset.holidayCompDate || '';
+  nightCompDate.value = button.dataset.nightCompDate || '';
+  nightAfterCompDate.value = button.dataset.nightAfterCompDate || '';
+  setupCompShift(holidayCompShift, holidayCompDate, button.dataset.holidayCompIsHoliday === '1', button.dataset.holidayCompPrev || '', button.dataset.holidayCompNext || '');
+  setupCompShift(nightCompShift, nightCompDate, button.dataset.nightCompIsHoliday === '1', button.dataset.nightCompPrev || '', button.dataset.nightCompNext || '');
+  setupCompShift(nightAfterCompShift, nightAfterCompDate, button.dataset.nightAfterCompIsHoliday === '1', button.dataset.nightAfterCompPrev || '', button.dataset.nightAfterCompNext || '');
+  undoDutyDate.value = button.dataset.date || '';
+  dayUndoButton.disabled = button.dataset.canUndo !== '1';
+  dayModal.classList.add('open');
+  dayModal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+function setupCompShift(select, dateInput, isHoliday, prevDate, nextDate) {
+  if (!select || !dateInput) return;
+  select.innerHTML = '';
+  if (!isHoliday || !dateInput.value) {
+    select.classList.add('d-none');
+    return;
+  }
+  const current = dateInput.value;
+  const options = [
+    [current, `祝日のまま ${current}`],
+    [prevDate, `前の通常勤務日 ${prevDate}`],
+    [nextDate, `次の通常勤務日 ${nextDate}`],
+  ].filter(item => item[0]);
+  for (const [value, label] of options) {
+    const option = document.createElement('option');
+    option.value = value; option.textContent = label; select.appendChild(option);
+  }
+  select.value = current;
+  select.classList.remove('d-none');
+}
+[holidayCompShift, nightCompShift, nightAfterCompShift].forEach((select, index) => {
+  const inputs = [holidayCompDate, nightCompDate, nightAfterCompDate];
+  select?.addEventListener('change', () => { if (select.value) inputs[index].value = select.value; });
+});
+[dayForceHolidayComp, dayForceNightComp, dayForceNightAfterComp].forEach(cb => {
+  cb?.addEventListener('change', () => { if (cb.checked) dayNoComp.checked = false; });
+});
+dayNoComp?.addEventListener('change', () => {
+  if (dayNoComp.checked) {
+    dayForceHolidayComp.checked = false; dayForceNightComp.checked = false; dayForceNightAfterComp.checked = false;
+  }
+});
+function refreshSpecificCompLabels() {
+  const hName = holidayStaff?.selectedOptions?.[0]?.textContent?.trim() || '休日日勤担当';
+  const nName = nightStaff?.selectedOptions?.[0]?.textContent?.trim() || '夜勤担当';
+  forceHolidayCompLabel.textContent = `${hName === '未設定' ? '休日日勤担当' : hName} に代休を個別追加`;
+  forceNightCompLabel.textContent = `${nName === '未設定' ? '夜勤担当' : nName} に夜勤分の代休を個別追加`;
+  forceNightAfterCompLabel.textContent = `${nName === '未設定' ? '夜勤担当' : nName} に明け分の代休を個別追加`;
+}
+holidayStaff?.addEventListener('change', refreshSpecificCompLabels);
+nightStaff?.addEventListener('change', refreshSpecificCompLabels);
+
+function closeDaySettings() {
+  dayModal.classList.remove('open');
+  dayModal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+document.querySelectorAll('.day-settings-button').forEach(button => {
+  button.addEventListener('click', event => {
+    event.stopPropagation();
+    openDaySettings(button);
+  });
+});
+dayClose?.addEventListener('click', closeDaySettings);
+dayCancel?.addEventListener('click', closeDaySettings);
+dayUndoButton?.addEventListener('click', () => {
+  if (dayUndoButton.disabled || !dayUndoForm) return;
+  if (confirm('この日を直前の状態に戻しますか？')) dayUndoForm.submit();
+});
+dayModal?.addEventListener('click', event => {
+  if (event.target === dayModal) closeDaySettings();
+});
+
+const downloadButton = document.getElementById('downloadMonthlyImage');
+downloadButton?.addEventListener('click', async () => {
+  if (!table || typeof html2canvas === 'undefined') {
+    alert('画像作成機能を読み込めませんでした。通信状態を確認してください。');
+    return;
+  }
+  downloadButton.disabled = true;
+  downloadButton.textContent = '画像作成中…';
+  try {
+    const canvas = await html2canvas(table, {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      useCORS: true
+    });
+    const link = document.createElement('a');
+    link.download = '月間夜勤表_{{ first_day|date:"Y-m" }}.png';
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (error) {
+    alert('画像を作成できませんでした。');
+  } finally {
+    downloadButton.disabled = false;
+    downloadButton.textContent = '画像として保存';
+  }
+});
+</script>
+{% endblock %}

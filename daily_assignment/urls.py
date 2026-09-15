@@ -4,47 +4,66 @@ from . import views
 app_name = "daily_assignment"
 
 urlpatterns = [
-    # 当日配置表
     path("", views.board_view, name="board"),
     path("save/", views.save_board, name="save"),
+    path("auto-duty/", views.auto_duty, name="auto_duty"),
+    path("auto-assignment/", views.auto_assignment, name="auto_assignment"),
+    path("area-activation/", views.set_daily_area_activation, name="area_activation"),
     path("copy/", views.copy_board, name="copy"),
     path("clear/", views.clear_board, name="clear"),
     path("excel/", views.export_excel, name="excel"),
+    path("preview.svg", views.board_preview_svg, name="preview"),
+    path("monthly/", views.monthly_duty_view, name="monthly_duty"),
+    path("weekly/", views.weekly_planner_view, name="weekly_planner"),
+    path("weekly/absence/save/", views.weekly_absence_save, name="weekly_absence_save"),
+    path("weekly/absence/bulk/", views.weekly_absence_bulk, name="weekly_absence_bulk"),
+    path("weekly/absence/delete/", views.weekly_absence_delete, name="weekly_absence_delete"),
+    path("weekly/generate/", views.weekly_generate, name="weekly_generate"),
+    path("weekly/main-rotation/shift/", views.main_rotation_shift, name="main_rotation_shift"),
+    path("weekly/reallocation/proposals/", views.weekly_reallocation_proposals, name="weekly_reallocation_proposals"),
+    path("weekly/reallocation/apply/", views.weekly_reallocation_apply, name="weekly_reallocation_apply"),
+    path("fill-vacancies/", views.fill_manual_vacancies, name="fill_manual_vacancies"),
+    path("undo-last-auto/", views.undo_last_auto_action, name="undo_last_auto_action"),
+    path("redo-last-auto/", views.redo_last_auto_action, name="redo_last_auto_action"),
+    path("monthly/rotation-version/save/", views.duty_rotation_version_save, name="duty_rotation_version_save"),
+    path("monthly/rotation-version/delete/", views.duty_rotation_version_delete, name="duty_rotation_version_delete"),
+    path("monthly/generate/", views.duty_calendar_generate, name="duty_calendar_generate"),
+    path("monthly/day/update/", views.duty_calendar_day_update, name="duty_calendar_day_update"),
+    path("monthly/day/undo/", views.duty_calendar_day_undo, name="duty_calendar_day_undo"),
 
-    # ログイン不要の設定画面
     path("settings/", views.settings_view, name="settings"),
+    path("settings/area-staff/", views.area_staff_matrix_view, name="area_staff_matrix"),
+    path("settings/bulk-save/", views.settings_bulk_save, name="settings_bulk_save"),
+    path("settings/staff/add/", views.staff_add, name="staff_add"),
+    path("settings/staff/<int:staff_id>/update/", views.staff_update, name="staff_update"),
+    path("settings/staff/<int:staff_id>/assignment-rule/", views.staff_assignment_rule_update, name="staff_assignment_rule_update"),
+    path("settings/staff/<int:staff_id>/delete/", views.staff_delete, name="staff_delete"),
 
-    # スタッフ設定
-    path(
-        "settings/staff/add/",
-        views.staff_add,
-        name="staff_add",
-    ),
-    path(
-        "settings/staff/<int:staff_id>/update/",
-        views.staff_update,
-        name="staff_update",
-    ),
-    path(
-        "settings/staff/<int:staff_id>/delete/",
-        views.staff_delete,
-        name="staff_delete",
-    ),
+    path("settings/area/add/", views.area_add, name="area_add"),
+    path("settings/dedicated-backup/add/", views.dedicated_backup_add, name="dedicated_backup_add"),
+    path("settings/dedicated-backup/<int:backup_id>/delete/", views.dedicated_backup_delete, name="dedicated_backup_delete"),
+    path("settings/reception-staff/add/", views.reception_staff_add, name="reception_staff_add"),
+    path("settings/reception-staff/<int:reception_id>/delete/", views.reception_staff_delete, name="reception_staff_delete"),
+    path("settings/meeting-preset/add/", views.meeting_preset_add, name="meeting_preset_add"),
+    path("settings/meeting-preset/<int:preset_id>/delete/", views.meeting_preset_delete, name="meeting_preset_delete"),
+    path("settings/comment-template/add/", views.comment_template_add, name="comment_template_add"),
+    path("settings/comment-template/<int:template_id>/update/", views.comment_template_update, name="comment_template_update"),
+    path("settings/comment-template/<int:template_id>/delete/", views.comment_template_delete, name="comment_template_delete"),
+    path("settings/area/<int:area_id>/update/", views.area_update, name="area_update"),
+    path("settings/area/<int:area_id>/delete/", views.area_delete, name="area_delete"),
 
-    # 配置場所設定
-    path(
-        "settings/area/add/",
-        views.area_add,
-        name="area_add",
-    ),
-    path(
-        "settings/area/<int:area_id>/update/",
-        views.area_update,
-        name="area_update",
-    ),
-    path(
-        "settings/area/<int:area_id>/delete/",
-        views.area_delete,
-        name="area_delete",
-    ),
+
+    path("settings/time-slot/add/", views.time_slot_add, name="time_slot_add"),
+    path("settings/time-slot/<int:slot_id>/update/", views.time_slot_update, name="time_slot_update"),
+    path("settings/time-slot/<int:slot_id>/delete/", views.time_slot_delete, name="time_slot_delete"),
+    path("settings/area/<int:area_id>/time-rules/", views.area_time_rules_update, name="area_time_rules_update"),
+    path("settings/horizontal-merge/add/", views.horizontal_merge_rule_add, name="horizontal_merge_rule_add"),
+    path("settings/horizontal-merge/<int:rule_id>/delete/", views.horizontal_merge_rule_delete, name="horizontal_merge_rule_delete"),
+    path("settings/derived-rule/add/", views.derived_rule_add, name="derived_rule_add"),
+    path("settings/derived-rule/<int:rule_id>/update/", views.derived_rule_update, name="derived_rule_update"),
+    path("settings/derived-rule/<int:rule_id>/delete/", views.derived_rule_delete, name="derived_rule_delete"),
+
+    path("settings/comp-rule/add/", views.comp_rule_add, name="comp_rule_add"),
+    path("settings/comp-rule/<int:rule_id>/update/", views.comp_rule_update, name="comp_rule_update"),
+    path("settings/comp-rule/<int:rule_id>/delete/", views.comp_rule_delete, name="comp_rule_delete"),
 ]

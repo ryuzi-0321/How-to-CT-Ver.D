@@ -8,3 +8,4 @@ media/
 venv/
 medical_ct.db
 staticfiles/
+restore_safety_backups/

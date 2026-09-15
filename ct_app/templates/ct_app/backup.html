@@ -35,7 +35,7 @@
                     
                     <div class="mb-4">
                         <h6><i class="bi bi-file-zip"></i> 完全バックアップ (ZIP)</h6>
-                        <small class="text-muted d-block mb-2">画像ファイルを含むすべてのデータを保存します。引っ越しや完全な復元用です。</small>
+                        <small class="text-muted d-block mb-2">設定・勤務表・配置・画像を含む全データを保存します。復元すると、このバックアップを作成した時点へ戻せます。</small>
                         <a href="{% url 'backup_export' %}?format=zip" class="btn btn-primary w-100">
                             <i class="bi bi-cloud-down"></i> ZIP形式でダウンロード
                         </a>
@@ -61,12 +61,12 @@
                 </div>
                 <div class="card-body">
                     <p class="text-muted">
-                        以前に保存した ZIP または Excel ファイルをアップロードして、データを復元します。
+                        完全復元にはZIPを使用します。ExcelはCT情報の編集データ反映用です。
                     </p>
                     <div class="alert alert-warning mb-3">
                         <small>
                             <i class="bi bi-exclamation-triangle"></i> 
-                            注意：復元時に現在のデータが上書きされます。
+                            注意：ZIPの完全復元では、現在の設定・勤務表・配置・画像をバックアップ時点の内容へ完全に置き換えます。実行直前の状態は自動バックアップされます。
                         </small>
                     </div>
                     <form method="post" action="{% url 'backup_import' %}" enctype="multipart/form-data">
@@ -76,8 +76,12 @@
                             <input type="file" class="form-control" id="backupFile" name="backup_file" 
                                    accept=".zip,.xlsx" required>
                             <small class="text-muted d-block mt-2">
-                                ※ .zip または .xlsx 形式に対応しています
+                                ※ 完全復元は .zip ／ ExcelはCT情報の編集データ反映用です
                             </small>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="restoreConfirm" required>
+                            <label class="form-check-label small" for="restoreConfirm">ZIP復元時は現在データがバックアップ時点へ完全置換されることを確認しました</label>
                         </div>
                         <button type="submit" class="btn btn-danger w-100">
                             <i class="bi bi-arrow-repeat"></i> 復元を実行する
@@ -87,6 +91,26 @@
             </div>
         </div>
     </div>
+
+
+    {% if safety_backup %}
+    <div class="alert alert-info mt-4">
+        <i class="bi bi-shield-check"></i> 復元直前の状態を <strong>{{ safety_backup }}</strong> に自動退避しました。
+        <a class="btn btn-sm btn-outline-primary ms-2" href="{% url 'backup_safety_download' safety_backup %}">ダウンロード</a>
+    </div>
+    {% endif %}
+
+    {% if safety_files %}
+    <div class="card mt-4">
+        <div class="card-header bg-light"><h6 class="mb-0"><i class="bi bi-shield-check"></i> 復元前の自動退避</h6></div>
+        <div class="card-body py-2">
+            <small class="text-muted d-block mb-2">直近5件。復元操作の直前に自動で作成されます。</small>
+            {% for filename in safety_files %}
+                <a class="btn btn-sm btn-outline-secondary me-1 mb-1" href="{% url 'backup_safety_download' filename %}">{{ filename }}</a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     <div class="card mt-5">
         <div class="card-header bg-light">
@@ -143,11 +167,11 @@
             <h5 class="mb-0"><i class="bi bi-question-circle"></i> 使用方法</h5>
         </div>
         <div class="card-body">
-            <h6>Excel形式の使い方：</h6>
+            <h6>バックアップの使い分け：</h6>
             <ul>
-                <li>「Excel形式」でDLすると、病名・撮影法などがシート別に保存されます。</li>
-                <li>Excel上でデータを編集・追加し、そのままアップロードして復元できます。</li>
-                <li><strong>注意：</strong>画像ファイルはExcelには含まれません。画像も含めたい場合はZIP形式を使ってください。</li>
+                <li><strong>ZIP：</strong>設定・勤務表・配置・画像を含む完全バックアップです。完全復元はこちらを使用します。</li>
+                <li><strong>Excel：</strong>病名・撮影法などCT情報の編集・一括反映用です。勤務配置の完全復元には使用しません。</li>
+                <li>ZIP復元の直前には現在状態を自動退避し、失敗した場合は自動的に元へ戻すようにしています。</li>
             </ul>
         </div>
     </div>

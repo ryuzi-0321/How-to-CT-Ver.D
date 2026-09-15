@@ -4,6 +4,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.contrib.auth import get_user_model
 from django.urls import reverse_lazy
 from django.db.models import Q
+from django.db import connections
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
 from django.conf import settings
@@ -16,11 +17,10 @@ import zipfile
 import tempfile
 import json
 from io import StringIO, BytesIO
-from datetime import datetime, timedelta
+from datetime import datetime
 import pandas as pd
-from django.utils.timezone import now, localdate
+from django.utils.timezone import now
 import io
-from daily_assignment.models import AssignmentCell
 
 def get_protocol_data(request):
     title = request.GET.get('title', None)
@@ -739,16 +739,128 @@ class ProtocolDeleteView(View):
 # ===== バックアップ・復元機能 =====
 
 
+def _backup_history_context(**extra):
+    context = {
+        'page_title': 'バックアップ管理',
+        'histories': BackupHistory.objects.all()[:10],
+    }
+    context.update(extra)
+    return context
+
+
+def _safe_zip_extract(zipf, dest_dir):
+    """ZIP Slip を避けて安全に展開する。"""
+    base = os.path.realpath(dest_dir)
+    for member in zipf.infolist():
+        target = os.path.realpath(os.path.join(dest_dir, member.filename))
+        if target != base and not target.startswith(base + os.sep):
+            raise ValueError('不正なパスを含むZIPファイルです')
+    zipf.extractall(dest_dir)
+
+
+def _sqlite_db_path():
+    db = settings.DATABASES.get('default', {})
+    if db.get('ENGINE') != 'django.db.backends.sqlite3':
+        return None
+    return os.fspath(db.get('NAME'))
+
+
+def _write_full_backup_zip(zip_path, include_json=True):
+    """現在状態を ZIP に保存。SQLite DB本体 + db.json + media を含める。"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        db_json = os.path.join(temp_dir, 'db.json')
+        if include_json:
+            with open(db_json, 'w', encoding='utf-8') as f:
+                # セッション等も含め、アプリ全体を復元できるバックアップにする。
+                call_command('dumpdata', stdout=f)
+
+        db_path = _sqlite_db_path()
+        db_copy = None
+        if db_path and os.path.exists(db_path):
+            # SQLite の書込みを確実にディスクへ反映してからコピーする。
+            connections.close_all()
+            db_copy = os.path.join(temp_dir, 'database.sqlite3')
+            shutil.copy2(db_path, db_copy)
+
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            if include_json:
+                zipf.write(db_json, arcname='db.json')
+            if db_copy:
+                zipf.write(db_copy, arcname='database.sqlite3')
+            if os.path.exists(settings.MEDIA_ROOT):
+                for root, dirs, files in os.walk(settings.MEDIA_ROOT):
+                    for filename in files:
+                        file_path = os.path.join(root, filename)
+                        rel = os.path.relpath(file_path, settings.MEDIA_ROOT)
+                        zipf.write(file_path, arcname=os.path.join('media', rel))
+
+
+def _create_pre_restore_safety_backup():
+    """復元直前の状態をサーバー内に自動退避して、ファイル名を返す。"""
+    safety_dir = os.path.join(settings.BASE_DIR, 'restore_safety_backups')
+    os.makedirs(safety_dir, exist_ok=True)
+    stamp = now().strftime('%Y%m%d_%H%M%S')
+    filename = f'auto_before_restore_{stamp}.zip'
+    path = os.path.join(safety_dir, filename)
+    _write_full_backup_zip(path)
+    return filename, path
+
+
+def _restore_media_from_dir(media_backup_dir):
+    """media をバックアップ時点へ完全置換する。"""
+    if os.path.exists(settings.MEDIA_ROOT):
+        shutil.rmtree(settings.MEDIA_ROOT)
+    if os.path.exists(media_backup_dir):
+        shutil.copytree(media_backup_dir, settings.MEDIA_ROOT)
+    else:
+        os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
+
+
+def _restore_from_extracted_backup(temp_dir):
+    """展開済みバックアップを復元。新形式(SQLite本体)を優先し旧形式JSONにも対応。"""
+    sqlite_file = os.path.join(temp_dir, 'database.sqlite3')
+    db_json = os.path.join(temp_dir, 'db.json')
+    media_backup_dir = os.path.join(temp_dir, 'media')
+
+    if os.path.exists(sqlite_file):
+        db_path = _sqlite_db_path()
+        if not db_path:
+            raise RuntimeError('この完全バックアップはSQLite用ですが、現在のDBがSQLiteではありません')
+        connections.close_all()
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        shutil.copy2(sqlite_file, db_path)
+        connections.close_all()
+        # 古いバックアップを新しいアプリ版へ戻した場合も、現在のmigrationまで安全に追従させる。
+        call_command('migrate', interactive=False, verbosity=0)
+    elif os.path.exists(db_json):
+        # 旧バックアップも「その時点」に戻せるよう、先にDBを空にしてから読み込む。
+        # inhibit_post_migrate=True により、fixture内のcontenttypes/permissionsとの重複を防ぐ。
+        call_command(
+            'flush',
+            interactive=False,
+            verbosity=0,
+            reset_sequences=True,
+            inhibit_post_migrate=True,
+        )
+        call_command('loaddata', db_json, verbosity=0)
+    else:
+        raise ValueError('バックアップファイル内に database.sqlite3 または db.json が見つかりません')
+
+    _restore_media_from_dir(media_backup_dir)
+
 
 class BackupPageView(View):
     """バックアップ管理ページ"""
     def get(self, request):
-        histories = BackupHistory.objects.all()[:10]
-        context = {
-            'page_title': 'バックアップ管理',
-            'histories': histories,
-        }
-        return render(request, 'ct_app/backup.html', context)
+        safety_dir = os.path.join(settings.BASE_DIR, 'restore_safety_backups')
+        safety_files = []
+        if os.path.isdir(safety_dir):
+            safety_files = sorted(
+                [x for x in os.listdir(safety_dir) if x.endswith('.zip')],
+                reverse=True,
+            )[:5]
+        return render(request, 'ct_app/backup.html', _backup_history_context(safety_files=safety_files))
+
 
 class ExportBackupView(View):
     """バックアップ作成・ダウンロード"""
@@ -757,218 +869,156 @@ class ExportBackupView(View):
         export_format = request.GET.get('format', 'zip')
         timestamp = now().strftime('%Y%m%d_%H%M%S')
         if export_format == 'excel':
-            import io  # 関数内でインポートしてもOK
             try:
-                # メモリ上にバイナリデータを作成するためのバッファ
                 output = io.BytesIO()
-                # output（メモリ）に対してExcelを書き込む
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    # 各モデルのデータを取得
                     df_sick = pd.DataFrame(list(Sick.objects.all().values()))
                     df_form = pd.DataFrame(list(Form.objects.all().values()))
                     df_protocol = pd.DataFrame(list(Protocol.objects.all().values()))
                     df_nightshift = pd.DataFrame(list(NightShift.objects.all().values()))
                     df_question = pd.DataFrame(list(Question.objects.all().values()))
-                    df_assignment_cell = pd.DataFrame(list(AssignmentCell.objects.all().values()))
-
-
-
-                    # 日時カラムのタイムゾーンを解除する関数
 
                     def remove_timezone(df):
-
                         if not df.empty:
                             for col in df.columns:
-                                # 日時型のカラムを探してタイムゾーンを消す
                                 if pd.api.types.is_datetime64_any_dtype(df[col]):
                                     df[col] = df[col].dt.tz_localize(None)
                         return df
 
-                    # タイムゾーンを解除してからExcelに書き込む
                     remove_timezone(df_sick).to_excel(writer, sheet_name='Sicks', index=False)
                     remove_timezone(df_form).to_excel(writer, sheet_name='Forms', index=False)
                     remove_timezone(df_protocol).to_excel(writer, sheet_name='Protocols', index=False)
                     remove_timezone(df_nightshift).to_excel(writer, sheet_name='NightShifts', index=False)
                     remove_timezone(df_question).to_excel(writer, sheet_name='Questions', index=False)
-                    remove_timezone(df_assignment_cell).to_excel(writer, sheet_name='AssignmentCells', index=False)
-                # ポインタを先頭に戻す
                 output.seek(0)
-                # 履歴を作成
                 BackupHistory.objects.create(backup_type='export', filename=f'backup_{timestamp}.xlsx', status='success')
-                # レスポンスを作成してバイナリを流し込む
                 response = HttpResponse(
-                    output.read(), 
+                    output.read(),
                     content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 )
                 response['Content-Disposition'] = f'attachment; filename="backup_{timestamp}.xlsx"'
                 return response
             except Exception as e:
                 BackupHistory.objects.create(backup_type='export', status='failed', error_message=str(e))
-                return render(request, 'ct_app/backup.html', {'error': f'Excel作成失敗: {e}'})
-        else:           
-            try:
-                # 一時ディレクトリを作成
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    # DBデータをJSONでダンプ
-                    db_file = os.path.join(temp_dir, 'db.json')
-                    with open(db_file, 'w', encoding='utf-8') as f:
-                        call_command('dumpdata', stdout=f)
-                    # メディアファイルをコピー
-                    media_backup_dir = os.path.join(temp_dir, 'media')
-                    if os.path.exists(settings.MEDIA_ROOT):
-                        shutil.copytree(settings.MEDIA_ROOT, media_backup_dir)
-                    else:
-                        os.makedirs(media_backup_dir)
-                    # ZIPファイルを作成
-                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                    zip_filename = f'backup_{timestamp}.zip'
-                    zip_path = os.path.join(temp_dir, zip_filename)
-                    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                        # db.jsonを追加
-                        zipf.write(db_file, arcname='db.json')
-                        # mediaディレクトリを再帰的に追加
-                        if os.path.exists(media_backup_dir):
-                            for root, dirs, files in os.walk(media_backup_dir):
-                                for file in files:
-                                    file_path = os.path.join(root, file)
-                                    arcname = os.path.relpath(file_path, temp_dir)
-                                    zipf.write(file_path, arcname=arcname)
-                    # ZIPファイルを読み込んでレスポンス
-                    with open(zip_path, 'rb') as f:
-                        zip_content = f.read()
-                    # バックアップ履歴を記録（成功）
-                    BackupHistory.objects.create(
-                        backup_type='export',
-                        filename=zip_filename,
-                        status='success'
-                    )
-                    response = HttpResponse(zip_content, content_type='application/zip')
-                    response['Content-Disposition'] = f'attachment; filename="{zip_filename}"'
-                    return response
-            except Exception as e:
-                # エラーが発生した場合
-                BackupHistory.objects.create(
-                    backup_type='export',
-                    filename=zip_filename,
-                    status='failed',
-                    error_message=str(e)
-                )
-                context = {
-                    'page_title': 'バックアップ管理',
-                    'error': f'バックアップ作成に失敗しました: {str(e)}',
-                    'histories': BackupHistory.objects.all()[:10],
-                }
-                return render(request, 'ct_app/backup.html', context)
+                return render(request, 'ct_app/backup.html', _backup_history_context(error=f'Excel作成失敗: {e}'))
+
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                zip_filename = f'backup_{timestamp}.zip'
+                zip_path = os.path.join(temp_dir, zip_filename)
+                _write_full_backup_zip(zip_path)
+                with open(zip_path, 'rb') as f:
+                    zip_content = f.read()
+            BackupHistory.objects.create(backup_type='export', filename=zip_filename, status='success')
+            response = HttpResponse(zip_content, content_type='application/zip')
+            response['Content-Disposition'] = f'attachment; filename="{zip_filename}"'
+            return response
+        except Exception as e:
+            BackupHistory.objects.create(
+                backup_type='export', filename=zip_filename, status='failed', error_message=str(e)
+            )
+            return render(
+                request,
+                'ct_app/backup.html',
+                _backup_history_context(error=f'バックアップ作成に失敗しました: {e}')
+            )
+
+
+class SafetyBackupDownloadView(View):
+    """復元前に自動退避した安全バックアップをダウンロードする。"""
+    def get(self, request, filename):
+        safe_name = os.path.basename(filename)
+        if safe_name != filename or not safe_name.startswith('auto_before_restore_') or not safe_name.endswith('.zip'):
+            return HttpResponse('Invalid backup filename', status=400)
+        path = os.path.join(settings.BASE_DIR, 'restore_safety_backups', safe_name)
+        if not os.path.isfile(path):
+            return HttpResponse('Backup not found', status=404)
+        with open(path, 'rb') as f:
+            content = f.read()
+        response = HttpResponse(content, content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="{safe_name}"'
+        return response
 
 
 class ImportBackupView(View):
     """バックアップ復元"""
     def post(self, request):
-        try:
-            if 'backup_file' not in request.FILES:
-                return render(request, 'ct_app/backup.html', {'error': 'ファイルが選択されていません'})
-            backup_file = request.FILES['backup_file']
-            if backup_file.name.endswith('.xlsx'):
+        backup_file = request.FILES.get('backup_file')
+        if not backup_file:
+            return render(request, 'ct_app/backup.html', _backup_history_context(error='ファイルが選択されていません'))
+
+        if backup_file.name.lower().endswith('.xlsx'):
+            try:
+                # ExcelはCT情報の編集用。従来通り対象モデルだけを置換する。
                 Sick.objects.all().delete()
                 Form.objects.all().delete()
                 Protocol.objects.all().delete()
                 NightShift.objects.all().delete()
                 Question.objects.all().delete()
-                AssignmentCell.objects.all().delete()
                 df_sicks = pd.read_excel(backup_file, sheet_name='Sicks').fillna('')
                 df_forms = pd.read_excel(backup_file, sheet_name='Forms').fillna('')
                 df_protocols = pd.read_excel(backup_file, sheet_name='Protocols').fillna('')
                 df_nightshifts = pd.read_excel(backup_file, sheet_name='NightShifts').fillna('')
                 df_questions = pd.read_excel(backup_file, sheet_name='Questions').fillna('')
-                df_assignment_cells = pd.read_excel(backup_file, sheet_name='AssignmentCells').fillna('')
-                for _, row in df_sicks.iterrows():
-                    Sick.objects.create(**row.to_dict())
-                for _, row in df_forms.iterrows():
-                    Form.objects.create(**row.to_dict())
-                for _, row in df_protocols.iterrows():
-                    Protocol.objects.create(**row.to_dict())
-                for _, row in df_nightshifts.iterrows():
-                    NightShift.objects.create(**row.to_dict())
-                for _, row in df_questions.iterrows():
-                    Question.objects.create(**row.to_dict())
-                for _, row in df_assignment_cells.iterrows():
-                    AssignmentCell.objects.create(**row.to_dict())
+                for _, row in df_sicks.iterrows(): Sick.objects.create(**row.to_dict())
+                for _, row in df_forms.iterrows(): Form.objects.create(**row.to_dict())
+                for _, row in df_protocols.iterrows(): Protocol.objects.create(**row.to_dict())
+                for _, row in df_nightshifts.iterrows(): NightShift.objects.create(**row.to_dict())
+                for _, row in df_questions.iterrows(): Question.objects.create(**row.to_dict())
                 BackupHistory.objects.create(backup_type='import', filename=backup_file.name, status='success')
-                return render(request, 'ct_app/backup.html', {'success': 'Excelからテキストデータを復元しました'})
-            elif backup_file.name.endswith('.zip'):        
-                # 一時ディレクトリで展開
+                return render(request, 'ct_app/backup.html', _backup_history_context(success='Excelから編集用データを反映しました'))
+            except Exception as e:
+                BackupHistory.objects.create(backup_type='import', filename=backup_file.name, status='failed', error_message=str(e))
+                return render(request, 'ct_app/backup.html', _backup_history_context(error=f'Excel反映に失敗しました: {e}'))
 
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    zip_path = os.path.join(temp_dir, 'backup.zip')
-                    # ZIPファイルを保存
-                    with open(zip_path, 'wb') as f:
-                        for chunk in backup_file.chunks():
-                            f.write(chunk)
-                    # ZIPを展開
+        if not backup_file.name.lower().endswith('.zip'):
+            return render(request, 'ct_app/backup.html', _backup_history_context(error='ZIPまたはExcelファイルを選択してください'))
 
-                    with zipfile.ZipFile(zip_path, 'r') as zipf:
-                        zipf.extractall(temp_dir)
-                    # db.jsonを確認
-                    db_file = os.path.join(temp_dir, 'db.json')
-                    if not os.path.exists(db_file):
-                        BackupHistory.objects.create(
-                            backup_type='import',
-                            filename=backup_file.name,
-                            status='failed',
-                            error_message='db.json が見つかりません'
-                        )
-                        context = {
-                            'page_title': 'バックアップ管理',
-                            'error': 'バックアップファイル内に db.json が見つかりません',
-                            'histories': BackupHistory.objects.all()[:10],
-                        }
-                        return render(request, 'ct_app/backup.html', context)
-                        Sick.objects.all().delete()
-                        Form.objects.all().delete()
-                        Protocol.objects.all().delete()
-                        NoticeImage.objects.all().delete()
-                        SickImage.objects.all().delete()
-                        ProtocolImage.objects.all().delete()
-                        Question.objects.all().delete()
-                    # DBを復元
-                    with open(db_file, 'r', encoding='utf-8') as f:
-                        call_command('loaddata', f.name, verbosity=0)
-                    # メディアファイルを復元
-                    media_backup_dir = os.path.join(temp_dir, 'media')
-                    if os.path.exists(media_backup_dir):
-                        # 既存のメディアファイルをバックアップ
-                        if os.path.exists(settings.MEDIA_ROOT):
-                            backup_media = settings.MEDIA_ROOT + '_backup'
-                            if os.path.exists(backup_media):
-                                shutil.rmtree(backup_media)
-                            shutil.move(settings.MEDIA_ROOT, backup_media)
-                        # 復元したメディアをコピー
-                        shutil.copytree(media_backup_dir, settings.MEDIA_ROOT)
-                    # バックアップ履歴を記録（成功）
-                    BackupHistory.objects.create(
-                        backup_type='import',
-                        filename=backup_file.name,
-                        status='success'
+        safety_filename = None
+        safety_path = None
+        with tempfile.TemporaryDirectory() as temp_dir:
+            zip_path = os.path.join(temp_dir, 'incoming_backup.zip')
+            try:
+                with open(zip_path, 'wb') as f:
+                    for chunk in backup_file.chunks():
+                        f.write(chunk)
+                with zipfile.ZipFile(zip_path, 'r') as zipf:
+                    _safe_zip_extract(zipf, temp_dir)
+
+                # 変更前に必ず完全バックアップを自動作成。
+                safety_filename, safety_path = _create_pre_restore_safety_backup()
+
+                try:
+                    _restore_from_extracted_backup(temp_dir)
+                except Exception:
+                    # 復元途中に失敗した場合は、直前の自動退避から元へ戻す。
+                    with tempfile.TemporaryDirectory() as rollback_dir:
+                        with zipfile.ZipFile(safety_path, 'r') as zf:
+                            _safe_zip_extract(zf, rollback_dir)
+                        _restore_from_extracted_backup(rollback_dir)
+                    raise
+
+                BackupHistory.objects.create(backup_type='import', filename=backup_file.name, status='success')
+                return render(
+                    request,
+                    'ct_app/backup.html',
+                    _backup_history_context(
+                        success='完全バックアップを復元しました。バックアップ時点の設定・勤務表・配置・画像へ置き換えました。',
+                        safety_backup=safety_filename,
                     )
-                    context = {
-                        'page_title': 'バックアップ管理',
-                        'success': 'バックアップを復元しました',
-                        'histories': BackupHistory.objects.all()[:10],
-                    }
-                    return render(request, 'ct_app/backup.html', context)
-        except Exception as e:
-            BackupHistory.objects.create(
-                backup_type='import',
-                filename=backup_file.name if 'backup_file' in request.FILES else 'unknown',
-                status='failed',
-                error_message=str(e)
-            )
-            context = {
-                'page_title': 'バックアップ管理',
-                'error': f'復元に失敗しました: {str(e)}',
-                'histories': BackupHistory.objects.all()[:10],
-            }
-            return render(request, 'ct_app/backup.html', context)
+                )
+            except Exception as e:
+                try:
+                    BackupHistory.objects.create(
+                        backup_type='import', filename=backup_file.name, status='failed', error_message=str(e)
+                    )
+                except Exception:
+                    pass
+                msg = f'復元に失敗しました: {e}'
+                if safety_filename:
+                    msg += f'（復元前の状態は {safety_filename} に自動退避しています）'
+                return render(request, 'ct_app/backup.html', _backup_history_context(error=msg, safety_backup=safety_filename))
+
 # ===== 夜勤対応 =====
 
 class NightShiftListView(View):
@@ -1164,71 +1214,98 @@ def question_detail(request, pk):
     return render(request, 'ct_app/question_detail.html', context)
     
 def index(request):
-    questions = Question.objects.all().order_by("-created_at")
-
+    questions = Question.objects.all().order_by('-created_at')
     sicks_count = Sick.objects.count()
     forms_count = Form.objects.count()
     protocols_count = Protocol.objects.count()
     night_shifts_count = NightShift.objects.count()
     question_count = questions.count()
+    sicks_list = Sick.objects.all().order_by('-created_at')
+    forms_list = Form.objects.all().order_by('-created_at')
+    protocols_list = Protocol.objects.all().order_by('-created_at')
+    nightshift_list = NightShift.objects.all().order_by('-created_at') if hasattr(NightShift, 'created_at') else NightShift.objects.all()
 
-    sicks_list = Sick.objects.all().order_by("-created_at")
-    forms_list = Form.objects.all().order_by("-created_at")
-    protocols_list = Protocol.objects.all().order_by("-created_at")
+    today_assignment = None
+    today_assignment_exists = False
+    today_duties = []
+    early_assignments = []
+    tomorrow_early_assignments = []
+    try:
+        from datetime import timedelta
+        from django.utils import timezone
+        from daily_assignment.models import DailyBoard, AssignmentCell
 
-    nightshift_list = (
-        NightShift.objects.all().order_by("-created_at")
-        if hasattr(NightShift, "created_at")
-        else NightShift.objects.all()
-    )
+        def get_early_assignments(board):
+            """指定日の7:30配置を「早出」として大分類付きで返す。"""
+            if not board:
+                return []
 
-    today = localdate()
-    tomorrow = today + timedelta(days=1)
-
-    def get_early_staff(target_date):
-        early_shift_values = (
-            AssignmentCell.objects
-            .filter(
-                board__board_date=target_date,
-                row_key="0730",
+            qs = (
+                AssignmentCell.objects
+                .filter(board=board, row_key="0730")
+                .exclude(value="")
+                .select_related("area")
+                .order_by("area__display_order", "area__id", "slot_index")
             )
-            .exclude(value="")
-            .values_list("value", flat=True)
-        )
+            by_staff = {}
+            for cell in qs:
+                raw_value = str(cell.value or "").strip()
+                if not raw_value:
+                    continue
 
-        staff_names = []
+                names = [raw_value]
+                for sep in ("\n", "、", ","):
+                    expanded = []
+                    for item in names:
+                        expanded.extend(item.split(sep))
+                    names = expanded
 
-        for value in early_shift_values:
-            name = value.strip()
+                category = (cell.area.category or cell.area.name or "その他").strip()
+                for name in (item.strip() for item in names):
+                    if not name:
+                        continue
+                    by_staff.setdefault(name, [])
+                    if category not in by_staff[name]:
+                        by_staff[name].append(category)
 
-            if name and name not in staff_names:
-                staff_names.append(name)
+            return [
+                {"name": name, "categories": categories}
+                for name, categories in by_staff.items()
+            ]
 
-        return staff_names
+        today = timezone.localdate()
+        tomorrow = today + timedelta(days=1)
 
-    today_early_staff = get_early_staff(today)
-    tomorrow_early_staff = get_early_staff(tomorrow)
+        today_assignment = DailyBoard.objects.filter(board_date=today).first()
+        tomorrow_assignment = DailyBoard.objects.filter(board_date=tomorrow).first()
+
+        if today_assignment:
+            today_assignment_exists = True
+            for label, value, icon in [
+                ('夜勤', today_assignment.night_shift, 'bi-moon-stars'),
+                ('明け', today_assignment.night_shift_after, 'bi-sunrise'),
+                ('休日日勤', today_assignment.holiday_day_shift, 'bi-calendar-check'),
+            ]:
+                if str(value or '').strip():
+                    today_duties.append({'label': label, 'value': value, 'icon': icon})
+
+        early_assignments = get_early_assignments(today_assignment)
+        tomorrow_early_assignments = get_early_assignments(tomorrow_assignment)
+
+    except Exception:
+        pass
 
     context = {
-        "page_title": "ホーム",
-        "sick_list": sicks_list,
-        "form_list": forms_list,
-        "protocol_list": protocols_list,
-        "nightshift_list": nightshift_list,
-        "questions": questions,
-
-        "sicks_count": sicks_count,
-        "forms_count": forms_count,
-        "protocols_count": protocols_count,
-        "night_shifts_count": night_shifts_count,
-        "question_count": question_count,
-
-        "today_early_staff": today_early_staff,
-        "tomorrow_early_staff": tomorrow_early_staff,
-        "tomorrow": tomorrow,
+        'page_title': 'ホーム',
+        'sick_list': sicks_list, 'form_list': forms_list, 'protocol_list': protocols_list,
+        'nightshift_list': nightshift_list, 'questions': questions,
+        'sicks_count': sicks_count, 'forms_count': forms_count, 'protocols_count': protocols_count,
+        'night_shifts_count': night_shifts_count, 'question_count': question_count,
+        'today_assignment': today_assignment, 'today_assignment_exists': today_assignment_exists,
+        'today_duties': today_duties, 'early_assignments': early_assignments,
+        'tomorrow_early_assignments': tomorrow_early_assignments,
     }
-
-    return render(request, "ct_app/index.html", context)
+    return render(request, 'ct_app/index.html', context)
 
 class QuestionUpdateView(UpdateView):
     def get(self, request, pk):

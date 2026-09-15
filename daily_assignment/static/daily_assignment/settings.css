@@ -174,3 +174,339 @@
         margin-top: 4px;
     }
 }
+.settings-card-header.comp-rule {
+    background: linear-gradient(90deg, #6d28d9, #8b5cf6);
+}
+
+.comp-rule-form .form-label {
+    white-space: nowrap;
+}
+
+.settings-table select,
+.settings-table input[type="number"] {
+    min-width: 72px;
+}
+
+/* ==================================================
+   通常配置の自動作成ルール
+   ================================================== */
+.settings-card-header.auto-assignment {
+    background: linear-gradient(90deg, #5b3aa4, #7655c6);
+}
+
+.auto-rule-table {
+    min-width: 1450px;
+    margin-bottom: 0;
+}
+
+.auto-rule-table thead th {
+    color: #fff;
+    background: #2f3d55;
+    white-space: nowrap;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.auto-rule-table td {
+    min-width: 145px;
+    vertical-align: middle;
+}
+
+.auto-rule-table td:first-child {
+    min-width: 120px;
+}
+
+.auto-rule-table td:nth-child(2),
+.auto-rule-table td:nth-child(8),
+.auto-rule-table td:nth-child(9) {
+    min-width: 90px;
+}
+
+
+/* 配置場所の自動配置設定 */
+.settings-table select.form-select {
+    min-width: 120px;
+}
+
+/* ==================================================
+   Ver.3 時間枠・時間連動ルール
+   ================================================== */
+.settings-card-header.time-slot {
+    background: linear-gradient(90deg, #0f5f73, #1687a7);
+}
+.settings-card-header.area-time {
+    background: linear-gradient(90deg, #7a4f12, #a56a18);
+}
+.settings-card-header.derived-rule {
+    background: linear-gradient(90deg, #7a294f, #a83d70);
+}
+.compact-config-table {
+    min-width: 900px;
+}
+.area-time-scroll {
+    max-width: 100%;
+}
+.area-time-table {
+    min-width: 1500px;
+    margin-bottom: 0;
+}
+.area-time-table th,
+.area-time-table td {
+    white-space: nowrap;
+    text-align: center;
+    vertical-align: middle;
+}
+.area-time-table .sticky-area-name {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    min-width: 145px;
+    background: #fff;
+    color: #17324d;
+}
+.area-time-table thead .sticky-area-name {
+    z-index: 5;
+    background: #17324d;
+    color: #fff;
+}
+.area-time-table .sticky-area-name small {
+    color: #64748b;
+    font-weight: 600;
+}
+.area-time-select {
+    min-width: 94px !important;
+    font-size: 0.82rem;
+}
+.derived-rule-table {
+    min-width: 1150px;
+}
+
+/* ==================================================
+   Ver.3.1 管理画面リニューアル
+   - サイドメニュー前提で横幅を最大活用
+   - 保存ボタンを常に見える位置へ
+   - 狭い画面では自然に縮小・横スクロール
+   ================================================== */
+.settings-page {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0 0 36px;
+}
+
+.settings-page-header {
+    margin: 0 0 14px;
+    padding: 16px 18px;
+    color: #17324d;
+    background: #fff;
+    border: 1px solid #dbe3ec;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(23, 50, 77, 0.06);
+}
+
+.settings-page-header h1 {
+    color: #17324d;
+    font-size: 1.45rem;
+}
+
+.settings-page-header p {
+    color: #64748b !important;
+}
+
+.settings-back-button {
+    color: #fff;
+    background: #2a5298;
+    border-color: #2a5298;
+}
+
+.settings-back-button:hover {
+    color: #fff;
+    background: #1e3c72;
+}
+
+.settings-card {
+    overflow: visible;
+    margin-bottom: 2px;
+    border: 1px solid #dbe3ec;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(23, 50, 77, 0.06);
+}
+
+.settings-card-header,
+.settings-card-header.staff,
+.settings-card-header.area,
+.settings-card-header.comp-rule,
+.settings-card-header.auto-assignment,
+.settings-card-header.time-slot,
+.settings-card-header.area-time,
+.settings-card-header.derived-rule {
+    padding: 12px 16px;
+    color: #17324d;
+    background: #f8fafc;
+    border-bottom: 1px solid #dbe3ec;
+    border-radius: 10px 10px 0 0;
+}
+
+.settings-card-header h2 {
+    font-size: 1.02rem;
+    font-weight: 800;
+}
+
+.settings-card-body {
+    padding: 16px;
+}
+
+.settings-add-panel {
+    margin-bottom: 16px;
+    padding: 14px;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.settings-anchor {
+    scroll-margin-top: 18px;
+}
+
+/* 設定画面の表を画面幅に合わせてコンパクト化 */
+.settings-card .table-responsive {
+    width: 100%;
+    max-width: 100%;
+    border: 1px solid #e1e8f0;
+    border-radius: 8px;
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+.settings-card table {
+    margin-bottom: 0;
+}
+
+.settings-card table thead th {
+    color: #fff;
+    background: #17324d !important;
+    border-color: #44627e;
+    font-size: .82rem;
+    font-weight: 800;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.settings-card table tbody td,
+.settings-card table tbody th {
+    font-size: .86rem;
+}
+
+.settings-card .form-control,
+.settings-card .form-select {
+    min-width: 0;
+    font-size: .86rem;
+}
+
+/* 通常配置ルール：1920pxでは1画面、狭いPCでは保存列を固定 */
+.auto-rule-table {
+    width: 100%;
+    min-width: 1080px;
+    table-layout: fixed;
+}
+
+.auto-rule-table th:nth-child(1), .auto-rule-table td:nth-child(1) { width: 105px; }
+.auto-rule-table th:nth-child(2), .auto-rule-table td:nth-child(2) { width: 72px; }
+.auto-rule-table th:nth-child(3), .auto-rule-table td:nth-child(3),
+.auto-rule-table th:nth-child(4), .auto-rule-table td:nth-child(4),
+.auto-rule-table th:nth-child(5), .auto-rule-table td:nth-child(5),
+.auto-rule-table th:nth-child(6), .auto-rule-table td:nth-child(6),
+.auto-rule-table th:nth-child(7), .auto-rule-table td:nth-child(7) { width: 135px; min-width: 0; }
+.auto-rule-table th:nth-child(8), .auto-rule-table td:nth-child(8) { width: 76px; min-width: 0; }
+.auto-rule-table th:nth-child(9), .auto-rule-table td:nth-child(9) { width: 76px; min-width: 0; }
+
+.auto-rule-table td { min-width: 0; }
+.auto-rule-table .form-select,
+.auto-rule-table .form-control { width: 100%; min-width: 0 !important; }
+
+.auto-rule-table th:last-child,
+.auto-rule-table td:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 4;
+    box-shadow: -4px 0 8px rgba(23, 50, 77, .08);
+}
+.auto-rule-table td:last-child { background: #fff; }
+.auto-rule-table tbody tr:nth-child(even) td:last-child { background: #f8fafc; }
+
+/* 配置場所ごとの時間枠：保存列を右固定 */
+.area-time-table {
+    width: 100%;
+    min-width: 1080px;
+    table-layout: fixed;
+}
+
+.area-time-table .sticky-area-name {
+    width: 128px;
+    min-width: 128px;
+    max-width: 128px;
+}
+
+.area-time-table th:not(.sticky-area-name):not(:last-child),
+.area-time-table td:not(:last-child) {
+    width: 82px;
+    min-width: 82px;
+}
+
+.area-time-select {
+    width: 100%;
+    min-width: 0 !important;
+    padding-left: 6px;
+    padding-right: 22px;
+    font-size: .76rem;
+}
+
+.area-time-table th:last-child,
+.area-time-table td:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 4;
+    width: 72px;
+    min-width: 72px;
+    background: #fff;
+    box-shadow: -4px 0 8px rgba(23, 50, 77, .08);
+}
+.area-time-table thead th:last-child {
+    z-index: 6;
+    background: #17324d !important;
+}
+
+/* ボタンはセル内からはみ出さない */
+.settings-card .btn {
+    white-space: nowrap;
+}
+.auto-rule-table td:last-child .btn,
+.area-time-table td:last-child .btn {
+    width: 100%;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+/* 大画面では情報密度を高く、ノートPCではさらに縮小 */
+@media (max-width: 1500px) {
+    .settings-card-body { padding: 12px; }
+    .auto-rule-table { min-width: 1000px; }
+    .auto-rule-table th:nth-child(3), .auto-rule-table td:nth-child(3),
+    .auto-rule-table th:nth-child(4), .auto-rule-table td:nth-child(4),
+    .auto-rule-table th:nth-child(5), .auto-rule-table td:nth-child(5),
+    .auto-rule-table th:nth-child(6), .auto-rule-table td:nth-child(6),
+    .auto-rule-table th:nth-child(7), .auto-rule-table td:nth-child(7) { width: 118px; }
+    .area-time-table { min-width: 1000px; }
+    .area-time-table th:not(.sticky-area-name):not(:last-child),
+    .area-time-table td:not(:last-child) { width: 72px; min-width: 72px; }
+}
+
+@media (max-width: 900px) {
+    .settings-page-header {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 13px;
+    }
+    .settings-back-button { width: 100%; }
+    .settings-card-body { padding: 10px; }
+    .settings-add-panel { padding: 10px; }
+}

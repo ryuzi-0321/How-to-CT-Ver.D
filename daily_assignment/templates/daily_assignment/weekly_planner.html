@@ -1,0 +1,265 @@
+{% extends "ct_app/base.html" %}
+{% load static %}
+{% block title %}週間配置作成 - How to CT{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'daily_assignment/weekly_planner.css' %}?v=20260822_2">
+{% endblock %}
+{% block content %}
+<div class="weekly-page">
+  <div class="weekly-header">
+    <div><h1>週間配置作成</h1><p>{{ monday|date:"Y年n月j日" }} ～ {{ friday|date:"n月j日" }}（平日）</p></div>
+    <div class="week-nav"><a href="?week={{ previous_week|date:'Y-m-d' }}">← 前週</a><a href="?week={{ next_week|date:'Y-m-d' }}">翌週 →</a></div>
+  </div>
+
+  <section class="weekly-card weekly-flow-card">
+    <div class="weekly-flow-title"><strong>自動作成の流れ</strong><span>設定済みなら、この順番で進めればOKです。</span></div>
+    <div class="weekly-flow-steps">
+      <a href="{% url 'daily_assignment:monthly_duty' %}"><b>1</b><span><strong>月間勤務</strong><small>夜勤・休日勤務を確定</small></span></a>
+      <div class="current"><b>2</b><span><strong>週間予定</strong><small>年休・出張・会議を入力</small></span></div>
+      <div class="current"><b>3</b><span><strong>週間自動作成</strong><small>下のボタンで月～金を作成</small></span></div>
+      <a href="{% url 'daily_assignment:board' %}"><b>4</b><span><strong>当日確認</strong><small>予定・手直しを確認</small></span></a>
+    </div>
+  </section>
+
+  <section class="weekly-card weekly-absence-card">
+    <div class="weekly-card-head"><h2>週間不在予定</h2><span>月～金を表示。セルをクリックして年休・出張・会議などを登録</span></div>
+    <div class="absence-range-panel">
+      <div class="absence-range-title"><strong>期間でまとめて追加</strong><span>長期休暇・出張などを開始日～終了日で一括登録できます。</span></div>
+      <div class="absence-range-grid">
+        <label><span>スタッフ</span><select id="bulkAbsenceStaff"><option value="">選択</option>{% for st in staff_options %}<option value="{{ st.id }}">{{ st.name }}</option>{% endfor %}</select></label>
+        <label><span>種類</span><select id="bulkAbsenceKind">{% for v,l in kind_choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></label>
+        <label><span>開始日</span><input id="bulkAbsenceStart" type="date" value="{{ monday|date:'Y-m-d' }}"></label>
+        <label><span>終了日</span><input id="bulkAbsenceEnd" type="date" value="{{ sunday|date:'Y-m-d' }}"></label>
+        <label class="range-note"><span>メモ</span><input id="bulkAbsenceNote" type="text" maxlength="120" placeholder="任意"></label>
+        <div class="absence-range-actions"><button type="button" id="bulkThisWeekBtn" class="secondary-btn">今週を指定</button><button type="button" id="bulkAbsenceSaveBtn" class="primary-btn">期間追加</button></div>
+      </div>
+    </div>
+    <div class="weekly-table-wrap">
+      <table class="weekly-absence-table">
+        <thead><tr><th class="staff-col">スタッフ</th>{% for d in days %}<th class="{% if d.weekday == 5 %}sat{% elif d.weekday == 6 %}sun{% endif %}">{{ d|date:"n/j" }}<small>{{ d|date:"D" }}</small></th>{% endfor %}</tr></thead>
+        <tbody>
+        {% for row in rows %}<tr><th class="staff-col">{{ row.staff.name }}</th>{% for item in row.days %}<td><button type="button" class="absence-cell {% if item.absence %}has-absence kind-{{ item.absence.kind }}{% endif %}" data-staff-id="{{ row.staff.id }}" data-staff-name="{{ row.staff.name }}" data-date="{{ item.date|date:'Y-m-d' }}" {% if item.absence %}data-absence-id="{{ item.absence.id }}" data-kind="{{ item.absence.kind }}" data-period="{{ item.absence.period }}" data-start="{{ item.absence.start_slot_id|default:'' }}" data-end="{{ item.absence.end_slot_id|default:'' }}" data-note="{{ item.absence.note|escape }}"{% endif %}>{% if item.absence %}<strong>{{ item.absence.get_kind_display }}</strong><small>{{ item.absence.period_label }}</small>{% else %}<span>＋</span>{% endif %}</button></td>{% endfor %}</tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="weekly-card scheduled-area-card">
+    <div class="weekly-card-head">
+      <div><h2>予定時のみの配置</h2><span>月～金のみ表示。週間自動作成の前に、その日に必要な配置をONにします。当日配置表の「本日の予定」と共通です。</span></div>
+    </div>
+    {% if scheduled_rows %}
+    <div class="scheduled-area-wrap">
+      <table class="scheduled-area-table">
+        <thead><tr><th class="scheduled-area-name">配置場所</th>{% for d in days %}<th class="{% if d.weekday == 5 %}sat{% elif d.weekday == 6 %}sun{% endif %}">{{ d|date:"n/j" }}<small>{{ d|date:"D" }}</small></th>{% endfor %}</tr></thead>
+        <tbody>
+        {% for row in scheduled_rows %}
+          <tr><th class="scheduled-area-name"><span>{{ row.area.category }}</span><strong>{{ row.area.name }}</strong><small>自動 {{ row.area.auto_assignment_count }}人</small></th>
+          {% for item in row.days %}<td><label class="scheduled-toggle"><input type="checkbox" class="weekly-area-activation" data-date="{{ item.date|date:'Y-m-d' }}" data-area-id="{{ row.area.id }}" {% if item.enabled %}checked{% endif %}><span></span></label></td>{% endfor %}</tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<div class="scheduled-empty">「予定時のみ」に設定された配置場所はありません。</div>{% endif %}
+  </section>
+
+  <section class="weekly-card" id="main-rotation">
+    <div class="weekly-card-head main-rotation-head">
+      <div><h2>今週の主担当</h2><span>専任は固定、その他は1週間ごとに左へローテーション{% if main_rotation_is_manual %} ／ <strong class="manual-rotation-badge">手動調整中 {% if main_rotation_manual_offset > 0 %}+{% endif %}{{ main_rotation_manual_offset }}</strong>{% endif %}</span></div>
+      <div class="main-rotation-actions">
+        <form method="post" action="{% url 'daily_assignment:main_rotation_shift' %}">{% csrf_token %}<input type="hidden" name="week" value="{{ monday|date:'Y-m-d' }}"><input type="hidden" name="action" value="previous"><button type="submit" class="rotation-btn">← 1つ戻す</button></form>
+        <form method="post" action="{% url 'daily_assignment:main_rotation_shift' %}">{% csrf_token %}<input type="hidden" name="week" value="{{ monday|date:'Y-m-d' }}"><input type="hidden" name="action" value="next"><button type="submit" class="rotation-btn primary">1つ進める →</button></form>
+        <form method="post" action="{% url 'daily_assignment:main_rotation_shift' %}">{% csrf_token %}<input type="hidden" name="week" value="{{ monday|date:'Y-m-d' }}"><input type="hidden" name="action" value="reset"><button type="submit" class="rotation-btn reset" {% if not main_rotation_is_manual %}disabled{% endif %}>自動に戻す</button></form>
+      </div>
+    </div>
+    <div class="main-rotation-grid">{% for item in main_rows %}<div class="main-rotation-item {% if item.dedicated %}dedicated-fixed{% endif %}"><span>{{ item.area.category }} / {{ item.area.name }}{% if item.dedicated %}<small>専任固定</small>{% endif %}</span><strong>{% if item.staff %}{{ item.staff.name }}{% else %}—{% endif %}</strong></div>{% empty %}<p class="muted">設定画面で主担当対象の配置とスタッフを選択してください。</p>{% endfor %}</div>
+  </section>
+
+  <section class="weekly-card weekly-generate-card">
+    <div><h2>1週間まとめて自動作成</h2><p>月～金を順番に作成するため、週回数設定・Free履歴・主担当を見ながら後半ほどバランスが調整されます。</p></div>
+    <button id="generateWeekBtn" class="primary-btn">月～金を自動作成</button>
+    <div id="generateStatus" class="generate-status"></div>
+  </section>
+
+  <section class="weekly-card">
+    <div class="weekly-card-head"><h2>週間配置サマリー</h2><span>各配置に入った日数とFree回数</span></div>
+    <div class="summary-grid">{% for item in summary %}<div class="summary-card"><strong>{{ item.staff.name }}</strong><div class="summary-lines">{% for area,count in item.areas %}<span>{{ area }} <b>{{ count }}</b></span>{% empty %}<span class="muted">配置なし</span>{% endfor %}{% if item.lunch_count %}<span class="lunch-summary">昼 <b>{{ item.lunch_count }}</b></span>{% endif %}<span class="free-summary">Free <b>{{ item.free_count }}</b></span></div></div>{% endfor %}</div>
+  </section>
+</div>
+
+<div class="modal fade" id="absenceModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="absenceTitle">不在予定</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+  <input type="hidden" id="absenceStaffId"><input type="hidden" id="absenceDate"><input type="hidden" id="absenceId">
+  <div class="row g-3"><div class="col-6"><label class="form-label">種類</label><select id="absenceKind" class="form-select">{% for v,l in kind_choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div><div class="col-6"><label class="form-label">時間</label><select id="absencePeriod" class="form-select">{% for v,l in period_choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+  <div class="col-6 custom-time"><label class="form-label">開始</label><select id="absenceStart" class="form-select"><option value="">--</option>{% for s in time_slots %}<option value="{{ s.id }}">{{ s.label }}</option>{% endfor %}</select></div><div class="col-6 custom-time"><label class="form-label">終了</label><select id="absenceEnd" class="form-select"><option value="">--</option>{% for s in time_slots %}<option value="{{ s.id }}">{{ s.label }}</option>{% endfor %}</select></div>
+  <div class="col-12"><label class="form-label">メモ</label><input id="absenceNote" class="form-control" maxlength="120"></div></div>
+</div><div class="modal-footer"><button id="deleteAbsenceBtn" class="btn btn-outline-danger me-auto">削除</button><button id="saveAbsenceBtn" class="btn btn-primary">保存</button></div></div></div></div>
+
+<script>
+window.addEventListener('load',()=>{
+// Ver.3.9.8.5: 週間表は画面幅に合わせて自動縮小し、まだ横スクロールが必要な場合だけ追従バーを表示
+const responsiveWeeklyTables=[];
+function setupResponsiveWeeklyTable(wrapSelector, tableSelector){
+  const wrap=document.querySelector(wrapSelector);
+  const table=document.querySelector(tableSelector);
+  if(!wrap||!table)return;
+  const MIN_SCALE=0.78;
+  const state={wrap,table,scale:1,follow:null,followInner:null,syncing:false};
+  responsiveWeeklyTables.push(state);
+
+  const ensureFollow=()=>{
+    if(state.follow)return;
+    const bar=document.createElement('div');
+    bar.className='weekly-follow-scrollbar';
+    const inner=document.createElement('div');
+    inner.className='weekly-follow-scrollbar-inner';
+    bar.appendChild(inner);
+    document.body.appendChild(bar);
+    state.follow=bar;state.followInner=inner;
+    bar.addEventListener('scroll',()=>{
+      if(state.syncing)return;
+      state.syncing=true;
+      wrap.scrollLeft=bar.scrollLeft;
+      state.syncing=false;
+    },{passive:true});
+    wrap.addEventListener('scroll',()=>{
+      if(state.syncing)return;
+      state.syncing=true;
+      bar.scrollLeft=wrap.scrollLeft;
+      state.syncing=false;
+    },{passive:true});
+  };
+
+  const fit=()=>{
+    // 一度100%に戻して、本来必要な横幅から縮小率を決める
+    table.style.zoom='1';
+    const available=Math.max(1,wrap.clientWidth-2);
+    const natural=Math.max(table.scrollWidth,table.getBoundingClientRect().width);
+    let scale=Math.min(1,available/natural);
+    scale=Math.max(MIN_SCALE,scale);
+    state.scale=scale;
+    table.style.zoom=String(scale);
+    // zoom適用後にブラウザのレイアウトを確定させて追従バーを更新
+    requestAnimationFrame(updateFollow);
+  };
+
+  const updateFollow=()=>{
+    ensureFollow();
+    const wr=wrap.getBoundingClientRect();
+    const renderedWidth=table.getBoundingClientRect().width;
+    const needsHorizontal=renderedWidth>wrap.clientWidth+2 || wrap.scrollWidth>wrap.clientWidth+2;
+    // 元の横スクロールバーが画面外へ下がった時だけ、画面下に追従表示
+    const sectionVisible=wr.bottom>0 && wr.top<window.innerHeight;
+    const sourceBarBelowViewport=wr.bottom>window.innerHeight-24;
+    if(!needsHorizontal||!sectionVisible||!sourceBarBelowViewport){
+      state.follow.classList.remove('is-visible');
+      return;
+    }
+    state.follow.style.left=`${Math.max(0,wr.left)}px`;
+    state.follow.style.width=`${Math.min(wr.width,window.innerWidth-Math.max(0,wr.left))}px`;
+    state.followInner.style.width=`${Math.max(renderedWidth,wrap.scrollWidth)}px`;
+    state.follow.scrollLeft=wrap.scrollLeft;
+    state.follow.classList.add('is-visible');
+  };
+
+  state.fit=fit;state.updateFollow=updateFollow;
+  wrap.addEventListener('scroll',updateFollow,{passive:true});
+  fit();
+}
+setupResponsiveWeeklyTable('.weekly-table-wrap','.weekly-absence-table');
+setupResponsiveWeeklyTable('.scheduled-area-wrap','.scheduled-area-table');
+let weeklyResizeTimer=0;
+window.addEventListener('resize',()=>{
+  clearTimeout(weeklyResizeTimer);
+  weeklyResizeTimer=setTimeout(()=>responsiveWeeklyTables.forEach(x=>x.fit()),80);
+});
+window.addEventListener('scroll',()=>responsiveWeeklyTables.forEach(x=>x.updateFollow()),{passive:true});
+// Ver.3.9.6.1: 週間表の曜日ヘッダーは1段だけ表示し、スクロール時のみ同じ幅で追従させる
+const weeklyWrap=document.querySelector('.weekly-table-wrap');
+const weeklyTable=document.querySelector('.weekly-absence-table');
+if(weeklyWrap&&weeklyTable){
+  const sourceHead=weeklyTable.querySelector('thead');
+  const floating=document.createElement('div');
+  floating.className='weekly-floating-head';
+  const floatingTable=document.createElement('table');
+  floatingTable.className='weekly-absence-table weekly-floating-table';
+  floating.appendChild(floatingTable);
+  document.body.appendChild(floating);
+  const syncFloatingHeader=()=>{
+    const tableRect=weeklyTable.getBoundingClientRect();
+    const headRect=sourceHead.getBoundingClientRect();
+    const wrapRect=weeklyWrap.getBoundingClientRect();
+    const shouldShow=headRect.top<0 && tableRect.bottom>sourceHead.offsetHeight && wrapRect.right>0 && wrapRect.left<window.innerWidth;
+    if(!shouldShow){floating.classList.remove('is-visible');return;}
+    // Ver.3.9.8.7:
+    // 本体は CSS zoom で縮小しているため、getBoundingClientRect() の値を
+    // そのまま clone の列幅にするとブラウザによって二重に拡大/縮小され、
+    // 「スタッフ」と曜日列の境界がずれる。
+    // clone は本体と同じ「縮小前のレイアウト幅」で組み、最後に同じ zoom を
+    // 1回だけ適用する。これで本体と追従ヘッダーが同じ座標系になる。
+    const sourceCells=[...sourceHead.querySelectorAll('th')];
+    const scale=parseFloat(weeklyTable.style.zoom||'1')||1;
+    const naturalTableWidth=weeklyTable.offsetWidth;
+    const colgroup=document.createElement('colgroup');
+    sourceCells.forEach(th=>{
+      const col=document.createElement('col');
+      const width=th.offsetWidth;
+      col.style.width=`${width}px`;
+      col.style.minWidth=`${width}px`;
+      col.style.maxWidth=`${width}px`;
+      colgroup.appendChild(col);
+    });
+    floatingTable.innerHTML='';
+    floatingTable.appendChild(colgroup);
+    floatingTable.appendChild(sourceHead.cloneNode(true));
+    floating.style.left=`${wrapRect.left}px`;
+    floating.style.width=`${wrapRect.width}px`;
+    floatingTable.style.zoom=String(scale);
+    floatingTable.style.width=`${naturalTableWidth}px`;
+    floatingTable.style.minWidth=`${naturalTableWidth}px`;
+    floatingTable.style.maxWidth=`${naturalTableWidth}px`;
+    // scrollLeft も縮小前レイアウトの座標なので、同じ zoom 内で translate する。
+    floatingTable.style.transform=`translateX(${-weeklyWrap.scrollLeft}px)`;
+    floating.classList.add('is-visible');
+  };
+  let raf=0;
+  const requestSync=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(syncFloatingHeader)};
+  window.addEventListener('scroll',requestSync,{passive:true});
+  window.addEventListener('resize',requestSync);
+  weeklyWrap.addEventListener('scroll',requestSync,{passive:true});
+  requestSync();
+}
+const csrf='{{ csrf_token }}';
+const absenceStaffId=document.getElementById('absenceStaffId'), absenceDate=document.getElementById('absenceDate'), absenceId=document.getElementById('absenceId');
+const absenceKind=document.getElementById('absenceKind'), absencePeriod=document.getElementById('absencePeriod'), absenceStart=document.getElementById('absenceStart'), absenceEnd=document.getElementById('absenceEnd'), absenceNote=document.getElementById('absenceNote');
+const generateWeekBtn=document.getElementById('generateWeekBtn'), generateStatus=document.getElementById('generateStatus');
+const absenceModal=new bootstrap.Modal(document.getElementById('absenceModal'));
+const period=absencePeriod;
+function toggleCustom(){document.querySelectorAll('.custom-time').forEach(x=>x.style.display=period.value==='custom'?'block':'none')}; period.addEventListener('change',toggleCustom);
+document.querySelectorAll('.absence-cell').forEach(btn=>btn.addEventListener('click',()=>{document.getElementById('absenceStaffId').value=btn.dataset.staffId;document.getElementById('absenceDate').value=btn.dataset.date;document.getElementById('absenceId').value=btn.dataset.absenceId||'';document.getElementById('absenceKind').value=btn.dataset.kind||'annual';period.value=btn.dataset.period||'full';document.getElementById('absenceStart').value=btn.dataset.start||'';document.getElementById('absenceEnd').value=btn.dataset.end||'';document.getElementById('absenceNote').value=btn.dataset.note||'';document.getElementById('absenceTitle').textContent=`${btn.dataset.staffName} / ${btn.dataset.date}`;document.getElementById('deleteAbsenceBtn').style.visibility=btn.dataset.absenceId?'visible':'hidden';toggleCustom();absenceModal.show()}));
+async function postForm(url,data){const fd=new FormData();Object.entries(data).forEach(([k,v])=>fd.append(k,v??''));fd.append('csrfmiddlewaretoken',csrf);const r=await fetch(url,{method:'POST',body:fd,headers:{'X-CSRFToken':csrf}});const j=await r.json();if(!r.ok)throw new Error(j.error||'処理に失敗しました');return j}
+document.querySelectorAll('.weekly-area-activation').forEach(toggle=>toggle.addEventListener('change',async()=>{
+  toggle.disabled=true;
+  try{
+    await postForm('{% url "daily_assignment:area_activation" %}',{date:toggle.dataset.date,area_id:toggle.dataset.areaId,enabled:toggle.checked?'1':'0'});
+    toggle.closest('td').classList.add('saved-flash');setTimeout(()=>toggle.closest('td')?.classList.remove('saved-flash'),550);
+  }catch(e){toggle.checked=!toggle.checked;alert(e.message)}finally{toggle.disabled=false}
+}));
+document.getElementById('saveAbsenceBtn').onclick=async()=>{try{await postForm('{% url "daily_assignment:weekly_absence_save" %}',{staff_id:absenceStaffId.value,absence_date:absenceDate.value,kind:absenceKind.value,period:absencePeriod.value,start_slot_id:absenceStart.value,end_slot_id:absenceEnd.value,note:absenceNote.value});location.reload()}catch(e){alert(e.message)}};
+document.getElementById('deleteAbsenceBtn').onclick=async()=>{if(!absenceId.value)return;try{await postForm('{% url "daily_assignment:weekly_absence_delete" %}',{absence_id:absenceId.value});location.reload()}catch(e){alert(e.message)}};
+
+const bulkStart=document.getElementById('bulkAbsenceStart'), bulkEnd=document.getElementById('bulkAbsenceEnd');
+document.getElementById('bulkThisWeekBtn').onclick=()=>{bulkStart.value='{{ monday|date:"Y-m-d" }}';bulkEnd.value='{{ sunday|date:"Y-m-d" }}';};
+document.getElementById('bulkAbsenceSaveBtn').onclick=async()=>{
+  const staffId=document.getElementById('bulkAbsenceStaff').value;
+  if(!staffId){alert('スタッフを選択してください。');return;}
+  if(!bulkStart.value||!bulkEnd.value){alert('開始日と終了日を指定してください。');return;}
+  if(!confirm(`${bulkStart.value} ～ ${bulkEnd.value} をまとめて登録します。よろしいですか？`))return;
+  try{
+    const j=await postForm('{% url "daily_assignment:weekly_absence_bulk" %}',{staff_id:staffId,kind:document.getElementById('bulkAbsenceKind').value,start_date:bulkStart.value,end_date:bulkEnd.value,note:document.getElementById('bulkAbsenceNote').value});
+    alert(j.message||'登録しました。'); location.reload();
+  }catch(e){alert(e.message)}
+};
+document.getElementById('generateWeekBtn').onclick=async()=>{const btn=generateWeekBtn;btn.disabled=true;generateStatus.textContent='月～金をまとめて作成中…';try{const j=await postForm('{% url "daily_assignment:weekly_generate" %}',{week:'{{ monday|date:"Y-m-d" }}'});generateStatus.textContent=j.message||'5日分を作成しました。';setTimeout(()=>location.reload(),800)}catch(e){generateStatus.textContent='エラー: '+e.message;alert(e.message);btn.disabled=false}};
+});
+</script>
+{% endblock %}

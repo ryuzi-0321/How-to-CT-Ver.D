@@ -1,0 +1,74 @@
+.weekly-page{max-width:1600px;margin:0 auto;padding:22px}.weekly-header{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:18px}.weekly-header h1{margin:0;color:#183a63;font-weight:800}.weekly-header p{margin:.25rem 0 0;color:#64748b}.week-nav{display:flex;gap:8px}.week-nav a,.primary-btn{border:0;border-radius:10px;background:#234d83;color:#fff;padding:10px 16px;text-decoration:none;font-weight:700}.weekly-card{background:#fff;border:1px solid #cfdae7;border-radius:14px;margin-bottom:18px;box-shadow:0 4px 14px rgba(31,61,91,.07);overflow:hidden}.weekly-card-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#f3f7fb;border-bottom:1px solid #d7e0ea}.weekly-card-head h2,.weekly-generate-card h2{font-size:1.05rem;margin:0;color:#173b64;font-weight:800}.weekly-card-head span{color:#64748b;font-size:.9rem}.weekly-table-wrap{overflow:auto}.weekly-absence-table{width:100%;border-collapse:separate;border-spacing:0;min-width:820px}.weekly-absence-table th,.weekly-absence-table td{border-right:1px solid #d8e1eb;border-bottom:1px solid #d8e1eb;padding:0;text-align:center}.weekly-absence-table thead th{position:sticky;top:0;background:#173c65;color:#fff;padding:9px;z-index:3}.weekly-absence-table thead th.sat{background:#285c91}.weekly-absence-table thead th.sun{background:#7a3d4b}.weekly-absence-table small{display:block;font-size:.72rem;opacity:.85}.staff-col{position:sticky;left:0;z-index:2;background:#f7fafc!important;min-width:120px;color:#173b64!important;padding:8px!important}.absence-cell{width:100%;min-height:58px;border:0;background:#fff;color:#96a4b2}.absence-cell:hover{background:#edf5ff}.absence-cell.has-absence{background:#eef4fb;color:#173b64}.absence-cell.kind-annual{background:#e8f1ff}.absence-cell.kind-trip{background:#eef8ef}.absence-cell.kind-meeting{background:#fff5dc}.absence-cell.kind-other{background:#f2edf9}.absence-cell strong,.absence-cell small{display:block}.main-rotation-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;padding:16px}.main-rotation-item{border:1px solid #aac6e8;background:#eaf3ff;border-radius:10px;padding:10px}.main-rotation-item span{display:block;font-size:.78rem;color:#54708e}.main-rotation-item strong{display:block;color:#173b64;font-size:1.05rem;margin-top:3px}.weekly-generate-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px}.weekly-generate-card p{margin:.35rem 0 0;color:#64748b}.generate-status{min-width:180px;color:#315b84;font-weight:700}.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;padding:16px}.summary-card{border:1px solid #d7e0ea;border-radius:10px;padding:11px}.summary-card>strong{color:#173b64}.summary-lines{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.summary-lines span{background:#f3f6f9;border-radius:6px;padding:3px 7px;font-size:.78rem}.free-summary{background:#eef7f0!important}.muted{color:#8a98a7}.proposal-card{border:1px solid #ccd8e5;border-radius:10px;padding:12px;margin-bottom:12px}.proposal-head{display:flex;justify-content:space-between;background:#f4f8fc;margin:-12px -12px 10px;padding:10px 12px;border-radius:10px 10px 0 0}.proposal-body>div{display:flex;justify-content:space-between;gap:20px;border-bottom:1px dashed #dbe3ec;padding:5px 0;font-size:.9rem}.proposal-card button{margin-top:10px}@media(max-width:700px){.weekly-page{padding:10px}.weekly-header{align-items:stretch;flex-direction:column}.weekly-generate-card{align-items:stretch;flex-direction:column}}
+
+/* Ver.3.8.1 欠員再配置・専任固定 */
+.reallocation-main-btn{border:1px solid #27548a;background:#fff;color:#214b7d;border-radius:9px;padding:8px 12px;font-weight:800}.reallocation-main-btn:hover{background:#eaf2fb}.main-rotation-item.dedicated-fixed{background:#e8f1fb;border-color:#7199c6}.main-rotation-item small{display:block;font-size:.65rem;color:#58738f;margin-top:2px}
+
+/* Ver.3.8.7: 普段の自動作成フロー */
+.weekly-flow-card{border-left:5px solid #2a5298;background:#f7fbff}
+.weekly-flow-title{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}.weekly-flow-title strong{color:#17324d}.weekly-flow-title span{color:#6b7b8c;font-size:.82rem}
+.weekly-flow-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.weekly-flow-steps>a,.weekly-flow-steps>div{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid #d6e2ee;border-radius:9px;background:#fff;color:#17324d;text-decoration:none}
+.weekly-flow-steps .current{background:#eaf2fb;border-color:#2a5298}
+.weekly-flow-steps b{display:flex;align-items:center;justify-content:center;flex:0 0 25px;width:25px;height:25px;border-radius:50%;background:#2a5298;color:#fff;font-size:.78rem}
+.weekly-flow-steps span{min-width:0}.weekly-flow-steps strong,.weekly-flow-steps small{display:block}.weekly-flow-steps strong{font-size:.83rem}.weekly-flow-steps small{margin-top:1px;color:#6b7b8c;font-size:.7rem}
+@media(max-width:900px){.weekly-flow-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.weekly-flow-steps{grid-template-columns:1fr}}
+
+
+/* Ver.3.8.8: 主担当手動ローテーション */
+.main-rotation-head{gap:14px;flex-wrap:wrap}
+.main-rotation-head>div:first-child{min-width:240px}
+.main-rotation-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-left:auto}
+.main-rotation-actions form{margin:0}
+.rotation-btn{border:1px solid #9bb5d0;background:#fff;color:#214b78;border-radius:8px;padding:7px 10px;font-size:.8rem;font-weight:800}
+.rotation-btn:hover:not(:disabled){background:#edf5ff}
+.rotation-btn.primary{background:#2a5298;border-color:#2a5298;color:#fff}
+.rotation-btn.primary:hover{background:#21477f}
+.rotation-btn.reset{color:#65778b}
+.rotation-btn:disabled{opacity:.42;cursor:not-allowed}
+.manual-rotation-badge{display:inline-block;color:#24558d;background:#e7f1fd;border:1px solid #bdd3ea;border-radius:999px;padding:2px 7px;font-size:.72rem}
+@media(max-width:700px){.main-rotation-actions{width:100%;margin-left:0}.main-rotation-actions form{flex:1}.rotation-btn{width:100%}}
+
+/* Ver.3.9.6.1 曜日追従・昼サマリー */
+.lunch-summary{background:#e8f2ff!important;color:#24558d;font-weight:700}
+.weekly-absence-card{overflow:visible}.weekly-absence-card .weekly-card-head{border-radius:14px 14px 0 0}.weekly-absence-card .weekly-table-wrap{border-radius:0 0 14px 14px}
+.weekly-floating-head{display:none;position:fixed;top:0;overflow:hidden;z-index:1050;box-shadow:0 3px 10px rgba(15,42,68,.22);pointer-events:none}
+.weekly-floating-head.is-visible{display:block}
+.weekly-floating-table{margin:0;table-layout:fixed;border-collapse:separate;border-spacing:0}
+.weekly-floating-table thead th{position:static!important;box-sizing:border-box}
+
+/* Ver.3.9.7: 期間指定の不在予定 */
+.absence-range-panel{margin:0 18px 16px;padding:14px 16px;border:1px solid #cbd9e8;border-radius:12px;background:#f7faff}
+.absence-range-title{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;color:#173b64}
+.absence-range-title span{font-size:.82rem;color:#627b95}
+.absence-range-grid{display:grid;grid-template-columns:1.1fr .9fr 1fr 1fr 1.4fr auto;gap:10px;align-items:end}
+.absence-range-grid label{display:flex;flex-direction:column;gap:5px;font-size:.78rem;font-weight:800;color:#315476}
+.absence-range-grid select,.absence-range-grid input{height:40px;border:1px solid #bfd0e2;border-radius:8px;padding:0 10px;background:#fff}
+.absence-range-actions{display:flex;gap:8px;white-space:nowrap}
+.absence-range-actions button{height:40px}
+@media(max-width:1100px){.absence-range-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.range-note{grid-column:span 2}.absence-range-actions{grid-column:span 2}}
+
+/* Ver.3.9.8: 週間から「予定時のみ」を事前指定 */
+.scheduled-area-wrap{overflow:auto}
+.scheduled-area-table{width:100%;border-collapse:separate;border-spacing:0;min-width:700px}
+.scheduled-area-table th,.scheduled-area-table td{border-right:1px solid #d8e1eb;border-bottom:1px solid #d8e1eb;text-align:center;padding:10px}
+.scheduled-area-table thead th{background:#173c65;color:#fff;white-space:nowrap}
+.scheduled-area-table thead th.sat{background:#285c91}.scheduled-area-table thead th.sun{background:#7a3d4b}
+.scheduled-area-table thead small{display:block;font-size:.72rem;opacity:.85}
+.scheduled-area-name{min-width:190px;text-align:left!important;position:sticky;left:0;z-index:2;background:#f7fafc!important;color:#173b64!important}
+.scheduled-area-name span,.scheduled-area-name strong,.scheduled-area-name small{display:block}.scheduled-area-name span{font-size:.68rem;color:#68809a}.scheduled-area-name strong{font-size:.9rem}.scheduled-area-name small{margin-top:2px;font-size:.68rem;color:#7b8c9e}
+.scheduled-toggle{display:inline-flex;align-items:center;justify-content:center;cursor:pointer}.scheduled-toggle input{position:absolute;opacity:0;pointer-events:none}.scheduled-toggle span{display:block;width:38px;height:22px;border-radius:999px;background:#c8d3df;position:relative;transition:.18s}.scheduled-toggle span:after{content:"";position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;left:3px;top:3px;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:.18s}.scheduled-toggle input:checked+span{background:#2a6fe3}.scheduled-toggle input:checked+span:after{transform:translateX(16px)}.scheduled-toggle input:disabled+span{opacity:.55}.scheduled-area-table td.saved-flash{background:#eaf7ef}.scheduled-empty{padding:18px;color:#76879a}
+
+
+/* Ver.3.9.8.5: 週間表の自動縮小＋必要時のみ画面下に横スクロール追従 */
+.weekly-table-wrap,.scheduled-area-wrap{max-width:100%;overflow:auto;scrollbar-gutter:stable}
+.weekly-absence-table,.scheduled-area-table{transform-origin:left top}
+.weekly-follow-scrollbar{display:none;position:fixed;bottom:8px;height:18px;overflow-x:auto;overflow-y:hidden;z-index:1060;background:rgba(248,250,252,.96);border:1px solid #c9d6e4;border-radius:8px;box-shadow:0 2px 9px rgba(18,45,72,.15)}
+.weekly-follow-scrollbar.is-visible{display:block}
+.weekly-follow-scrollbar-inner{height:1px;min-width:100%}
+@media(max-width:900px){.weekly-absence-table,.scheduled-area-table{min-width:760px}}
+
+
+/* Ver.3.9.8.6: 自動縮小時の追従曜日ヘッダー列ずれ修正 */
+.weekly-floating-table{min-width:0!important;max-width:none;transform-origin:left top}
+.weekly-floating-table th{overflow:hidden;white-space:nowrap}

@@ -171,130 +171,247 @@
             content: "";
         }
     </style>
+
+    <style>
+        /* Daily Assignment: Ver.3.1 application shell */
+        .assignment-app-shell {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 220px minmax(0, 1fr);
+            background: #f3f6fa;
+        }
+        .assignment-app-sidebar {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 18px 12px;
+            color: #fff;
+            background: linear-gradient(180deg, #0e2b4c 0%, #123b67 60%, #0b2949 100%);
+            box-shadow: 2px 0 14px rgba(15, 42, 73, .12);
+            z-index: 1030;
+        }
+        .assignment-app-brand {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 4px 8px 18px;
+            color: #fff;
+            font-size: 1.35rem;
+            font-weight: 800;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255,255,255,.18);
+            margin-bottom: 14px;
+        }
+        .assignment-app-nav {
+            display: grid;
+            gap: 5px;
+        }
+        .assignment-app-nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 42px;
+            padding: 9px 11px;
+            color: rgba(255,255,255,.86);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: .92rem;
+            font-weight: 650;
+            transition: background .15s, color .15s, transform .15s;
+        }
+        .assignment-app-nav a:hover,
+        .assignment-app-nav a.active {
+            color: #fff;
+            background: rgba(55, 111, 255, .82);
+            transform: translateX(1px);
+        }
+        .assignment-app-nav .nav-separator {
+            height: 1px;
+            margin: 8px 6px;
+            background: rgba(255,255,255,.16);
+        }
+        .assignment-app-nav .nav-section-label {
+            padding: 3px 11px 1px;
+            color: rgba(255,255,255,.52);
+            font-size: .67rem;
+            font-weight: 800;
+            letter-spacing: .08em;
+        }
+        .assignment-app-main {
+            min-width: 0;
+            padding: 18px 20px 28px;
+        }
+        .assignment-app-topline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin: 0 0 12px;
+            padding-bottom: 11px;
+            border-bottom: 1px solid #d9e2ec;
+        }
+        .assignment-app-topline strong {
+            color: #17324d;
+            font-size: 1.12rem;
+        }
+        .assignment-app-toplinks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: .82rem;
+        }
+        .assignment-app-toplinks a {
+            color: #526274;
+            text-decoration: none;
+        }
+        .assignment-app-toplinks a:hover { color: #1e3c72; }
+        .assignment-app-content { min-width: 0; }
+        @media (max-width: 900px) {
+            .assignment-app-shell { grid-template-columns: 1fr; }
+            .assignment-app-sidebar {
+                position: sticky;
+                height: auto;
+                padding: 8px 10px;
+            }
+            .assignment-app-brand {
+                padding: 2px 4px 8px;
+                margin-bottom: 7px;
+                font-size: 1.05rem;
+            }
+            .assignment-app-nav {
+                display: flex;
+                overflow-x: auto;
+                gap: 6px;
+                padding-bottom: 2px;
+                scrollbar-width: thin;
+            }
+            .assignment-app-nav a {
+                flex: 0 0 auto;
+                min-height: 36px;
+                padding: 7px 10px;
+                white-space: nowrap;
+                font-size: .84rem;
+            }
+            .assignment-app-nav .nav-separator, .assignment-app-nav .nav-section-label { display: none; }
+            .assignment-app-main { padding: 12px; }
+            .assignment-app-topline { display: none; }
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
     {% if is_maintenance %}
-    <div style="background-color: #ff9800; color: white; text-align: center; padding: 20px; font-weight: bold; position: sticky; top: 0; z-index: 9999; font-size: 24px;">
-    ⚠️ 現在システムメンテナンス（機能追加作業）中です。一時的に動作が不安定になる場合があります。
+    <div style="background-color:#ff9800;color:white;text-align:center;padding:10px;font-weight:bold;position:sticky;top:0;z-index:9999;">
+        ⚠️ 現在システムメンテナンス（機能追加作業）中です。一時的に動作が不安定になる場合があります。
     </div>
     {% endif %}
-    <!-- ナビゲーションバー -->
+
+    {% if request.resolver_match.namespace == 'daily_assignment' %}
+    <div class="assignment-app-shell">
+        <aside class="assignment-app-sidebar">
+            <a class="assignment-app-brand" href="{% url 'index' %}">
+                <i class="bi bi-hospital"></i><span>How to CT</span>
+            </a>
+            <nav class="assignment-app-nav" aria-label="勤務配置メニュー">
+                <a href="{% url 'daily_assignment:board' %}" class="{% if request.resolver_match.url_name == 'board' %}active{% endif %}"><i class="bi bi-calendar3"></i>当日配置表</a>
+                <a href="{% url 'daily_assignment:monthly_duty' %}" class="{% if request.resolver_match.url_name == 'monthly_duty' %}active{% endif %}"><i class="bi bi-calendar-month"></i>月間勤務表</a>
+                <a href="{% url 'daily_assignment:weekly_planner' %}" class="{% if request.resolver_match.url_name == 'weekly_planner' %}active{% endif %}"><i class="bi bi-calendar-week"></i>週間配置作成</a>
+                <a href="{% url 'daily_assignment:area_staff_matrix' %}" class="{% if request.resolver_match.url_name == 'area_staff_matrix' %}active{% endif %}"><i class="bi bi-person-lines-fill"></i>配置可能スタッフ一覧</a>
+
+                <div class="nav-separator"></div>
+                <div class="nav-section-label">基本設定</div>
+                <a href="{% url 'daily_assignment:settings' %}#staff-settings"><i class="bi bi-people"></i>スタッフ設定</a>
+                <a href="{% url 'daily_assignment:settings' %}#duty-settings"><i class="bi bi-moon-stars"></i>勤務・代休設定</a>
+                <a href="{% url 'daily_assignment:settings' %}#time-slot-settings"><i class="bi bi-clock"></i>時間枠設定</a>
+                <a href="{% url 'daily_assignment:settings' %}#area-time-settings"><i class="bi bi-grid-3x3-gap"></i>場所別時間枠</a>
+                <a href="{% url 'daily_assignment:settings' %}#derived-rule-settings"><i class="bi bi-diagram-3"></i>時間連動ルール</a>
+                <a href="{% url 'daily_assignment:settings' %}#reception-staff-settings"><i class="bi bi-person-badge"></i>受付担当設定</a>
+                <a href="{% url 'daily_assignment:settings' %}#meeting-preset-settings"><i class="bi bi-card-checklist"></i>会議等内容設定</a>
+
+                <div class="nav-separator"></div>
+                <div class="nav-section-label">自動配置設定</div>
+                <a href="{% url 'daily_assignment:settings' %}#auto-assignment-settings"><i class="bi bi-sliders"></i>スタッフ自動配置</a>
+                <a href="{% url 'daily_assignment:settings' %}#area-settings"><i class="bi bi-building-gear"></i>配置場所設定</a>
+                <a href="{% url 'daily_assignment:settings' %}#area-auto-time-settings"><i class="bi bi-calendar-x"></i>時間別自動配置</a>
+                <a href="{% url 'daily_assignment:settings' %}#dedicated-backup-settings"><i class="bi bi-person-check"></i>専任・代理設定</a>
+                <a href="{% url 'daily_assignment:weekly_planner' %}#main-rotation"><i class="bi bi-arrow-left-right"></i>主担当ローテーション</a>
+
+                <div class="nav-separator"></div>
+                <a href="{% url 'index' %}"><i class="bi bi-house"></i>How to CT ホーム</a>
+                <a href="{% url 'question_list' %}"><i class="bi bi-chat-dots"></i>掲示板</a>
+            </nav>
+        </aside>
+        <main class="assignment-app-main">
+            <div class="assignment-app-topline">
+                <strong>当日配置管理</strong>
+                <div class="assignment-app-toplinks">
+                    <a href="{% url 'index' %}">ホーム</a><span>/</span>
+                    <a href="{% url 'daily_assignment:board' %}">当日配置表</a>
+                    {% if request.resolver_match.url_name == 'settings' %}<span>/</span><strong>設定</strong>{% endif %}
+                </div>
+            </div>
+            <div class="assignment-app-content">
+    {% else %}
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'index' %}">
-                <i class="bi bi-hospital"></i> How to CT
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <a class="navbar-brand" href="{% url 'index' %}"><i class="bi bi-hospital"></i> How to CT</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'index' %}">ホーム</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'sick_list' %}">疾患検索</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'form_list' %}">お知らせ</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'protocol_list' %}">CTプロトコル</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'nightshift_list' %}"><i class="bi bi-moon"></i> 夜勤対応</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'backup' %}">バックアップ</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'question_list' %}"><i class="bi bi-chat-dots"></i> 掲示板</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'daily_assignment:board' %}"><i class="bi bi-calendar-check"></i> 当日配置表</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">ホーム</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'sick_list' %}">疾患検索</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'form_list' %}">お知らせ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'protocol_list' %}">CTプロトコル</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'nightshift_list' %}"><i class="bi bi-moon"></i> 夜勤対応</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'daily_assignment:board' %}"><i class="bi bi-calendar3"></i> 当日配置表</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'backup' %}">バックアップ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'question_list' %}"><i class="bi bi-chat-dots"></i> 掲示板</a></li>
                 </ul>
             </div>
         </div>
     </nav>
-
-    <!-- メインコンテンツ -->
     <main class="container-fluid py-4">
         {% if page_title %}
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="main-header d-flex justify-content-between align-items-center">
-                    <h1><i class="bi bi-hospital"></i> {{ page_title }}</h1>
-                
-                    <div class="header-info text-end">
-                        {% block header_info %}{% endblock %}
-                    </div>
-                </div>
+        <div class="row mb-4"><div class="col-12"><div class="main-header d-flex justify-content-between align-items-center">
+            <h1><i class="bi bi-hospital"></i> {{ page_title }}</h1>
+            <div class="header-info text-end">{% block header_info %}{% endblock %}</div>
+        </div></div></div>
+        {% endif %}
+    {% endif %}
+
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-        </div>
+            {% endfor %}
         {% endif %}
 
-        <div class="row">
-            <div class="col-12">
-                {% if messages %}
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-                {% endfor %}
-                {% endif %}
+        {% block content %}{% endblock %}
 
-                {% block content %}{% endblock %}
+    {% if request.resolver_match.namespace == 'daily_assignment' %}
             </div>
-        </div>
+        </main>
+    </div>
+    {% else %}
     </main>
-
-    <!-- フッター -->
     <footer>
         <div class="container-fluid">
             <div class="row">
-                <div class="col-md-4">
-                    <h5>How to CT</h5>
-                    <p>診療放射線技師向けCT検査マニュアルシステム</p>
-                </div>
-                <div class="col-md-4">
-                    <h5>リンク</h5>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <ul class="list-unstyled mb-0">
-                                <li><a href="{% url 'sick_list' %}">疾患検索</a></li>
-                                <li><a href="{% url 'protocol_list' %}">CTプロトコル</a></li>
-                            </ul>
-                        </div>
-                        <div class="col-6">
-                            <ul class="list-unstyled mb-0">
-                                <li><a href="{% url 'form_list' %}">お知らせ</a></li>
-                                <li><a href="{% url 'nightshift_list' %}">夜勤対応</a></li>
-                            </ul>
-                        </div>
-                        <div class="col-6">
-                            <ul class="list-unstyled mb-0">
-                                <li><a href="{% url 'question_list' %}">掲示板</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <h5>ご利用ありがとうございます</h5>
-                    <p>このシステムは医療従事者向けの教育ツールです。</p>
-                </div>
+                <div class="col-md-4"><h5>How to CT</h5><p>診療放射線技師向けCT検査マニュアルシステム</p></div>
+                <div class="col-md-4"><h5>リンク</h5><div class="row g-2">
+                    <div class="col-6"><ul class="list-unstyled mb-0"><li><a href="{% url 'sick_list' %}">疾患検索</a></li><li><a href="{% url 'protocol_list' %}">CTプロトコル</a></li></ul></div>
+                    <div class="col-6"><ul class="list-unstyled mb-0"><li><a href="{% url 'form_list' %}">お知らせ</a></li><li><a href="{% url 'nightshift_list' %}">夜勤対応</a></li></ul></div>
+                    <div class="col-6"><ul class="list-unstyled mb-0"><li><a href="{% url 'question_list' %}">掲示板</a></li></ul></div>
+                </div></div>
+                <div class="col-md-4"><h5>ご利用ありがとうございます</h5><p>このシステムは医療従事者向けの教育ツールです。</p></div>
             </div>
-            <hr>
-            <div class="row">
-                <div class="col-12 text-center">
-                    <p class="mb-0">© 2026 How to CT. All rights reserved.</p>
-                </div>
-            </div>
+            <hr><div class="row"><div class="col-12 text-center"><p class="mb-0">© 2026 How to CT. All rights reserved.</p></div></div>
         </div>
     </footer>
-
+    {% endif %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}{% endblock %}
 </body>

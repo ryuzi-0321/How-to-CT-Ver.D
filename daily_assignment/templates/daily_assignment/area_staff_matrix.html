@@ -1,0 +1,145 @@
+{% extends "ct_app/base.html" %}
+
+{% block title %}配置可能スタッフ一覧{% endblock %}
+
+{% block extra_css %}
+<style>
+.area-staff-page{padding-bottom:32px}
+.area-staff-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+.area-staff-card{background:#fff;border:1px solid #ccd9e7;border-radius:14px;box-shadow:0 5px 18px rgba(24,52,82,.08);overflow:hidden}
+.area-staff-toolbar{padding:14px 16px;background:#f7faff;border-bottom:1px solid #d7e1ec}
+.area-chip-wrap{display:flex;gap:8px;flex-wrap:wrap}
+.area-chip{display:inline-flex;align-items:center;text-decoration:none;padding:7px 11px;border:1px solid #c6d4e4;border-radius:9px;background:#fff;color:#284d75;font-weight:700;font-size:.88rem}
+.area-chip.active{background:#285a9f;border-color:#285a9f;color:#fff}
+.area-summary{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.summary-pill{border-radius:999px;padding:5px 10px;font-size:.8rem;font-weight:800;background:#eef4fa;color:#395a7d}
+.staff-matrix-table th{white-space:nowrap;background:#173c65!important;color:#fff!important;text-align:center;vertical-align:middle}
+.staff-matrix-table td{vertical-align:middle}
+.staff-matrix-table .staff-name{font-weight:800;white-space:nowrap}
+.relation-badge{display:inline-flex;align-items:center;border-radius:999px;padding:4px 9px;font-weight:800;font-size:.78rem;white-space:nowrap}
+.rel-dedicated{background:#dff3e5;color:#176239}.rel-backup{background:#e5efff;color:#245aa4}.rel-priority{background:#fff1cf;color:#8b5b00}.rel-normal{background:#edf2f7;color:#465b71}.rel-off{background:#fbe5e7;color:#a12c37}
+.week-count{font-weight:800;white-space:nowrap}.week-count .actual{font-size:1.04rem}.week-count .target{color:#65778a;font-size:.8rem;margin-left:2px}
+.unavailable-row{background:#fbf3f4}.unavailable-reason{color:#a23b45;font-size:.82rem;font-weight:700}
+.area-meta{display:flex;gap:8px;flex-wrap:wrap;color:#52687f;font-size:.84rem}
+@media(max-width:760px){.area-staff-header{align-items:flex-start;flex-direction:column}.area-staff-toolbar .row>*{margin-bottom:8px}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="area-staff-page">
+  <div class="area-staff-header">
+    <div>
+      <h1 class="h3 mb-1">配置可能スタッフ一覧</h1>
+      <div class="text-muted">配置場所から逆引きして、配置可能スタッフ・優先関係・週回数を確認します。</div>
+    </div>
+    <a href="{% url 'daily_assignment:settings' %}#area-settings" class="btn btn-outline-primary fw-bold">設定へ戻る</a>
+  </div>
+
+  {% if not selected_area %}
+  <div class="alert alert-warning">使用中の配置場所がありません。先に配置場所を登録してください。</div>
+  {% else %}
+  <div class="area-staff-card">
+    <div class="area-staff-toolbar">
+      <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-md-5">
+          <label class="form-label fw-bold">配置場所</label>
+          <select name="area" class="form-select" onchange="this.form.submit()">
+            {% for area in areas %}
+            <option value="{{ area.id }}" {% if selected_area.id == area.id %}selected{% endif %}>{{ area.category }}{% if area.category %} / {% endif %}{{ area.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold">週</label>
+          <input type="date" name="week" class="form-control" value="{{ monday|date:'Y-m-d' }}" onchange="this.form.submit()">
+        </div>
+        <div class="col-md-2">
+          <div class="form-check form-switch mb-2">
+            <input type="checkbox" class="form-check-input" id="includeUnavailable" name="include_unavailable" value="1" {% if include_unavailable %}checked{% endif %} onchange="this.form.submit()">
+            <label class="form-check-label fw-bold" for="includeUnavailable">配置不可も表示</label>
+          </div>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+          <a class="btn btn-outline-secondary flex-fill" href="?area={{ selected_area.id }}&week={{ previous_week|date:'Y-m-d' }}{% if include_unavailable %}&include_unavailable=1{% endif %}">← 前週</a>
+          <a class="btn btn-outline-secondary flex-fill" href="?area={{ selected_area.id }}&week={{ next_week|date:'Y-m-d' }}{% if include_unavailable %}&include_unavailable=1{% endif %}">翌週 →</a>
+        </div>
+      </form>
+
+      <div class="area-chip-wrap mb-3">
+        {% for area in areas %}
+        <a class="area-chip {% if selected_area.id == area.id %}active{% endif %}" href="?area={{ area.id }}&week={{ monday|date:'Y-m-d' }}{% if include_unavailable %}&include_unavailable=1{% endif %}">{{ area.name }}</a>
+        {% endfor %}
+      </div>
+
+      <div class="small text-muted mb-2">「今週」は月〜金の通常配置実績（日数）、「週目安」は通常配置の自動作成ルールで設定した場所ごとの週回数です。昼当番だけの移動は今週回数に含めません。</div>
+
+      <div class="d-flex justify-content-between gap-3 flex-wrap align-items-end">
+        <div>
+          <h2 class="h4 mb-1">{{ selected_area.category }}{% if selected_area.category %} / {% endif %}{{ selected_area.name }}</h2>
+          <div class="area-meta">
+            <span>配置優先度 {{ selected_area.assignment_priority }}</span>
+            <span>最低必要 {{ selected_area.minimum_assignment_count }}人</span>
+            <span>自動配置 {{ selected_area.auto_assignment_count }}人</span>
+            <span>{{ monday|date:'n/j' }}〜{{ friday|date:'n/j' }}</span>
+          </div>
+        </div>
+        <div class="area-summary">
+          <span class="summary-pill">配置可能 {{ available_count }}人</span>
+          {% if include_unavailable %}<span class="summary-pill">配置不可 {{ unavailable_count }}人</span>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover mb-0 staff-matrix-table">
+        <thead>
+          <tr>
+            <th style="min-width:145px">スタッフ</th>
+            <th style="min-width:120px">関係</th>
+            <th style="min-width:130px">今週 / 週目安</th>
+            <th style="min-width:110px">スタッフ優先度</th>
+            <th style="min-width:135px">勤務可能時間</th>
+            {% if include_unavailable %}<th style="min-width:220px">配置不可理由</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr {% if not row.available %}class="unavailable-row"{% endif %}>
+            <td class="staff-name">{{ row.staff.name }}</td>
+            <td class="text-center">
+              {% if not row.available %}
+                <span class="relation-badge rel-off">{{ row.relation }}</span>
+              {% elif row.relation == '専任' %}
+                <span class="relation-badge rel-dedicated">専任</span>
+              {% elif '専任代理' in row.relation %}
+                <span class="relation-badge rel-backup">{{ row.relation }}</span>
+              {% elif '優先' in row.relation %}
+                <span class="relation-badge rel-priority">{{ row.relation }}</span>
+              {% else %}
+                <span class="relation-badge rel-normal">{{ row.relation }}</span>
+              {% endif %}
+            </td>
+            <td class="text-center week-count">
+              <span class="actual">{{ row.weekly_actual }}</span>
+              <span class="target">/ {% if row.weekly_target %}{{ row.weekly_target }}回{% else %}指定なし{% endif %}</span>
+            </td>
+            <td class="text-center">{{ row.staff.get_assignment_staff_priority_display }}</td>
+            <td class="text-center">
+              {% if row.staff.work_start_time or row.staff.work_end_time %}
+                {% if row.staff.work_start_time %}{{ row.staff.work_start_time|time:'H:i' }}{% else %}制限なし{% endif %}
+                〜
+                {% if row.staff.work_end_time %}{{ row.staff.work_end_time|time:'H:i' }}{% else %}制限なし{% endif %}
+              {% else %}制限なし{% endif %}
+            </td>
+            {% if include_unavailable %}<td class="unavailable-reason">{{ row.unavailable_reason|default:'—' }}</td>{% endif %}
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="text-center text-muted py-4">表示対象のスタッフがいません。</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
