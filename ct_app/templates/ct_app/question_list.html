@@ -18,7 +18,7 @@
             <a href="{% url 'question_detail' question.pk %}" class="list-group-item list-group-item-action">
                 <div class="d-flex w-100 justify-content-between">
                     <h5 class="mb-1">{{ question.title }}</h5>
-                    <small class="text-muted">{{ question.created_at|date:"Y/m/d H:i" }}</small>
+                    <small class="text-muted">更新: {{ question.updated_at|date:"Y/m/d H:i" }}</small>
                 </div>
                 <p class="mb-1 text-truncate">{{ question.content }}</p>
                 

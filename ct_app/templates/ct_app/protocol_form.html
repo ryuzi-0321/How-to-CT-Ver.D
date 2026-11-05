@@ -28,7 +28,8 @@
                         {{ form.content }}
                     </div>
 
-                    <hr> <div class="mb-3">
+                    <hr>
+                    <div class="mb-3">
                         <label for="{{ form.protocol_detail.id_for_label }}" class="form-label">撮影詳細</label>
                         {{ form.protocol_detail }}
                     </div>
@@ -45,6 +46,7 @@
                     <div class="mb-3">
                         <label for="{{ form.protocol_img.id_for_label }}" class="form-label">{{ form.protocol_img.label }}</label>
                         {{ form.protocol_img }}
+                        {% if protocol.protocol_img %}<small class="form-text text-muted">現在の画像: {{ protocol.protocol_img.name }}</small>{% endif %}
                     </div>
                 </div>
             </div>

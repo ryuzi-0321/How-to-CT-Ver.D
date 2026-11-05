@@ -5,6 +5,8 @@ from django.core.management.utils import get_random_secret_key
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+IS_PRODUCTION = os.environ.get("DJANGO_ENV") == "production"
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', get_random_secret_key())
 
@@ -30,6 +32,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -75,7 +78,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+#STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media files
@@ -89,14 +92,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 86400  # 24 hours
 
-CSRF_COOKIE_SECURE = True  # Set to True in production with HTTPS
-SESSION_COOKIE_SECURE = True  # Set to True in production with HTTPS
+CSRF_COOKIE_SECURE = IS_PRODUCTION  # Set to True in production with HTTPS
+SESSION_COOKIE_SECURE = IS_PRODUCTION  # Set to True in production with HTTPS
 
 # メンテナンス中なら True、普段は False にする
 IS_MAINTENANCE = False
 
-IS_PRODUCTION = os.environ.get("DJANGO_ENV") == "production"
-
-DEBUG = not IS_PRODUCTION
+DEBUG = False
 
 SECURE_SSL_REDIRECT = IS_PRODUCTION

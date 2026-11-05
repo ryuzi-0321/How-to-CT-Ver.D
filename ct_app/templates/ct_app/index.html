@@ -285,7 +285,7 @@
                         <img src="{{ first_image.image.url }}" class="rounded border shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
                     </div>
                     {% endif %}
-                    <p class="text-muted mb-1" style="font-size: 0.7rem;">{{ form.created_at|date:'Y/m/d H:i' }}</p>
+                    <p class="text-muted mb-1" style="font-size: 0.7rem;">更新: {{ form.updated_at|date:'Y/m/d H:i' }}</p>
                     <p class="small text-secondary text-truncate mb-2">{{ form.main }}</p>
                     
                     <div class="mt-auto">
@@ -338,7 +338,7 @@
                         <img src="{{ first_image.image.url }}" class="rounded border shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
                     </div>
                     {% endif %}
-                    <p class="text-muted mb-1" style="font-size: 0.7rem;">{{ night_shift.created_at|date:'Y/m/d H:i' }}</p>
+                    <p class="text-muted mb-1" style="font-size: 0.7rem;">更新: {{ night_shift.updated_at|date:'Y/m/d H:i' }}</p>
                     <p class="small text-secondary text-truncate mb-2">{{ night_shift.content }}</p>
 
                     <div class="mt-auto">
@@ -390,7 +390,7 @@
                         <img src="{{ first_image.image.url }}" class="rounded border shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
                     </div>
                     {% endif %}
-                    <p class="text-muted mb-1" style="font-size: 0.7rem;">{{ question.created_at|date:'Y/m/d H:i' }}</p>
+                    <p class="text-muted mb-1" style="font-size: 0.7rem;">更新: {{ question.updated_at|date:'Y/m/d H:i' }}</p>
                     <p class="small text-secondary text-truncate mb-2">{{ question.content }}</p>
 
                     <div class="mt-auto">

@@ -9,3 +9,12 @@ venv/
 medical_ct.db
 staticfiles/
 restore_safety_backups/
+# Offline distribution files
+/HowToCT_Offline_v2/
+/offline_packages/
+
+# Local backups and exported settings
+/medical_ct.before_*.db
+/export_settings.py
+/howtoct_settings.json
+/HowToCT_Offline_v2_review/

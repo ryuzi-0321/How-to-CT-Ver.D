@@ -37,9 +37,12 @@
                         <i class="bi bi-tags"></i> {{ sick.keyword }}
                     </p>
                     {% endif %}
-                    {% if sick.protocol %}
+                    {% if sick.protocol or sick.protocols.exists %}
                     <p class="mb-2">
-                        <span class="protocol-badge">{{ sick.protocol }}</span>
+                        {% if sick.protocol %}<span class="protocol-badge">{{ sick.protocol }}</span>{% endif %}
+                        {% for related_protocol in sick.protocols.all %}
+                        <span class="protocol-badge">{{ related_protocol.title }}</span>
+                        {% endfor %}
                     </p>
                     {% endif %}
                     <p class="card-text text-muted">{{ sick.diesease_text|truncatewords:20 }}</p>

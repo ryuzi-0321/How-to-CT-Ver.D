@@ -19,6 +19,7 @@ class SickForm(forms.ModelForm):
             'protocol', 'protocol_text',
             'processing', 'processing_text',
             'contrast', 'contrast_text',
+            'protocols',
         ]
         widgets = {
             'diesease': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '疾患名'}),
@@ -30,6 +31,7 @@ class SickForm(forms.ModelForm):
             'processing_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': '処理方法'}),
             'contrast': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '造影プロトコル'}),
             'contrast_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': '造影詳細'}),
+            'protocols': forms.CheckboxSelectMultiple(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -72,11 +74,9 @@ class NoticeForm(forms.ModelForm):
                 field.required = False
 
 class ProtocolForm(forms.ModelForm):
-    # 【修正箇所】forms. を削除
-    images = forms.ImageField(widget=MultipleFileInput(attrs={'multiple': True}), required=False, label="画像アップロード")
     class Meta:
         model = Protocol
-        fields = ['title','category', 'content', 'protocol_detail', 'contrast_detail', 'processing_detail']
+        fields = ['title','category', 'content', 'protocol_detail', 'contrast_detail', 'processing_detail', 'protocol_img']
         widgets = {
             'category': forms.Select(attrs={'class': 'form-control'}),
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'プロトコルタイトル'}),
@@ -84,6 +84,7 @@ class ProtocolForm(forms.ModelForm):
             'protocol_detail': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': '撮影手順・条件など'}),
             'contrast_detail': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': '造影剤量・タイミングなど'}),
             'processing_detail': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': '再構成・3D処理など'}),
+            'protocol_img': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

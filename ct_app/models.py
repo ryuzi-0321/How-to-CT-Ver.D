@@ -18,6 +18,7 @@ class Sick(models.Model):
     protocol_img = models.ImageField(upload_to='protocol_images/', null=True, blank=True)
     processing_img = models.ImageField(upload_to='processing_images/', null=True, blank=True)
     contrast_img = models.ImageField(upload_to='contrast_images/', null=True, blank=True)
+    protocols = models.ManyToManyField('Protocol', blank=True, related_name='sicks', verbose_name="関連プロトコル")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

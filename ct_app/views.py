@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.db import connections
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
+from django.core.exceptions import PermissionDenied
 from django.conf import settings
 from .models import Sick, Form, Protocol, NightShift, NightShiftImage, BackupHistory, NoticeImage, SickImage,ProtocolImage, Question, Answer
 from .forms import SickForm, FormForm, ProtocolForm, NightShiftForm, QuestionForm, AnswerForm
@@ -97,10 +98,10 @@ def night_shift_create(request):
 class IndexView(View):
     """ホームページ"""
     def get(self, request):
-        forms = Form.objects.all().order_by('-created_at')
+        forms = Form.objects.all().order_by('-updated_at', '-created_at')
         sicks = Sick.objects.all()
         protocols = Protocol.objects.all()
-        night_shifts = NightShift.objects.all().order_by('-created_at')
+        night_shifts = NightShift.objects.all().order_by('-updated_at', '-created_at')
         nightshift_count = NightShift.objects.count()
         context = {
                 'page_title': 'ホーム',
@@ -420,7 +421,7 @@ class FormListView(View):
 
     def get(self, request):
 
-        forms = Form.objects.all()
+        forms = Form.objects.all().order_by('-updated_at', '-created_at')
 
         context = {
 
@@ -749,14 +750,35 @@ def _backup_history_context(**extra):
 
 
 def _safe_zip_extract(zipf, dest_dir):
-    """ZIP Slip を避けて安全に展開する。"""
-    base = os.path.realpath(dest_dir)
-    for member in zipf.infolist():
-        target = os.path.realpath(os.path.join(dest_dir, member.filename))
-        if target != base and not target.startswith(base + os.sep):
-            raise ValueError('不正なパスを含むZIPファイルです')
-    zipf.extractall(dest_dir)
+    """ZIP Slip・巨大ZIP対策を行って安全に展開する。"""
 
+    MAX_TOTAL_SIZE = 500 * 1024 * 1024  # 展開後500MB
+    MAX_FILES = 5000
+
+    base = os.path.realpath(dest_dir)
+    members = zipf.infolist()
+
+    if len(members) > MAX_FILES:
+        raise ValueError("ZIP内のファイル数が上限を超えています")
+
+    total_size = 0
+
+    for member in members:
+        # 展開先が指定フォルダの外にならないことを確認
+        target = os.path.realpath(
+            os.path.join(dest_dir, member.filename)
+        )
+
+        if target != base and not target.startswith(base + os.sep):
+            raise ValueError("不正なパスを含むZIPファイルです")
+
+        # 展開後の合計サイズを確認
+        total_size += member.file_size
+
+        if total_size > MAX_TOTAL_SIZE:
+            raise ValueError("ZIPの展開後サイズが500MBを超えています")
+
+    zipf.extractall(dest_dir)
 
 def _sqlite_db_path():
     db = settings.DATABASES.get('default', {})
@@ -973,6 +995,17 @@ class ImportBackupView(View):
 
         if not backup_file.name.lower().endswith('.zip'):
             return render(request, 'ct_app/backup.html', _backup_history_context(error='ZIPまたはExcelファイルを選択してください'))
+        # バックアップZIPのアップロード上限：100MB
+        MAX_BACKUP_SIZE = 100 * 1024 * 1024
+
+        if backup_file.size > MAX_BACKUP_SIZE:
+            return render(
+                request,
+                'ct_app/backup.html',
+                _backup_history_context(
+                    error='バックアップZIPは100MB以下のファイルを選択してください。'
+                )
+            )
 
         safety_filename = None
         safety_path = None
@@ -1024,7 +1057,7 @@ class ImportBackupView(View):
 class NightShiftListView(View):
     """夜勤対応一覧"""
     def get(self, request):
-        nightshifts = NightShift.objects.all()
+        nightshifts = NightShift.objects.all().order_by('-updated_at', '-created_at')
         context = {
             'page_title': '夜勤対応',
             'nightshifts': nightshifts,
@@ -1130,7 +1163,7 @@ class QuestionListView(ListView):
     model = Question
     template_name = 'ct_app/question_list.html'
     context_object_name = 'questions'
-    ordering = ['-created_at']  # 新しい質問を上に
+    ordering = ['-updated_at', '-created_at']  # 更新日時が新しい質問を上に
 
 # 2. 質問作成画面（ログイン必須）
 class QuestionCreateView(CreateView):
@@ -1142,20 +1175,13 @@ class QuestionCreateView(CreateView):
     def form_valid(self, form):
         self.object = form.save(commit=False)
         User = get_user_model()
-        if not User.objects.exists():
-            # ユーザーが存在しない場合はエラーを返す
-            default_user = User.objects.create_superuser(
-                username='admin',
-                email='admin@example.com',
-                password='adminpassword'
-            )
-        else:
-            default_user = User.objects.first()  # 最初のユーザーを取得
-        if self.request.user.is_authenticated:
-            self.object.author = self.request.user
-        else:
-            # ログインしていない場合は最初のユーザー（管理者など）をセット
-            self.object.author = User.objects.first()
+        default_user = User.objects.first()
+
+        if default_user is None:
+            raise PermissionDenied("投稿に使用できるユーザーが設定されていません。")
+
+        self.object.author = default_user
+        
         related_protocol_id = self.request.POST.get('related_protocol')
         if related_protocol_id:
             self.object.related_protocol = get_object_or_404(Protocol, id=related_protocol_id)
@@ -1171,19 +1197,10 @@ def question_detail(request, pk):
     if request.method == 'POST':
         # 🚨 ログインしていない場合の安全装置（テストユーザーを割り当てる）
         User = get_user_model()
-        if request.user.is_authenticated:
-            author = request.user
-        else:
-            # データベースにユーザーがいなければ作成し、いれば最初のユーザーを使う
-            if not User.objects.exists():
-                author = User.objects.create_user(
-                    username='test_user', 
-                    email='test@example.com', 
-                    password='password123'
-                )
-            else:
-                author = User.objects.first()
+        author = User.objects.first()
 
+        if author is None:
+            raise PermissionDenied("投稿に使用できるユーザーが設定されていません。")
         content = request.POST.get('content')
         suggested_protocol_id = request.POST.get('suggested_protocol')
         
@@ -1214,16 +1231,16 @@ def question_detail(request, pk):
     return render(request, 'ct_app/question_detail.html', context)
     
 def index(request):
-    questions = Question.objects.all().order_by('-created_at')
+    questions = Question.objects.all().order_by('-updated_at', '-created_at')
     sicks_count = Sick.objects.count()
     forms_count = Form.objects.count()
     protocols_count = Protocol.objects.count()
     night_shifts_count = NightShift.objects.count()
     question_count = questions.count()
     sicks_list = Sick.objects.all().order_by('-created_at')
-    forms_list = Form.objects.all().order_by('-created_at')
+    forms_list = Form.objects.all().order_by('-updated_at', '-created_at')
     protocols_list = Protocol.objects.all().order_by('-created_at')
-    nightshift_list = NightShift.objects.all().order_by('-created_at') if hasattr(NightShift, 'created_at') else NightShift.objects.all()
+    nightshift_list = NightShift.objects.all().order_by('-updated_at', '-created_at') if hasattr(NightShift, 'created_at') else NightShift.objects.all()
 
     today_assignment = None
     today_assignment_exists = False

@@ -81,12 +81,33 @@
     </div>
 
     <div class="tab-pane fade" id="protocol" role="tabpanel">
+        {% if sick.protocols.exists %}
+            {% for related_protocol in sick.protocols.all %}
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">{{ related_protocol.title }} <small class="text-muted">({{ related_protocol.get_category_display }})</small></h5>
+                </div>
+                <div class="card-body">
+                    <h6>概要</h6>
+                    {% if related_protocol.content %}{{ related_protocol.content|linebreaks }}{% else %}<p class="text-muted">概要は未登録です。</p>{% endif %}
+                    <hr>
+                    <h6>撮影詳細</h6>
+                    {% if related_protocol.protocol_detail %}{{ related_protocol.protocol_detail|linebreaks }}{% else %}<p class="text-muted">撮影詳細は未登録です。</p>{% endif %}
+                    {% if related_protocol.protocol_img %}
+                    <a href="{{ related_protocol.protocol_img.url }}" target="_blank"><img src="{{ related_protocol.protocol_img.url }}" class="img-fluid rounded border shadow-sm mt-2" style="max-width: 500px;" alt="{{ related_protocol.title }}の撮影画像"></a>
+                    {% endif %}
+                    <a href="{% url 'protocol_detail' related_protocol.pk %}" class="btn btn-sm btn-outline-primary mt-3">プロトコル詳細を見る</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
         <div class="card mb-3">
             <div class="card-header bg-light"><h5 class="mb-0">{{ sick.protocol|default:"撮影プロトコル詳細" }}</h5></div>
             <div class="card-body">
                 {% if sick.protocol_text %}{{ sick.protocol_text|linebreaks }}{% else %}詳細なし{% endif %}
             </div>
         </div>
+        {% endif %}
         <div class="row g-2">
             {% for img_obj in sick.images.all %}
                 {% if img_obj.category == 'protocol' %}
@@ -101,12 +122,23 @@
     </div>
 
     <div class="tab-pane fade" id="contrast" role="tabpanel">
+        {% if sick.protocols.exists %}
+            {% for related_protocol in sick.protocols.all %}
+            <div class="card mb-3">
+                <div class="card-header bg-light"><h5 class="mb-0">{{ related_protocol.title }} <small class="text-muted">({{ related_protocol.get_category_display }})</small></h5></div>
+                <div class="card-body">
+                    <h6>造影プロトコル詳細</h6>
+                    {% if related_protocol.contrast_detail %}{{ related_protocol.contrast_detail|linebreaks }}{% else %}<p class="text-muted">造影プロトコル詳細は未登録です。</p>{% endif %}
+                    <a href="{% url 'protocol_detail' related_protocol.pk %}" class="btn btn-sm btn-outline-primary mt-3">プロトコル詳細を見る</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
         <div class="card mb-3">
             <div class="card-header bg-light"><h5 class="mb-0">{{ sick.contrast|default:"造影プロトコル詳細" }}</h5></div>
-            <div class="card-body">
-                {% if sick.contrast_text %}{{ sick.contrast_text|linebreaks }}{% else %}詳細なし{% endif %}
-            </div>
+            <div class="card-body">{% if sick.contrast_text %}{{ sick.contrast_text|linebreaks }}{% else %}詳細なし{% endif %}</div>
         </div>
+        {% endif %}
         <div class="row g-2">
             {% for img_obj in sick.images.all %}
                 {% if img_obj.category == 'contrast' %}
@@ -121,12 +153,23 @@
     </div>
 
     <div class="tab-pane fade" id="processing" role="tabpanel">
+        {% if sick.protocols.exists %}
+            {% for related_protocol in sick.protocols.all %}
+            <div class="card mb-3">
+                <div class="card-header bg-light"><h5 class="mb-0">{{ related_protocol.title }} <small class="text-muted">({{ related_protocol.get_category_display }})</small></h5></div>
+                <div class="card-body">
+                    <h6>画像処理詳細</h6>
+                    {% if related_protocol.processing_detail %}{{ related_protocol.processing_detail|linebreaks }}{% else %}<p class="text-muted">画像処理詳細は未登録です。</p>{% endif %}
+                    <a href="{% url 'protocol_detail' related_protocol.pk %}" class="btn btn-sm btn-outline-primary mt-3">プロトコル詳細を見る</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
         <div class="card mb-3">
             <div class="card-header bg-light"><h5 class="mb-0">{{ sick.processing|default:"画像処理詳細" }}</h5></div>
-            <div class="card-body">
-                {% if sick.processing_text %}{{ sick.processing_text|linebreaks }}{% else %}詳細なし{% endif %}
-            </div>
+            <div class="card-body">{% if sick.processing_text %}{{ sick.processing_text|linebreaks }}{% else %}詳細なし{% endif %}</div>
         </div>
+        {% endif %}
         <div class="row g-2">
             {% for img_obj in sick.images.all %}
                 {% if img_obj.category == 'processing' %}

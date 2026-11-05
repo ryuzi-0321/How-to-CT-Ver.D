@@ -22,31 +22,61 @@
     </div>
 </div>
 
-<div class="protocol-section">
-    <div class="mb-3">
+<div class="card disease-card mb-3">
+    <div class="card-body">
         <span class="protocol-badge">{{ protocol.get_category_display }}</span>
+        <h3 class="mt-2">{{ protocol.title }}</h3>
+        <p class="text-muted small mb-0">
+            作成: {{ protocol.created_at|date:'Y年m月d日 H:i' }} |
+            更新: {{ protocol.updated_at|date:'Y年m月d日 H:i' }}
+        </p>
     </div>
-    
-    <h3>{{ protocol.title }}</h3>
-    <p class="text-muted small">
-        作成: {{ protocol.created_at|date:'Y年m月d日 H:i' }} | 
-        更新: {{ protocol.updated_at|date:'Y年m月d日 H:i' }}
-    </p>
-    
-    <div class="mt-4">
-        {{ protocol.content|linebreaks }}
-    </div>
+</div>
 
-    <div class="card mt-3">
-        <div class="card-header bg-info text-white">撮影詳細</div>
-        <div class="card-body">{{ protocol.protocol_detail|linebreaks }}</div>
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">概要</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="protocol-tab" data-bs-toggle="tab" data-bs-target="#protocol" type="button" role="tab">撮影プロトコル</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="contrast-tab" data-bs-toggle="tab" data-bs-target="#contrast" type="button" role="tab">造影プロトコル</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="processing-tab" data-bs-toggle="tab" data-bs-target="#processing" type="button" role="tab">画像処理</button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="overview" role="tabpanel">
+        <div class="card mb-3">
+            <div class="card-header bg-light"><h5 class="mb-0">概要</h5></div>
+            <div class="card-body">{% if protocol.content %}{{ protocol.content|linebreaks }}{% else %}詳細なし{% endif %}</div>
+        </div>
     </div>
-    
-    {% if protocol.protocol_img %}
-    <div class="mt-4">
-        <h5>プロトコル画像</h5>
-        <img src="{{ protocol.protocol_img.url }}" class="img-fluid" alt="プロトコル画像" style="max-width: 500px;">
+    <div class="tab-pane fade" id="protocol" role="tabpanel">
+        <div class="card mb-3">
+            <div class="card-header bg-light"><h5 class="mb-0">撮影プロトコル</h5></div>
+            <div class="card-body">{% if protocol.protocol_detail %}{{ protocol.protocol_detail|linebreaks }}{% else %}詳細なし{% endif %}</div>
+        </div>
+        {% if protocol.protocol_img %}
+        <div class="row g-2"><div class="col-md-6 col-lg-4">
+            <a href="{{ protocol.protocol_img.url }}" target="_blank"><img src="{{ protocol.protocol_img.url }}" class="img-fluid rounded border shadow-sm" alt="プロトコル画像"></a>
+        </div></div>
+        {% endif %}
     </div>
-    {% endif %}
+    <div class="tab-pane fade" id="contrast" role="tabpanel">
+        <div class="card mb-3">
+            <div class="card-header bg-light"><h5 class="mb-0">造影プロトコル</h5></div>
+            <div class="card-body">{% if protocol.contrast_detail %}{{ protocol.contrast_detail|linebreaks }}{% else %}詳細なし{% endif %}</div>
+        </div>
+    </div>
+    <div class="tab-pane fade" id="processing" role="tabpanel">
+        <div class="card mb-3">
+            <div class="card-header bg-light"><h5 class="mb-0">画像処理</h5></div>
+            <div class="card-body">{% if protocol.processing_detail %}{{ protocol.processing_detail|linebreaks }}{% else %}詳細なし{% endif %}</div>
+        </div>
+    </div>
 </div>
 {% endblock %}
